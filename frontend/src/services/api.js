@@ -1,7 +1,8 @@
 // frontend/src/services/api.js
 // API service for communicating with backend
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Hardcode the URL since live-server doesn't support import.meta.env
+const API_URL = 'http://localhost:5000/api';
 
 // Generic fetch wrapper with error handling
 async function fetchAPI(endpoint, options = {}) {

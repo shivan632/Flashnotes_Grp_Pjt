@@ -13,17 +13,27 @@ if (!supabaseUrl || !supabaseAnonKey) {
     process.exit(1);
 }
 
-// Regular client for public operations (with RLS)
+// Regular client for public operations
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Admin client for privileged operations (bypasses RLS)
+// Admin client that bypasses RLS
 export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-// Test connection
+// Test connection with admin client to bypass RLS
 export async function testConnection() {
     try {
-        const { data, error } = await supabase.from('profiles').select('count', { count: 'exact', head: true });
-        if (error) throw error;
+        // Use admin client for testing to bypass RLS
+        const adminClient = createClient(supabaseUrl, supabaseServiceRoleKey);
+        
+        const { error } = await adminClient
+            .from('profiles')
+            .select('count', { count: 'exact', head: true });
+        
+        if (error) {
+            console.error('❌ Supabase connection failed:', error.message);
+            return false;
+        }
+        
         console.log('✅ Supabase connected successfully');
         return true;
     } catch (error) {
