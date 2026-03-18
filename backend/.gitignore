@@ -1,0 +1,46 @@
+# dependencies
+/node_modules
+package-lock.json
+yarn.lock
+.pnpm-debug.log
+
+# testing
+/coverage
+.nyc_output
+
+# production
+/dist
+/build
+.env.production
+
+# environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production.local
+
+# misc
+.DS_Store
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-*
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Supabase local (if you use Supabase CLI)
+supabase/.temp
