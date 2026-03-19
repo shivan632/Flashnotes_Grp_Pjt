@@ -30,6 +30,8 @@ export const ROUTES = {
     HISTORY: '/history',
     SAVED: '/saved',
     QUIZ: '/quiz',
+    QUIZ_ATTEMPT: '/quiz/:id/attempt',  // NEW
+    QUIZ_RESULT: '/quiz/result/:id',     // NEW
     SCORE: '/score',
     PROFILE: '/profile',
     SETTINGS: '/settings',

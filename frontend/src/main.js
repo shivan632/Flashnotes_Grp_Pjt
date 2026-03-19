@@ -53,6 +53,9 @@ import { ScorePage } from './pages/ScorePage.js';
 import { ProfilePage } from './pages/ProfilePage.js';
 import { SettingsPage } from './pages/SettingsPage.js';
 import { NotificationsPage } from './pages/NotificationsPage.js';
+import { QuizAttemptPage, initQuizAttempt, cleanupQuiz } from './pages/QuizAttemptPage.js';
+import { setupQuizPage } from './pages/QuizPage.js';
+import { setupScorePage } from './pages/ScorePage.js';
 
 // ============= PAGE COMPONENTS =============
 
@@ -176,7 +179,6 @@ const routes = {
     [ROUTES.VERIFY_OTP]: VerifyOTPPage,
     [ROUTES.DASHBOARD]: DashboardPage,
     [ROUTES.HISTORY]: HistoryPage,
-    // NEW ROUTES
     [ROUTES.SAVED]: SavedPage,
     [ROUTES.QUIZ]: QuizPage,
     [ROUTES.SCORE]: ScorePage,
@@ -184,6 +186,9 @@ const routes = {
     [ROUTES.SETTINGS]: SettingsPage,
     [ROUTES.NOTIFICATIONS]: NotificationsPage
 };
+
+// Dynamic route for quiz attempt
+routes[/^\/quiz\/\d+\/attempt$/] = QuizAttemptPage;
 
 // ============= GLOBAL STATE =============
 let isGenerating = false;
@@ -336,9 +341,15 @@ async function router() {
     
     console.log('Current hash path:', path);
     
-    const pageFunction = routes[path];
-    const app = document.getElementById('app');
+    // Check for dynamic routes
+    let pageFunction = routes[path];
     
+    // Check for quiz attempt pattern
+    if (!pageFunction && path.match(/^\/quiz\/\d+\/attempt$/)) {
+        pageFunction = QuizAttemptPage;
+    }
+    
+    const app = document.getElementById('app');
     if (!app) return;
     
     // Show loading state
@@ -353,6 +364,9 @@ async function router() {
     `;
     
     try {
+        // Clean up previous quiz timer if any
+        cleanupQuiz();
+        
         // Execute page function (might be async)
         const pageContent = await (typeof pageFunction === 'function' ? pageFunction() : pageFunction);
         app.innerHTML = pageContent;
@@ -380,28 +394,19 @@ async function router() {
                 setupDashboard();
             } else if (path === ROUTES.HISTORY) {
                 setupHistoryEvents();
+            } else if (path === ROUTES.QUIZ) {
+                setupQuizPage();
+            } else if (path === ROUTES.SCORE) {
+                setupScorePage();
+            } else if (path.match(/^\/quiz\/\d+\/attempt$/)) {
+                // Initialize quiz attempt
+                initQuizAttempt();
             }
-            // New pages don't need special setup yet
         }, 100);
         
     } catch (error) {
         console.error('Router error:', error);
-        
-        // Handle 404
-        if (!pageFunction) {
-            app.innerHTML = `
-                <div class="min-h-screen flex items-center justify-center bg-[#111827]">
-                    <div class="bg-[#1F2937] p-8 rounded-xl shadow-2xl text-center max-w-md">
-                        <h1 class="text-6xl font-bold text-[#3B82F6] mb-4">404</h1>
-                        <p class="text-2xl text-[#E5E7EB] mb-4">Page Not Found</p>
-                        <p class="text-[#9CA3AF] mb-8">The page you're looking for doesn't exist or has been moved.</p>
-                        <a href="#/" class="bg-[#3B82F6] hover:bg-[#60A5FA] text-white px-6 py-3 rounded-lg transition-all transform hover:scale-105 inline-block">
-                            Go Home
-                        </a>
-                    </div>
-                </div>
-            `;
-        }
+        app.innerHTML = `<div class="min-h-screen flex items-center justify-center">Error loading page</div>`;
     }
 }
 

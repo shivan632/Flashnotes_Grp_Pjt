@@ -5,12 +5,14 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { testConnection } from './src/config/supabase.js';
-import aiRoutes from './src/routes/ai.js';
 
 // Import routes
 import authRoutes from './src/routes/auth.js';
 import notesRoutes from './src/routes/notes.js';
 import historyRoutes from './src/routes/history.js';
+import aiRoutes from './src/routes/ai.js';
+import quizRoutes from './src/routes/quiz.js';
+import scoreRoutes from './src/routes/score.js';
 
 dotenv.config();
 
@@ -50,6 +52,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/notes', notesRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/quiz', quizRoutes);      
+app.use('/api/score', scoreRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {
