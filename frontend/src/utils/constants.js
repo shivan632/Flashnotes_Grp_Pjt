@@ -1,4 +1,5 @@
-// Application constants
+// frontend/src/utils/constants.js
+// Application constants with all routes
 
 // App information
 export const APP_NAME = 'Flashnotes';
@@ -18,7 +19,7 @@ export const COLORS = {
     error: '#EF4444'
 };
 
-// Routes
+// Routes - COMPLETE WITH ALL NEW ROUTES
 export const ROUTES = {
     HOME: '/',
     WELCOME: '/welcome',
@@ -27,8 +28,12 @@ export const ROUTES = {
     VERIFY_OTP: '/verify-otp',
     DASHBOARD: '/dashboard',
     HISTORY: '/history',
+    SAVED: '/saved',
+    QUIZ: '/quiz',
+    SCORE: '/score',
     PROFILE: '/profile',
-    SETTINGS: '/settings'
+    SETTINGS: '/settings',
+    NOTIFICATIONS: '/notifications'
 };
 
 // Local storage keys
@@ -39,7 +44,8 @@ export const STORAGE_KEYS = {
     NOTES: 'flashnotes_notes',
     HISTORY: 'flashnotes_history',
     THEME: 'flashnotes_theme',
-    SIDEBAR: 'sidebarCollapsed'
+    SIDEBAR: 'sidebarCollapsed',
+    NOTIFICATION_COUNT: 'notificationCount'
 };
 
 // API endpoints (for future backend)
@@ -69,7 +75,23 @@ export const API_ENDPOINTS = {
     },
     AI: {
         GENERATE: '/ai/generate',
-        SUGGEST: '/ai/suggest'
+        SUGGEST: '/ai/suggest',
+        CHAT: '/ai/chat'
+    },
+    QUIZ: {
+        GET_ALL: '/quiz',
+        START: '/quiz/start',
+        SUBMIT: '/quiz/submit',
+        RESULTS: '/quiz/results'
+    },
+    SCORE: {
+        GET: '/score',
+        LEADERBOARD: '/score/leaderboard'
+    },
+    NOTIFICATIONS: {
+        GET_ALL: '/notifications',
+        MARK_READ: '/notifications/read',
+        MARK_ALL_READ: '/notifications/read-all'
     }
 };
 
@@ -117,5 +139,7 @@ export const SUCCESS_MESSAGES = {
     LOGGED_OUT: 'Logged out successfully.',
     NOTE_SAVED: 'Note saved successfully!',
     NOTE_DELETED: 'Note deleted successfully.',
-    PROFILE_UPDATED: 'Profile updated successfully.'
+    PROFILE_UPDATED: 'Profile updated successfully.',
+    QUIZ_COMPLETED: 'Quiz completed! Check your score.',
+    NOTIFICATIONS_CLEARED: 'All notifications marked as read.'
 };
