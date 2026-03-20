@@ -72,7 +72,7 @@ const sendOTPEmail = async (email, otp, name) => {
     }
 };
 
-// ============= REGISTER =============
+// ============= EXPORT ALL FUNCTIONS =============
 export const register = async (req, res) => {
     try {
         const { name, email, password } = req.body;
@@ -86,7 +86,6 @@ export const register = async (req, res) => {
             });
         }
         
-        // Check if user exists in profiles
         const { data: existingUser } = await supabase
             .from('profiles')
             .select('email')
@@ -100,22 +99,17 @@ export const register = async (req, res) => {
             });
         }
         
-        // Check if user is already pending
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const otp = generateOTP();
+        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+        
         const { data: pendingUser } = await supabase
             .from('pending_users')
             .select('*')
             .eq('email', email)
             .maybeSingle();
         
-        // Hash password
-        const hashedPassword = await bcrypt.hash(password, 10);
-        
-        // Generate OTP
-        const otp = generateOTP();
-        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
-        
         if (pendingUser) {
-            // Update existing pending user
             await supabaseAdmin
                 .from('pending_users')
                 .update({
@@ -127,7 +121,6 @@ export const register = async (req, res) => {
                 })
                 .eq('email', email);
         } else {
-            // Insert new pending user
             await supabaseAdmin
                 .from('pending_users')
                 .insert([{
@@ -141,106 +134,28 @@ export const register = async (req, res) => {
                 }]);
         }
         
-        // SEND OTP EMAIL (THIS IS THE KEY FIX)
-        console.log(`📧 Attempting to send OTP to ${email}...`);
-        const emailSent = await sendOTPEmail(email, otp, name);
+        await sendOTPEmail(email, otp, name);
         
-        if (!emailSent) {
-            console.warn('⚠️ Email sending failed, but registration continues. OTP available in logs.');
-        }
-        
-        // Show OTP in console (for debugging)
-        console.log(`\n🔐 =====================================`);
-        console.log(`   OTP for ${email}: ${otp}`);
-        console.log(`   Email sent: ${emailSent ? '✅ YES' : '❌ NO'}`);
-        console.log(`=====================================\n`);
+        console.log(`\n🔐 OTP for ${email}: ${otp}\n`);
         
         res.status(201).json({ 
             success: true,
-            message: emailSent 
-                ? 'Registration successful! Please check your email for OTP.'
-                : 'Registration successful! Check console for OTP (email failed).',
-            email,
-            otp: otp // For development only
+            message: 'Registration successful! Please check your email for OTP.',
+            email 
         });
         
     } catch (error) {
         console.error('❌ Registration error:', error);
         res.status(500).json({ 
             success: false, 
-            message: error.message || 'Registration failed. Please try again.' 
+            message: error.message || 'Registration failed' 
         });
     }
 };
 
-// ============= RESEND OTP =============
-export const resendOTP = async (req, res) => {
-    try {
-        const { email } = req.body;
-        
-        if (!email) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Email is required' 
-            });
-        }
-        
-        // Get pending user
-        const { data: pendingUser } = await supabase
-            .from('pending_users')
-            .select('*')
-            .eq('email', email)
-            .single();
-        
-        if (!pendingUser) {
-            return res.status(404).json({ 
-                success: false, 
-                message: 'No pending registration found for this email' 
-            });
-        }
-        
-        // Generate new OTP
-        const newOTP = generateOTP();
-        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
-        
-        // Update OTP
-        await supabaseAdmin
-            .from('pending_users')
-            .update({ 
-                otp: newOTP, 
-                otp_expiry: otpExpiry,
-                updated_at: new Date().toISOString()
-            })
-            .eq('email', email);
-        
-        // Send new OTP email
-        const emailSent = await sendOTPEmail(email, newOTP, pendingUser.name);
-        
-        console.log(`🔄 Resent OTP to ${email}: ${newOTP} (Email sent: ${emailSent})`);
-        
-        res.json({ 
-            success: true,
-            message: emailSent 
-                ? 'OTP resent successfully! Please check your email.'
-                : 'OTP resent. Check console for code.',
-            otp: newOTP
-        });
-        
-    } catch (error) {
-        console.error('❌ Resend OTP error:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Failed to resend OTP' 
-        });
-    }
-};
-
-// ============= VERIFY OTP =============
 export const verifyOTP = async (req, res) => {
     try {
         const { email, otp } = req.body;
-        
-        console.log('🔐 OTP Verification:', { email, otp });
         
         if (!email || !otp) {
             return res.status(400).json({ 
@@ -249,30 +164,27 @@ export const verifyOTP = async (req, res) => {
             });
         }
         
-        // Get pending user
-        const { data: pendingUser, error: fetchError } = await supabase
+        const { data: pendingUser } = await supabase
             .from('pending_users')
             .select('*')
             .eq('email', email)
             .eq('otp', otp)
             .single();
         
-        if (fetchError || !pendingUser) {
+        if (!pendingUser) {
             return res.status(400).json({ 
                 success: false, 
                 message: 'Invalid OTP' 
             });
         }
         
-        // Check expiry
         if (new Date() > new Date(pendingUser.otp_expiry)) {
             return res.status(400).json({ 
                 success: false, 
-                message: 'OTP has expired. Please request a new one.' 
+                message: 'OTP has expired' 
             });
         }
         
-        // Create profile
         const { data: profile, error: profileError } = await supabaseAdmin
             .from('profiles')
             .insert([{
@@ -284,56 +196,86 @@ export const verifyOTP = async (req, res) => {
             .select()
             .single();
         
-        if (profileError) {
-            console.error('Profile creation error:', profileError);
-            throw profileError;
-        }
+        if (profileError) throw profileError;
         
-        // Delete pending user
         await supabaseAdmin
             .from('pending_users')
             .delete()
             .eq('email', email);
         
-        // Generate JWT token
         const token = jwt.sign(
-            { 
-                userId: profile.id,
-                email: profile.email, 
-                name: profile.name 
-            },
+            { userId: profile.id, email: profile.email, name: profile.name },
             process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+            { expiresIn: '7d' }
         );
-        
-        console.log('✅ Verification successful for:', email);
         
         res.json({
             success: true,
             message: 'Email verified successfully',
             token,
-            user: {
-                id: profile.id,
-                name: profile.name,
-                email: profile.email
-            }
+            user: { id: profile.id, name: profile.name, email: profile.email }
         });
         
     } catch (error) {
         console.error('❌ Verification error:', error);
         res.status(500).json({ 
             success: false, 
-            message: 'Verification failed. Please try again.' 
+            message: 'Verification failed' 
         });
     }
 };
 
-// ============= LOGIN =============
+export const resendOTP = async (req, res) => {
+    try {
+        const { email } = req.body;
+        
+        if (!email) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Email is required' 
+            });
+        }
+        
+        const { data: pendingUser } = await supabase
+            .from('pending_users')
+            .select('*')
+            .eq('email', email)
+            .single();
+        
+        if (!pendingUser) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'No pending registration found' 
+            });
+        }
+        
+        const newOTP = generateOTP();
+        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+        
+        await supabaseAdmin
+            .from('pending_users')
+            .update({ otp: newOTP, otp_expiry: otpExpiry })
+            .eq('email', email);
+        
+        await sendOTPEmail(email, newOTP, pendingUser.name);
+        
+        res.json({ 
+            success: true,
+            message: 'OTP resent successfully' 
+        });
+        
+    } catch (error) {
+        console.error('❌ Resend OTP error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to resend OTP' 
+        });
+    }
+};
+
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
-        
-        console.log('🔑 Login attempt:', email);
         
         if (!email || !password) {
             return res.status(400).json({ 
@@ -342,52 +284,41 @@ export const login = async (req, res) => {
             });
         }
         
-        // Get user from profiles
-        const { data: user, error: userError } = await supabase
+        const { data: user } = await supabase
             .from('profiles')
             .select('*')
             .eq('email', email)
             .single();
         
-        if (userError || !user) {
+        if (!user) {
             return res.status(401).json({ 
                 success: false, 
                 message: 'Invalid email or password' 
             });
         }
         
-        // Generate JWT token
         const token = jwt.sign(
-            { 
-                userId: user.id,
-                email: user.email, 
-                name: user.name 
-            },
+            { userId: user.id, email: user.email, name: user.name },
             process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+            { expiresIn: '7d' }
         );
         
         res.json({
             success: true,
             message: 'Login successful',
             token,
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email
-            }
+            user: { id: user.id, name: user.name, email: user.email }
         });
         
     } catch (error) {
         console.error('❌ Login error:', error);
         res.status(500).json({ 
             success: false, 
-            message: 'Login failed. Please try again.' 
+            message: 'Login failed' 
         });
     }
 };
 
-// ============= FORGOT PASSWORD =============
 export const forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
@@ -435,37 +366,47 @@ export const forgotPassword = async (req, res) => {
     }
 };
 
-// ============= RESET PASSWORD =============
 export const resetPassword = async (req, res) => {
     try {
         const { email, token, newPassword } = req.body;
         
         if (!email || !token || !newPassword) {
-            return res.status(400).json({ success: false, message: 'All fields required' });
+            return res.status(400).json({ 
+                success: false, 
+                message: 'All fields are required' 
+            });
         }
         
         try {
             jwt.verify(token, process.env.JWT_SECRET);
         } catch (error) {
-            return res.status(400).json({ success: false, message: 'Invalid or expired token' });
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Invalid or expired token' 
+            });
         }
         
         const hashedPassword = await bcrypt.hash(newPassword, 10);
         
         await supabaseAdmin
             .from('profiles')
-            .update({ password: hashedPassword, updated_at: new Date().toISOString() })
+            .update({ 
+                password: hashedPassword, 
+                updated_at: new Date().toISOString() 
+            })
             .eq('email', email);
         
         res.json({ success: true, message: 'Password reset successful' });
         
     } catch (error) {
         console.error('Reset password error:', error);
-        res.status(500).json({ success: false, message: 'Failed to reset password' });
+        res.status(500).json({ 
+            success: false, 
+            message: 'Failed to reset password' 
+        });
     }
 };
 
-// ============= LOGOUT =============
 export const logout = async (req, res) => {
     res.json({ success: true, message: 'Logged out successfully' });
 };
