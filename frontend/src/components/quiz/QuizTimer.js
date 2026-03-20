@@ -11,12 +11,14 @@ export function QuizTimer({ seconds, totalSeconds }) {
         return 'text-[#3B82F6]';
     };
 
+    const timerColor = getTimerColor();
+
     return `
         <div class="quiz-timer flex items-center gap-2 bg-[#1F2937] px-4 py-2 rounded-lg">
-            <svg class="w-5 h-5 ${getTimerColor()}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 ${timerColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
-            <span class="font-mono text-lg ${getTimerColor()}">
+            <span class="font-mono text-lg ${timerColor}">
                 ${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}
             </span>
         </div>

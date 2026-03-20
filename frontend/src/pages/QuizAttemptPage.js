@@ -254,6 +254,7 @@ function selectAnswer(questionId, optionIndex) {
 }
 
 // Start timer
+// Start timer - FIXED VERSION
 function startTimer() {
     if (timerInterval) clearInterval(timerInterval);
     
@@ -270,10 +271,20 @@ function startTimer() {
             const timerColor = quizState.timeLeft < quizState.totalTime * 0.2 ? 'text-red-500' : 
                               quizState.timeLeft < quizState.totalTime * 0.5 ? 'text-yellow-500' : 'text-[#3B82F6]';
             
-            timerElement.querySelector('span').textContent = 
-                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            timerElement.querySelector('span').className = `font-mono text-lg ${timerColor}`;
-            timerElement.querySelector('svg').className = `w-5 h-5 ${timerColor}`;
+            // Update the text span
+            const timeSpan = timerElement.querySelector('span');
+            if (timeSpan) {
+                timeSpan.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                // Remove existing classes and add new ones
+                timeSpan.className = `font-mono text-lg ${timerColor}`;
+            }
+            
+            // Update the SVG icon
+            const svgIcon = timerElement.querySelector('svg');
+            if (svgIcon) {
+                // Remove existing classes and add new ones
+                svgIcon.className = `w-5 h-5 ${timerColor}`;
+            }
         }
         
         // Auto-submit when time runs out

@@ -1,5 +1,5 @@
 // backend/src/controllers/quizController.js
-import { supabase } from '../config/supabase.js';
+import { supabase, supabaseAdmin } from '../config/supabase.js';
 
 // Get all available quizzes
 export const getAllQuizzes = async (req, res) => {
@@ -114,11 +114,12 @@ export const getQuizQuestions = async (req, res) => {
 export const startQuiz = async (req, res) => {
     try {
         const quizId = req.params.id;
-        const userId = req.user.id; // Get this from the auth middleware
+        const userId = req.user.id;
         
-        console.log('Starting quiz - User ID from token:', userId);
-        console.log('Quiz ID:', quizId);
-
+        console.log('🎯 Starting quiz attempt:');
+        console.log('  - Quiz ID:', quizId);
+        console.log('  - User ID:', userId);
+        
         // Get quiz details
         const { data: quiz, error: quizError } = await supabase
             .from('quizzes')
@@ -126,14 +127,17 @@ export const startQuiz = async (req, res) => {
             .eq('id', quizId)
             .single();
 
-        if (quizError) throw quizError;
-
-        // Create new attempt
-        const { data: attempt, error } = await supabase
+        if (quizError) {
+            console.error('❌ Quiz fetch error:', quizError);
+            throw quizError;
+        }
+        
+        // Create new attempt using supabaseAdmin (bypasses RLS)
+        const { data: attempt, error } = await supabaseAdmin
             .from('quiz_attempts')
             .insert([{
                 user_id: userId,
-                quiz_id: quizId,
+                quiz_id: parseInt(quizId),
                 total_questions: quiz.total_questions,
                 status: 'in_progress',
                 started_at: new Date().toISOString()
@@ -142,10 +146,12 @@ export const startQuiz = async (req, res) => {
             .single();
 
         if (error) {
-            console.error('Insert error details:', error);
+            console.error('❌ Insert error details:', error);
             throw error;
         }
-
+        
+        console.log('✅ Quiz attempt created:', attempt.id);
+        
         res.json({
             success: true,
             attemptId: attempt.id,
@@ -153,13 +159,67 @@ export const startQuiz = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Start quiz error:', error);
+        console.error('❌ Start quiz error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to start quiz'
+            message: error.message || 'Failed to start quiz'
         });
     }
 };
+
+// Helper function to update user scores
+async function updateUserScores(userId, correctCount, totalQuestions, percentage) {
+    try {
+        // Get existing scores
+        const { data: existing } = await supabaseAdmin
+            .from('user_scores')
+            .select('*')
+            .eq('user_id', userId)
+            .maybeSingle();
+        
+        if (existing) {
+            // Update existing
+            const newTotalQuizzes = existing.total_quizzes_taken + 1;
+            const newTotalQuestions = existing.total_questions_answered + totalQuestions;
+            const newCorrectAnswers = existing.correct_answers + correctCount;
+            const newAverageScore = ((existing.average_score * existing.total_quizzes_taken) + percentage) / newTotalQuizzes;
+            const newPerfectScores = existing.perfect_scores + (percentage === 100 ? 1 : 0);
+            
+            await supabaseAdmin
+                .from('user_scores')
+                .update({
+                    total_quizzes_taken: newTotalQuizzes,
+                    total_questions_answered: newTotalQuestions,
+                    correct_answers: newCorrectAnswers,
+                    average_score: newAverageScore,
+                    perfect_scores: newPerfectScores,
+                    last_quiz_date: new Date().toISOString().split('T')[0],
+                    updated_at: new Date().toISOString()
+                })
+                .eq('user_id', userId);
+        } else {
+            // Create new
+            await supabaseAdmin
+                .from('user_scores')
+                .insert([{
+                    user_id: userId,
+                    total_quizzes_taken: 1,
+                    total_questions_answered: totalQuestions,
+                    correct_answers: correctCount,
+                    average_score: percentage,
+                    perfect_scores: percentage === 100 ? 1 : 0,
+                    last_quiz_date: new Date().toISOString().split('T')[0],
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                }]);
+        }
+        
+        console.log('✅ User scores updated for user:', userId);
+        
+    } catch (error) {
+        console.error('❌ Error updating user scores:', error);
+    }
+}
 
 // Submit quiz answers
 export const submitQuiz = async (req, res) => {
@@ -169,7 +229,7 @@ export const submitQuiz = async (req, res) => {
         const { attemptId, answers, timeTakenSeconds } = req.body;
 
         // Get the attempt
-        const { data: attempt, error: attemptError } = await supabase
+        const { data: attempt, error: attemptError } = await supabaseAdmin
             .from('quiz_attempts')
             .select('*')
             .eq('id', attemptId)
@@ -206,8 +266,8 @@ export const submitQuiz = async (req, res) => {
         const totalQuestions = questions.length;
         const percentage = (correctCount / totalQuestions) * 100;
 
-        // Update attempt
-        const { data: updatedAttempt, error: updateError } = await supabase
+        // Update attempt using supabaseAdmin
+        const { data: updatedAttempt, error: updateError } = await supabaseAdmin
             .from('quiz_attempts')
             .update({
                 score: correctCount,
@@ -223,6 +283,9 @@ export const submitQuiz = async (req, res) => {
             .single();
 
         if (updateError) throw updateError;
+
+        // Update user_scores
+        await updateUserScores(userId, correctCount, totalQuestions, percentage);
 
         res.json({
             success: true,
