@@ -119,17 +119,22 @@ export function setupRegistrationForm() {
         try {
             // Call backend API
             const result = await authAPI.register({ name, email, password });
-            
-            // Store email for OTP verification
-            localStorage.setItem('pendingVerification', email);
-            
-            // Show success message
-            showError(result.message || 'Registration successful! Please check your email for OTP.', 'success');
-            
-            // Redirect to OTP verification
-            setTimeout(() => {
-                window.location.hash = '#/verify-otp';
-            }, 2000);
+
+// Store email for OTP verification
+localStorage.setItem('pendingVerification', email);
+
+// SHOW OTP ALERT (for development)
+if (result.otp) {
+    alert(`Your OTP is: ${result.otp}\n(Check terminal if not visible)`);
+}
+
+// Show success message
+showError(result.message || 'Registration successful! Please check OTP.', 'success');
+
+// Redirect to OTP verification
+setTimeout(() => {
+    window.location.hash = '#/verify-otp';
+}, 2000);
             
         } catch (error) {
             console.error('Registration failed:', error);
