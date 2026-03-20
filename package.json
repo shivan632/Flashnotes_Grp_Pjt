@@ -1,0 +1,23 @@
+﻿{
+  "name": "flashnotes-frontend",
+  "version": "1.0.0",
+  "description": "Flashnotes AI-powered learning application frontend",
+  "main": "src/main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "live-server --port=3000",
+    "build": "tailwindcss -i ./src/style.css -o ./dist/style.css --minify"
+  },
+  "keywords": ["flashnotes", "ai", "learning"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "three": "^0.158.0"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.14",
+    "live-server": "^1.2.2",
+    "postcss": "^8.4.24",
+    "tailwindcss": "^3.4.17"
+  }
+}
