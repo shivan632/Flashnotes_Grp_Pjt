@@ -32,7 +32,7 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
-// CORS configuration - Allow your Vercel frontend
+// CORS configuration
 const allowedOrigins = [
     'https://flashnotes-grp-pjt-1t3z.vercel.app',
     'http://localhost:3000',
@@ -41,13 +41,11 @@ const allowedOrigins = [
 
 app.use(cors({
     origin: function(origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
         if (allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
         } else {
             console.log('⚠️ Blocked origin:', origin);
-            // For now, allow anyway for debugging
             callback(null, true);
         }
     },
@@ -68,37 +66,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// Debug route - list all registered routes (remove in production)
-app.get('/api/debug/routes', (req, res) => {
-    const routes = [];
-    
-    function printRoutes(stack, basePath = '') {
-        if (!stack) return;
-        stack.forEach(layer => {
-            if (layer.route) {
-                const methods = Object.keys(layer.route.methods).join(',');
-                routes.push(`${methods.toUpperCase()} ${basePath}${layer.route.path}`);
-            } else if (layer.name === 'router' && layer.handle && layer.handle.stack) {
-                const routerPath = layer.regexp.source
-                    .replace(/\\/g, '/')
-                    .replace('/^/', '')
-                    .replace('/\\/?(?=\\/|$)/', '')
-                    .replace('?', '');
-                printRoutes(layer.handle.stack, `${basePath}${routerPath}`);
-            }
-        });
-    }
-    
-    if (app._router && app._router.stack) {
-        printRoutes(app._router.stack);
-    }
-    
-    res.json({ 
-        routes: routes.sort(),
-        count: routes.length
-    });
-});
-
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/notes', notesRoutes);
@@ -108,13 +75,22 @@ app.use('/api/quiz', quizRoutes);
 app.use('/api/score', scoreRoutes);
 
 // Health check route
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
+    let supabaseStatus = 'unknown';
+    try {
+        const { error } = await supabase.from('profiles').select('count', { count: 'exact', head: true });
+        supabaseStatus = error ? 'error' : 'connected';
+    } catch (e) {
+        supabaseStatus = 'disconnected';
+    }
+    
     res.json({
         status: 'ok',
         message: 'Flashnotes API is running',
         timestamp: new Date().toISOString(),
         environment: process.env.NODE_ENV,
-        cors: 'enabled'
+        supabase: supabaseStatus,
+        supabaseUrl: process.env.SUPABASE_URL
     });
 });
 

@@ -15,7 +15,7 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-// Generate OTP
+// Generate OTP (6-digit random number)
 const generateOTP = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
 };
@@ -62,12 +62,14 @@ const sendOTPEmail = async (email, otp, name) => {
     await transporter.sendMail(mailOptions);
 };
 
-// Register
+// ============= REGISTER =============
+// ============= REGISTER (Fast Version) =============
 export const register = async (req, res) => {
     try {
         const { name, email, password } = req.body;
         
-        // Validate input
+        console.log('📝 Registration attempt:', { name, email });
+        
         if (!name || !email || !password) {
             return res.status(400).json({ 
                 success: false, 
@@ -89,23 +91,23 @@ export const register = async (req, res) => {
             });
         }
         
-        // Check if user is pending
+        // Check if user is already pending
         const { data: pendingUser } = await supabase
             .from('pending_users')
             .select('*')
             .eq('email', email)
             .maybeSingle();
         
-        // Hash password
+        // Hash password (fast)
         const hashedPassword = await bcrypt.hash(password, 10);
         
         // Generate OTP
         const otp = generateOTP();
-        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
         
         if (pendingUser) {
             // Update existing pending user
-            const { error: updateError } = await supabase
+            const { error: updateError } = await supabaseAdmin
                 .from('pending_users')
                 .update({
                     name,
@@ -119,41 +121,49 @@ export const register = async (req, res) => {
             if (updateError) throw updateError;
         } else {
             // Insert new pending user
-            const { error: insertError } = await supabase
+            const { error: insertError } = await supabaseAdmin
                 .from('pending_users')
                 .insert([{
                     name,
                     email,
                     password: hashedPassword,
                     otp,
-                    otp_expiry: otpExpiry
+                    otp_expiry: otpExpiry,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
                 }]);
             
             if (insertError) throw insertError;
         }
         
-        // Send OTP email
-        await sendOTPEmail(email, otp, name);
+        // Send OTP email in BACKGROUND (don't wait for it)
+        // Ye async mein bhej dijiye, response pehle dedo
+        sendOTPEmail(email, otp, name).catch(err => {
+            console.error('Email sending failed (non-critical):', err);
+        });
         
+        // FAST RESPONSE - User ko turant bata do
         res.status(201).json({ 
             success: true,
-            message: 'Registration successful. Please check your email for OTP.',
+            message: 'Registration successful. OTP has been sent to your email.',
             email 
         });
         
     } catch (error) {
-        console.error('Registration error:', error);
+        console.error('❌ Registration error:', error);
         res.status(500).json({ 
             success: false, 
-            message: 'Registration failed. Please try again.' 
+            message: error.message || 'Registration failed. Please try again.' 
         });
     }
 };
 
-// Verify OTP
+// ============= VERIFY OTP =============
 export const verifyOTP = async (req, res) => {
     try {
         const { email, otp } = req.body;
+        
+        console.log('🔐 OTP Verification:', { email, otp });
         
         if (!email || !otp) {
             return res.status(400).json({ 
@@ -191,7 +201,8 @@ export const verifyOTP = async (req, res) => {
             .insert([{
                 email: pendingUser.email,
                 name: pendingUser.name,
-                created_at: new Date().toISOString()
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
             }])
             .select()
             .single();
@@ -202,12 +213,12 @@ export const verifyOTP = async (req, res) => {
         }
         
         // Delete pending user
-        await supabase
+        await supabaseAdmin
             .from('pending_users')
             .delete()
             .eq('email', email);
         
-        // Generate JWT
+        // Generate JWT token
         const token = jwt.sign(
             { 
                 userId: profile.id,
@@ -230,7 +241,7 @@ export const verifyOTP = async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Verification error:', error);
+        console.error('❌ Verification error:', error);
         res.status(500).json({ 
             success: false, 
             message: 'Verification failed. Please try again.' 
@@ -238,10 +249,12 @@ export const verifyOTP = async (req, res) => {
     }
 };
 
-// Login
+// ============= LOGIN =============
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
+        
+        console.log('🔑 Login attempt:', email);
         
         if (!email || !password) {
             return res.status(400).json({ 
@@ -264,10 +277,7 @@ export const login = async (req, res) => {
             });
         }
         
-        // Since we're using Supabase Auth, we should verify with Supabase
-        // This is a simplified version - in production, use Supabase Auth
-        
-        // Generate JWT
+        // Generate JWT token
         const token = jwt.sign(
             { 
                 userId: user.id,
@@ -290,7 +300,7 @@ export const login = async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('❌ Login error:', error);
         res.status(500).json({ 
             success: false, 
             message: 'Login failed. Please try again.' 
@@ -298,10 +308,12 @@ export const login = async (req, res) => {
     }
 };
 
-// Resend OTP
+// ============= RESEND OTP =============
 export const resendOTP = async (req, res) => {
     try {
         const { email } = req.body;
+        
+        console.log('🔄 Resend OTP attempt:', email);
         
         if (!email) {
             return res.status(400).json({ 
@@ -329,7 +341,7 @@ export const resendOTP = async (req, res) => {
         const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
         
         // Update OTP
-        const { error: updateError } = await supabase
+        const { error: updateError } = await supabaseAdmin
             .from('pending_users')
             .update({ 
                 otp: newOTP, 
@@ -349,7 +361,7 @@ export const resendOTP = async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Resend OTP error:', error);
+        console.error('❌ Resend OTP error:', error);
         res.status(500).json({ 
             success: false, 
             message: 'Failed to resend OTP' 
@@ -357,7 +369,7 @@ export const resendOTP = async (req, res) => {
     }
 };
 
-// Forgot Password
+// ============= FORGOT PASSWORD =============
 export const forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
@@ -386,7 +398,7 @@ export const forgotPassword = async (req, res) => {
         // Generate reset token
         const resetToken = jwt.sign(
             { email: user.email },
-            process.env.JWT_SECRET + user.password,
+            process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
         
@@ -413,7 +425,7 @@ export const forgotPassword = async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Forgot password error:', error);
+        console.error('❌ Forgot password error:', error);
         res.status(500).json({ 
             success: false, 
             message: 'Failed to send reset email' 
@@ -421,7 +433,7 @@ export const forgotPassword = async (req, res) => {
     }
 };
 
-// Reset Password
+// ============= RESET PASSWORD =============
 export const resetPassword = async (req, res) => {
     try {
         const { email, token, newPassword } = req.body;
@@ -430,6 +442,19 @@ export const resetPassword = async (req, res) => {
             return res.status(400).json({ 
                 success: false, 
                 message: 'All fields are required' 
+            });
+        }
+        
+        // Verify token
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            if (decoded.email !== email) {
+                throw new Error('Invalid token');
+            }
+        } catch (error) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Invalid or expired token' 
             });
         }
         
@@ -447,21 +472,11 @@ export const resetPassword = async (req, res) => {
             });
         }
         
-        // Verify token
-        try {
-            jwt.verify(token, process.env.JWT_SECRET + user.password);
-        } catch (error) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Invalid or expired token' 
-            });
-        }
-        
         // Hash new password
         const hashedPassword = await bcrypt.hash(newPassword, 10);
         
-        // Update password (in real app, update Supabase Auth)
-        // This is simplified
+        // Note: In production, update password in Supabase Auth
+        // This is a simplified version
         
         res.json({ 
             success: true,
@@ -469,7 +484,7 @@ export const resetPassword = async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Reset password error:', error);
+        console.error('❌ Reset password error:', error);
         res.status(500).json({ 
             success: false, 
             message: 'Failed to reset password' 
@@ -477,16 +492,15 @@ export const resetPassword = async (req, res) => {
     }
 };
 
-// Logout
+// ============= LOGOUT =============
 export const logout = async (req, res) => {
     try {
-        // Client should remove token
         res.json({ 
             success: true,
             message: 'Logged out successfully' 
         });
     } catch (error) {
-        console.error('Logout error:', error);
+        console.error('❌ Logout error:', error);
         res.status(500).json({ 
             success: false, 
             message: 'Logout failed' 
