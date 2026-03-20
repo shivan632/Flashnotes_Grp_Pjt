@@ -33,14 +33,33 @@ exec('tailwindcss -i ./src/style.css -o ./dist/style.css --minify', (error, stdo
     fs.copyFileSync('index.html', 'dist/index.html');
     console.log('✅ index.html copied to dist folder');
     
-    // Also copy public folder if it exists
+    // Copy the entire src folder to dist
+    console.log('📝 Copying src folder...');
+    const srcDir = path.join(__dirname, 'src');
+    const distSrcDir = path.join(distDir, 'src');
+    
+    // Remove existing src in dist if exists
+    if (fs.existsSync(distSrcDir)) {
+        fs.rmSync(distSrcDir, { recursive: true });
+    }
+    
+    // Copy entire src folder
+    fs.cpSync(srcDir, distSrcDir, { recursive: true });
+    console.log('✅ src folder copied to dist/src');
+    
+    // Copy public folder if it exists
     if (fs.existsSync('public')) {
         console.log('📝 Copying public folder...');
-        fs.cpSync('public', 'dist/public', { recursive: true });
-        console.log('✅ Public folder copied');
+        const distPublicDir = path.join(distDir, 'public');
+        if (fs.existsSync(distPublicDir)) {
+            fs.rmSync(distPublicDir, { recursive: true });
+        }
+        fs.cpSync('public', distPublicDir, { recursive: true });
+        console.log('✅ public folder copied');
     }
     
     console.log('🎉 Build complete! Files in dist/ folder:');
     console.log('   - dist/style.css');
     console.log('   - dist/index.html');
+    console.log('   - dist/src/ (all your source files)');
 });
