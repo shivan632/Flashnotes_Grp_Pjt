@@ -16,35 +16,17 @@ if (!supabaseUrl || !supabaseAnonKey) {
 console.log('🔗 Connecting to Supabase:', supabaseUrl);
 
 // Regular client for public operations
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-        autoRefreshToken: false,
-        persistSession: false
-    }
-});
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Admin client that bypasses RLS
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
-    auth: {
-        autoRefreshToken: false,
-        persistSession: false
-    }
-});
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-// Test connection with timeout
+// Test connection
 export async function testConnection() {
     try {
-        console.log('🔍 Testing Supabase connection...');
-        
-        const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Connection timeout after 10 seconds')), 10000);
-        });
-        
-        const connectionPromise = supabaseAdmin
+        const { error } = await supabaseAdmin
             .from('profiles')
             .select('count', { count: 'exact', head: true });
-        
-        const { error } = await Promise.race([connectionPromise, timeoutPromise]);
         
         if (error) {
             console.error('❌ Supabase connection failed:', error.message);

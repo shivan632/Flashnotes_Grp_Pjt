@@ -75,22 +75,12 @@ app.use('/api/quiz', quizRoutes);
 app.use('/api/score', scoreRoutes);
 
 // Health check route
-app.get('/api/health', async (req, res) => {
-    let supabaseStatus = 'unknown';
-    try {
-        const { error } = await supabase.from('profiles').select('count', { count: 'exact', head: true });
-        supabaseStatus = error ? 'error' : 'connected';
-    } catch (e) {
-        supabaseStatus = 'disconnected';
-    }
-    
+app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
         message: 'Flashnotes API is running',
         timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV,
-        supabase: supabaseStatus,
-        supabaseUrl: process.env.SUPABASE_URL
+        environment: process.env.NODE_ENV
     });
 });
 
