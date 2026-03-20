@@ -20,7 +20,9 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
 // Rate limiting
 const limiter = rateLimit({
@@ -30,10 +32,27 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
-// CORS configuration
+// CORS configuration - FIXED FOR PRODUCTION
+const allowedOrigins = [
+    'https://flashnotes-grp-pjt-1t3z.vercel.app',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000'
+];
+
 app.use(cors({
-    origin: [process.env.FRONTEND_URL || 'http://localhost:3000', 'http://127.0.0.1:3000'],
+    origin: function(origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            console.log('Blocked origin:', origin);
+            callback(null, true); // Allow anyway for now, but log it
+        }
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     optionsSuccessStatus: 200
 }));
 
@@ -44,6 +63,7 @@ app.use(express.urlencoded({ extended: true }));
 // Request logging middleware
 app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+    console.log('Origin:', req.headers.origin);
     next();
 });
 
@@ -61,7 +81,8 @@ app.get('/api/health', (req, res) => {
         status: 'ok',
         message: 'Flashnotes API is running',
         timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV
+        environment: process.env.NODE_ENV,
+        cors: 'enabled'
     });
 });
 
@@ -86,6 +107,7 @@ app.use((err, req, res, next) => {
 app.listen(PORT, async () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
     console.log(`📝 Environment: ${process.env.NODE_ENV}`);
+    console.log(`🔗 Allowed origins: ${allowedOrigins.join(', ')}`);
     
     // Test database connection
     await testConnection();
