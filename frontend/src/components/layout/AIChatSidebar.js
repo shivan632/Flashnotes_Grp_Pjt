@@ -230,7 +230,7 @@ async function sendMessage(message) {
         const token = localStorage.getItem('authToken');
         
         // Call backend API
-        const response = await fetch('http://localhost:5000/api/ai/chat', {
+        const response = await fetch('https://flashnotes-grp-pjt.onrender.com/api/ai/chat', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

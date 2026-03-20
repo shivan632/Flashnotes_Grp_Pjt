@@ -1,7 +1,7 @@
 // frontend/src/services/scoreService.js
 // Score API service
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://flashnotes-grp-pjt.onrender.com/api';
 
 // Get auth token
 const getToken = () => localStorage.getItem('authToken');
