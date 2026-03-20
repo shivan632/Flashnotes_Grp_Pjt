@@ -1,8 +1,7 @@
 // frontend/src/services/api.js
 // API service for communicating with backend
 
-// Hardcode the URL since live-server doesn't support import.meta.env
-const API_URL = 'https://flashnotes-grp-pjt.onrender.com';
+const API_URL = 'https://flashnotes-grp-pjt.onrender.com/api';
 
 // Generic fetch wrapper with error handling
 async function fetchAPI(endpoint, options = {}) {
@@ -67,19 +66,15 @@ export const authAPI = {
 // Notes endpoints
 export const notesAPI = {
     getAll: () => fetchAPI('/notes'),
-    
     getById: (id) => fetchAPI(`/notes/${id}`),
-    
     save: (note) => fetchAPI('/notes', {
         method: 'POST',
         body: JSON.stringify(note)
     }),
-    
     update: (id, note) => fetchAPI(`/notes/${id}`, {
         method: 'PUT',
         body: JSON.stringify(note)
     }),
-    
     delete: (id) => fetchAPI(`/notes/${id}`, {
         method: 'DELETE'
     })
@@ -88,12 +83,10 @@ export const notesAPI = {
 // History endpoints
 export const historyAPI = {
     getAll: () => fetchAPI('/history'),
-    
     add: (topic) => fetchAPI('/history', {
         method: 'POST',
         body: JSON.stringify({ topic })
     }),
-    
     clear: () => fetchAPI('/history', {
         method: 'DELETE'
     })
@@ -102,7 +95,6 @@ export const historyAPI = {
 // User endpoints
 export const userAPI = {
     getProfile: () => fetchAPI('/user/profile'),
-    
     updateProfile: (data) => fetchAPI('/user/profile', {
         method: 'PUT',
         body: JSON.stringify(data)
