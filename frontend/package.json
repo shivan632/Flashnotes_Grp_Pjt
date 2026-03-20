@@ -2,7 +2,7 @@
   "type": "module",
   "scripts": {
     "dev": "live-server --port=3000",
-    "build": "tailwindcss -i ./src/style.css -o ./dist/style.css --minify"
+    "build": "npx tailwindcss -i ./src/style.css -o ./dist/style.css --minify"
   },
   "name": "frontend",
   "version": "1.0.0",
@@ -15,6 +15,9 @@
     "three": "^0.183.2"
   },
   "devDependencies": {
-    "live-server": "^1.2.0"
+    "autoprefixer": "^10.4.27",
+    "live-server": "^1.2.0",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.2"
   }
 }
