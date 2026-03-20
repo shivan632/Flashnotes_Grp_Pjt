@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashnotes - AI-Powered Learning</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="public/logo.jpeg">
+    
+    <!-- Tailwind CSS (CDN for development - will be replaced by compiled CSS in production) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom CSS - FOR PRODUCTION: use /dist/style.css -->
+    <!-- For development: /src/style.css, for production: /dist/style.css -->
+    <link rel="stylesheet" href="/dist/style.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for icons (fallback) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827;
+            color: #E5E7EB;
+        }
+        
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #1F2937;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #3B82F6;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #60A5FA;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .animate-fadeIn {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .animate-slideIn {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        /* Loading spinner */
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            position: relative;
+            margin: 0 auto;
+        }
+        
+        .loading-spinner div {
+            position: absolute;
+            border: 4px solid transparent;
+            border-top-color: #3B82F6;
+            border-radius: 50%;
+            animation: spin 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+        }
+        
+        .loading-spinner div:nth-child(1) {
+            width: 100%;
+            height: 100%;
+            border-top-color: #3B82F6;
+        }
+        
+        .loading-spinner div:nth-child(2) {
+            width: 70%;
+            height: 70%;
+            top: 15%;
+            left: 15%;
+            border-top-color: #60A5FA;
+            animation-direction: reverse;
+            animation-duration: 1.2s;
+        }
+        
+        .loading-spinner div:nth-child(3) {
+            width: 40%;
+            height: 40%;
+            top: 30%;
+            left: 30%;
+            border-top-color: #A78BFA;
+            animation-duration: 1s;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-spinner-small {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+            margin-left: 8px;
+        }
+        
+        /* Animated background */
+        .animated-bg {
+            background: linear-gradient(-45deg, #111827, #1F2937, #3B82F6, #A78BFA);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    </style>
+</head>
+<body class="bg-[#111827] text-[#E5E7EB] antialiased">
+    <!-- App Container -->
+    <div id="app">
+        <!-- Initial loading state -->
+        <div class="min-h-screen flex items-center justify-center">
+            <div class="loading-spinner">
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Script -->
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>

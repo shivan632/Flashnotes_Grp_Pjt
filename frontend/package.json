@@ -1,9 +1,10 @@
 {
   "type": "module",
-  "scripts": {
-    "dev": "live-server --port=3000",
-    "build": "tailwindcss -i ./src/style.css -o ./dist/style.css --minify"
-  },
+"scripts": {
+  "dev": "live-server --port=3000",
+  "build": "node build.js"
+},
+
   "name": "frontend",
   "version": "1.0.0",
   "description": "",
