@@ -1,5 +1,5 @@
 // frontend/src/services/aiChat.js
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://flashnotes-grp-pjt.onrender.com';
 
 // Store conversation history
 let conversationHistory = [];

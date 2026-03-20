@@ -2,7 +2,7 @@
 // API service for communicating with backend
 
 // Hardcode the URL since live-server doesn't support import.meta.env
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://flashnotes-grp-pjt.onrender.com';
 
 // Generic fetch wrapper with error handling
 async function fetchAPI(endpoint, options = {}) {
