@@ -32,7 +32,7 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
-// CORS configuration - FIXED FOR PRODUCTION
+// CORS configuration - Allow your Vercel frontend
 const allowedOrigins = [
     'https://flashnotes-grp-pjt-1t3z.vercel.app',
     'http://localhost:3000',
@@ -46,8 +46,9 @@ app.use(cors({
         if (allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
         } else {
-            console.log('Blocked origin:', origin);
-            callback(null, true); // Allow anyway for now, but log it
+            console.log('⚠️ Blocked origin:', origin);
+            // For now, allow anyway for debugging
+            callback(null, true);
         }
     },
     credentials: true,
@@ -63,8 +64,39 @@ app.use(express.urlencoded({ extended: true }));
 // Request logging middleware
 app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-    console.log('Origin:', req.headers.origin);
+    console.log('  Origin:', req.headers.origin || 'none');
     next();
+});
+
+// Debug route - list all registered routes (remove in production)
+app.get('/api/debug/routes', (req, res) => {
+    const routes = [];
+    
+    function printRoutes(stack, basePath = '') {
+        if (!stack) return;
+        stack.forEach(layer => {
+            if (layer.route) {
+                const methods = Object.keys(layer.route.methods).join(',');
+                routes.push(`${methods.toUpperCase()} ${basePath}${layer.route.path}`);
+            } else if (layer.name === 'router' && layer.handle && layer.handle.stack) {
+                const routerPath = layer.regexp.source
+                    .replace(/\\/g, '/')
+                    .replace('/^/', '')
+                    .replace('/\\/?(?=\\/|$)/', '')
+                    .replace('?', '');
+                printRoutes(layer.handle.stack, `${basePath}${routerPath}`);
+            }
+        });
+    }
+    
+    if (app._router && app._router.stack) {
+        printRoutes(app._router.stack);
+    }
+    
+    res.json({ 
+        routes: routes.sort(),
+        count: routes.length
+    });
 });
 
 // Routes
@@ -88,15 +120,16 @@ app.get('/api/health', (req, res) => {
 
 // 404 handler
 app.use((req, res) => {
+    console.log(`⚠️ 404 Not Found: ${req.method} ${req.path}`);
     res.status(404).json({
         success: false,
-        message: 'Route not found'
+        message: `Route not found: ${req.method} ${req.path}`
     });
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-    console.error('Error:', err.stack);
+    console.error('❌ Error:', err.stack);
     res.status(err.status || 500).json({
         success: false,
         message: err.message || 'Internal server error'
@@ -106,7 +139,7 @@ app.use((err, req, res, next) => {
 // Start server
 app.listen(PORT, async () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`📝 Environment: ${process.env.NODE_ENV}`);
+    console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`🔗 Allowed origins: ${allowedOrigins.join(', ')}`);
     
     // Test database connection

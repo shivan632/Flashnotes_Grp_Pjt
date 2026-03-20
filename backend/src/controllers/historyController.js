@@ -6,6 +6,8 @@ export const getHistory = async (req, res) => {
     try {
         const userId = req.user.id;
         
+        console.log('📊 Fetching history for user:', userId);
+        
         const { data: history, error } = await supabase
             .from('search_history')
             .select('*')
@@ -13,7 +15,12 @@ export const getHistory = async (req, res) => {
             .order('created_at', { ascending: false })
             .limit(20);
         
-        if (error) throw error;
+        if (error) {
+            console.error('❌ Supabase error:', error);
+            throw error;
+        }
+        
+        console.log(`✅ Found ${history?.length || 0} history items`);
         
         // Transform to frontend format
         const formattedHistory = history.map(item => ({
@@ -28,7 +35,7 @@ export const getHistory = async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Get history error:', error);
+        console.error('❌ Get history error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch history'
@@ -49,6 +56,8 @@ export const addToHistory = async (req, res) => {
             });
         }
         
+        console.log(`📝 Adding to history: user=${userId}, topic=${topic}`);
+        
         // First, check if this topic already exists in history
         const { data: existing } = await supabase
             .from('search_history')
@@ -63,6 +72,7 @@ export const addToHistory = async (req, res) => {
                 .delete()
                 .eq('user_id', userId)
                 .eq('topic', topic);
+            console.log(`🗑️ Removed existing duplicate: ${topic}`);
         }
         
         // Insert new history entry
@@ -91,6 +101,7 @@ export const addToHistory = async (req, res) => {
                 .from('search_history')
                 .delete()
                 .in('id', idsToDelete);
+            console.log(`🧹 Cleaned up old history, kept last 20`);
         }
         
         res.status(201).json({
@@ -104,7 +115,7 @@ export const addToHistory = async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Add to history error:', error);
+        console.error('❌ Add to history error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to add to history'
@@ -116,6 +127,8 @@ export const addToHistory = async (req, res) => {
 export const clearHistory = async (req, res) => {
     try {
         const userId = req.user.id;
+        
+        console.log(`🗑️ Clearing all history for user: ${userId}`);
         
         const { error } = await supabase
             .from('search_history')
@@ -130,7 +143,7 @@ export const clearHistory = async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Clear history error:', error);
+        console.error('❌ Clear history error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to clear history'
@@ -143,6 +156,8 @@ export const deleteHistoryItem = async (req, res) => {
     try {
         const userId = req.user.id;
         const historyId = req.params.id;
+        
+        console.log(`🗑️ Deleting history item ${historyId} for user ${userId}`);
         
         // Check if history item exists and belongs to user
         const { data: existing, error: checkError } = await supabase
@@ -174,7 +189,7 @@ export const deleteHistoryItem = async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Delete history item error:', error);
+        console.error('❌ Delete history item error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to delete history item'
