@@ -1,75 +1,21 @@
 // backend/src/controllers/authController.js
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import nodemailer from 'nodemailer';
 import { supabase, supabaseAdmin } from '../config/supabase.js';
-
-// Email configuration
-const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
-    secure: false,
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
-});
 
 // Generate OTP (6-digit random number)
 const generateOTP = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Send OTP email
-const sendOTPEmail = async (email, otp, name) => {
-    const mailOptions = {
-        from: `"Flashnotes" <${process.env.EMAIL_USER}>`,
-        to: email,
-        subject: 'Flashnotes Email Verification',
-        html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #1F2937; border-radius: 10px;">
-                <div style="text-align: center; margin-bottom: 30px;">
-                    <h1 style="color: #3B82F6; font-size: 32px; margin: 0;">Flashnotes</h1>
-                    <p style="color: #E5E7EB; font-size: 16px;">Your AI-Powered Learning Companion</p>
-                </div>
-                
-                <div style="background-color: #111827; padding: 30px; border-radius: 8px;">
-                    <h2 style="color: #E5E7EB; margin-top: 0;">Hello ${name || 'there'}!</h2>
-                    <p style="color: #9CA3AF; font-size: 16px; line-height: 1.5;">
-                        Thank you for registering with Flashnotes. Please verify your email address using the OTP below:
-                    </p>
-                    
-                    <div style="text-align: center; margin: 30px 0;">
-                        <div style="background: linear-gradient(135deg, #3B82F6, #A78BFA); padding: 20px; border-radius: 8px; display: inline-block;">
-                            <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: white;">${otp}</span>
-                        </div>
-                    </div>
-                    
-                    <p style="color: #9CA3AF; font-size: 14px; line-height: 1.5;">
-                        This OTP will expire in <strong style="color: #60A5FA;">10 minutes</strong>.
-                    </p>
-                    
-                    <hr style="border: 1px solid #374151; margin: 20px 0;">
-                    
-                    <p style="color: #6B7280; font-size: 12px; text-align: center;">
-                        If you didn't create an account with Flashnotes, please ignore this email.
-                    </p>
-                </div>
-            </div>
-        `
-    };
-    
-    await transporter.sendMail(mailOptions);
-};
-
-// ============= REGISTER =============
-// ============= REGISTER (Fast Version) =============
+// ============= REGISTER (WITHOUT EMAIL - FAST) =============
 export const register = async (req, res) => {
     try {
         const { name, email, password } = req.body;
         
         console.log('📝 Registration attempt:', { name, email });
         
+        // Validate input
         if (!name || !email || !password) {
             return res.status(400).json({ 
                 success: false, 
@@ -77,7 +23,7 @@ export const register = async (req, res) => {
             });
         }
         
-        // Check if user exists in profiles
+        // Check if user already exists in profiles
         const { data: existingUser } = await supabase
             .from('profiles')
             .select('email')
@@ -87,120 +33,19 @@ export const register = async (req, res) => {
         if (existingUser) {
             return res.status(400).json({ 
                 success: false, 
-                message: 'User already exists' 
+                message: 'User already exists with this email' 
             });
         }
         
-        // Check if user is already pending
-        const { data: pendingUser } = await supabase
-            .from('pending_users')
-            .select('*')
-            .eq('email', email)
-            .maybeSingle();
-        
-        // Hash password (fast)
+        // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
         
-        // Generate OTP
-        const otp = generateOTP();
-        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
-        
-        if (pendingUser) {
-            // Update existing pending user
-            const { error: updateError } = await supabaseAdmin
-                .from('pending_users')
-                .update({
-                    name,
-                    password: hashedPassword,
-                    otp,
-                    otp_expiry: otpExpiry,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('email', email);
-            
-            if (updateError) throw updateError;
-        } else {
-            // Insert new pending user
-            const { error: insertError } = await supabaseAdmin
-                .from('pending_users')
-                .insert([{
-                    name,
-                    email,
-                    password: hashedPassword,
-                    otp,
-                    otp_expiry: otpExpiry,
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                }]);
-            
-            if (insertError) throw insertError;
-        }
-        
-        // Send OTP email in BACKGROUND (don't wait for it)
-        // Ye async mein bhej dijiye, response pehle dedo
-        sendOTPEmail(email, otp, name).catch(err => {
-            console.error('Email sending failed (non-critical):', err);
-        });
-        
-        // FAST RESPONSE - User ko turant bata do
-        res.status(201).json({ 
-            success: true,
-            message: 'Registration successful. OTP has been sent to your email.',
-            email 
-        });
-        
-    } catch (error) {
-        console.error('❌ Registration error:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: error.message || 'Registration failed. Please try again.' 
-        });
-    }
-};
-
-// ============= VERIFY OTP =============
-export const verifyOTP = async (req, res) => {
-    try {
-        const { email, otp } = req.body;
-        
-        console.log('🔐 OTP Verification:', { email, otp });
-        
-        if (!email || !otp) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Email and OTP are required' 
-            });
-        }
-        
-        // Get pending user
-        const { data: pendingUser, error: fetchError } = await supabase
-            .from('pending_users')
-            .select('*')
-            .eq('email', email)
-            .eq('otp', otp)
-            .single();
-        
-        if (fetchError || !pendingUser) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Invalid OTP' 
-            });
-        }
-        
-        // Check expiry
-        if (new Date() > new Date(pendingUser.otp_expiry)) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'OTP has expired. Please request a new one.' 
-            });
-        }
-        
-        // Create profile
-        const { data: profile, error: profileError } = await supabase
+        // Create profile directly (skip OTP for now)
+        const { data: profile, error: profileError } = await supabaseAdmin
             .from('profiles')
             .insert([{
-                email: pendingUser.email,
-                name: pendingUser.name,
+                email,
+                name,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
             }])
@@ -212,11 +57,7 @@ export const verifyOTP = async (req, res) => {
             throw profileError;
         }
         
-        // Delete pending user
-        await supabaseAdmin
-            .from('pending_users')
-            .delete()
-            .eq('email', email);
+        console.log('✅ Profile created:', profile.id);
         
         // Generate JWT token
         const token = jwt.sign(
@@ -229,9 +70,11 @@ export const verifyOTP = async (req, res) => {
             { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
         );
         
-        res.json({
+        console.log('✅ Registration successful for:', email);
+        
+        res.status(201).json({ 
             success: true,
-            message: 'Email verified successfully',
+            message: 'Registration successful!',
             token,
             user: {
                 id: profile.id,
@@ -241,10 +84,10 @@ export const verifyOTP = async (req, res) => {
         });
         
     } catch (error) {
-        console.error('❌ Verification error:', error);
+        console.error('❌ Registration error:', error);
         res.status(500).json({ 
             success: false, 
-            message: 'Verification failed. Please try again.' 
+            message: error.message || 'Registration failed. Please try again.' 
         });
     }
 };
@@ -271,11 +114,14 @@ export const login = async (req, res) => {
             .single();
         
         if (userError || !user) {
+            console.log('❌ User not found:', email);
             return res.status(401).json({ 
                 success: false, 
                 message: 'Invalid email or password' 
             });
         }
+        
+        console.log('✅ User found:', user.id);
         
         // Generate JWT token
         const token = jwt.sign(
@@ -287,6 +133,8 @@ export const login = async (req, res) => {
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
         );
+        
+        console.log('✅ Login successful for:', email);
         
         res.json({
             success: true,
@@ -308,12 +156,86 @@ export const login = async (req, res) => {
     }
 };
 
-// ============= RESEND OTP =============
+// ============= VERIFY OTP (Placeholder - Not used currently) =============
+export const verifyOTP = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        
+        console.log('🔐 OTP Verification:', { email, otp });
+        
+        // Get pending user
+        const { data: pendingUser, error: fetchError } = await supabase
+            .from('pending_users')
+            .select('*')
+            .eq('email', email)
+            .eq('otp', otp)
+            .single();
+        
+        if (fetchError || !pendingUser) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Invalid OTP' 
+            });
+        }
+        
+        // Check expiry
+        if (new Date() > new Date(pendingUser.otp_expiry)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'OTP has expired' 
+            });
+        }
+        
+        // Create profile
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .insert([{
+                email: pendingUser.email,
+                name: pendingUser.name,
+                created_at: new Date().toISOString()
+            }])
+            .select()
+            .single();
+        
+        if (profileError) throw profileError;
+        
+        // Delete pending user
+        await supabase
+            .from('pending_users')
+            .delete()
+            .eq('email', email);
+        
+        // Generate token
+        const token = jwt.sign(
+            { userId: profile.id, email: profile.email, name: profile.name },
+            process.env.JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+        
+        res.json({
+            success: true,
+            message: 'Email verified successfully',
+            token,
+            user: {
+                id: profile.id,
+                name: profile.name,
+                email: profile.email
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Verification error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Verification failed' 
+        });
+    }
+};
+
+// ============= RESEND OTP (Placeholder) =============
 export const resendOTP = async (req, res) => {
     try {
         const { email } = req.body;
-        
-        console.log('🔄 Resend OTP attempt:', email);
         
         if (!email) {
             return res.status(400).json({ 
@@ -323,16 +245,16 @@ export const resendOTP = async (req, res) => {
         }
         
         // Get pending user
-        const { data: pendingUser, error: fetchError } = await supabase
+        const { data: pendingUser } = await supabase
             .from('pending_users')
             .select('*')
             .eq('email', email)
             .single();
         
-        if (fetchError || !pendingUser) {
+        if (!pendingUser) {
             return res.status(404).json({ 
                 success: false, 
-                message: 'No pending registration found for this email' 
+                message: 'No pending registration found' 
             });
         }
         
@@ -341,7 +263,7 @@ export const resendOTP = async (req, res) => {
         const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
         
         // Update OTP
-        const { error: updateError } = await supabaseAdmin
+        await supabase
             .from('pending_users')
             .update({ 
                 otp: newOTP, 
@@ -350,14 +272,12 @@ export const resendOTP = async (req, res) => {
             })
             .eq('email', email);
         
-        if (updateError) throw updateError;
-        
-        // Send new OTP
-        await sendOTPEmail(email, newOTP, pendingUser.name);
+        console.log(`🔄 OTP resent for ${email}: ${newOTP}`);
         
         res.json({ 
             success: true,
-            message: 'OTP resent successfully' 
+            message: 'OTP resent successfully',
+            otp: newOTP // Only for testing
         });
         
     } catch (error) {
@@ -381,7 +301,6 @@ export const forgotPassword = async (req, res) => {
             });
         }
         
-        // Check if user exists
         const { data: user } = await supabase
             .from('profiles')
             .select('*')
@@ -402,33 +321,19 @@ export const forgotPassword = async (req, res) => {
             { expiresIn: '1h' }
         );
         
-        // Send reset email
-        const resetLink = `${process.env.FRONTEND_URL}/#/reset-password?token=${resetToken}&email=${email}`;
-        
-        await transporter.sendMail({
-            from: `"Flashnotes" <${process.env.EMAIL_USER}>`,
-            to: email,
-            subject: 'Flashnotes Password Reset',
-            html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2 style="color: #3B82F6;">Reset Your Password</h2>
-                    <p>Click the link below to reset your password:</p>
-                    <a href="${resetLink}" style="display: inline-block; background: #3B82F6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reset Password</a>
-                    <p>This link will expire in 1 hour.</p>
-                </div>
-            `
-        });
+        console.log(`🔑 Password reset token for ${email}: ${resetToken}`);
         
         res.json({ 
             success: true,
-            message: 'Password reset email sent' 
+            message: 'Password reset token generated',
+            resetToken // Only for testing
         });
         
     } catch (error) {
         console.error('❌ Forgot password error:', error);
         res.status(500).json({ 
             success: false, 
-            message: 'Failed to send reset email' 
+            message: 'Failed to process request' 
         });
     }
 };
@@ -475,8 +380,7 @@ export const resetPassword = async (req, res) => {
         // Hash new password
         const hashedPassword = await bcrypt.hash(newPassword, 10);
         
-        // Note: In production, update password in Supabase Auth
-        // This is a simplified version
+        // Update password (simplified - in production update Supabase Auth)
         
         res.json({ 
             success: true,
