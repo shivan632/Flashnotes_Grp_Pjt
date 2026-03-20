@@ -1,0 +1,10 @@
+node_modules
+.git
+README.md
+.gitignore
+*.log
+.env
+.env.local
+.env.development
+.env.production
+server/
