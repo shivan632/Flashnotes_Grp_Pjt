@@ -21,14 +21,11 @@ const PORT = process.env.PORT || 10000;
 
 // ============= CORS CONFIGURATION - FIX =============
 const allowedOrigins = [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'http://localhost:5000',
-    'http://127.0.0.1:5000',
-    'http://localhost:10000',
-    'http://127.0.0.1:10000',
     'https://flashnotes-grp-pjt-1t3z.vercel.app',
-    'https://flashnotes-grp-pjt.onrender.com'
+    'https://flashnotes-grp-pjt.onrender.com',
+    'http://localhost:3000',
+    'http://localhost:10000',
+    'http://127.0.0.1:3000'
 ];
 
 app.use(cors({
@@ -47,7 +44,6 @@ app.use(cors({
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-    exposedHeaders: ['Content-Range', 'X-Content-Range'],
     optionsSuccessStatus: 200
 }));
 
