@@ -58,6 +58,15 @@ exec('tailwindcss -i ./src/style.css -o ./dist/style.css --minify', (error, stdo
         console.log('✅ public folder copied');
     }
     
+    // Copy favicon directly to dist root (IMPORTANT FIX)
+    const faviconSrc = path.join(__dirname, 'public', 'favicon.ico');
+    const faviconDest = path.join(distDir, 'favicon.ico');
+
+    if (fs.existsSync(faviconSrc)) {
+        fs.copyFileSync(faviconSrc, faviconDest);
+        console.log('✅ favicon.ico copied to dist root');
+    }
+
     console.log('🎉 Build complete! Files in dist/ folder:');
     console.log('   - dist/style.css');
     console.log('   - dist/index.html');
