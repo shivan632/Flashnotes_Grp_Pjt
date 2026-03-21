@@ -96,27 +96,23 @@ export const register = async (req, res) => {
         console.log('✅ User created:', newUser.id);
 
         // Create profile in profiles table (if exists)
-        try {
-            const { error: profileError } = await supabase
-                .from('profiles')
-                .insert({
-                    id: newUser.id,
-                    username: name.toLowerCase().replace(/\s/g, ''),
-                    full_name: name,
-                    email: email,
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                });
-            
-            if (profileError) {
-                console.log('⚠️ Profile table not found or error:', profileError.message);
-                // Don't fail registration if profiles table doesn't exist
-            } else {
-                console.log('✅ Profile created for user:', newUser.id);
-            }
-        } catch (profileErr) {
-            console.log('⚠️ Profiles table not set up yet');
-        }
+        // In register function - use correct column names based on your table
+try {
+    const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+            id: newUser.id,
+            username: name.toLowerCase().replace(/\s/g, '_'),
+            full_name: name,
+            email: email
+        });
+    
+    if (profileError) {
+        console.log('⚠️ Profile creation error:', profileError.message);
+    }
+} catch (err) {
+    console.log('⚠️ Profile creation skipped');
+}
 
         // Generate OTP
         const otp = generateOTP();
