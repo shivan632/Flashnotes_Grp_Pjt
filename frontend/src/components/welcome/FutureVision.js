@@ -1,71 +1,251 @@
 // frontend/src/components/welcome/FutureVision.js
+// Future Vision Section - Enhanced UI with modern design
 
 export function FutureVision() {
+    const features = [
+        {
+            icon: '🎤',
+            title: 'Voice Input',
+            description: 'Ask questions naturally with voice commands',
+            gradient: 'from-[#3B82F6] to-[#60A5FA]'
+        },
+        {
+            icon: '🌐',
+            title: '10+ Languages',
+            description: 'Learn in your preferred language',
+            gradient: 'from-[#10B981] to-[#34D399]'
+        },
+        {
+            icon: '👥',
+            title: 'Collaborative Learning',
+            description: 'Study with friends and share notes',
+            gradient: 'from-[#F59E0B] to-[#FBBF24]'
+        },
+        {
+            icon: '📊',
+            title: 'Smart Analytics',
+            description: 'Track your progress with detailed insights',
+            gradient: 'from-[#EF4444] to-[#F87171]'
+        },
+        {
+            icon: '🧠',
+            title: 'Personalized Paths',
+            description: 'AI-customized learning journeys',
+            gradient: 'from-[#A78BFA] to-[#C084FC]'
+        },
+        {
+            icon: '🎮',
+            title: 'Gamification',
+            description: 'Earn achievements and compete',
+            gradient: 'from-[#EC4899] to-[#F472B6]'
+        }
+    ];
+    
     return `
-        <section class="py-20 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA]">
-            <div class="container mx-auto px-4 text-center">
-                <h2 class="text-4xl font-bold text-white mb-6">The Future of Learning</h2>
-                <p class="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-                    We're building the ultimate AI learning companion. Coming soon: voice input, multiple languages, 
-                    collaborative learning, and personalized study plans.
-                </p>
+        <section class="relative py-24 overflow-hidden bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A]">
+            <!-- Animated Background Elements -->
+            <div class="absolute inset-0 overflow-hidden">
+                <div class="absolute top-0 left-0 w-96 h-96 bg-[#3B82F6] rounded-full filter blur-3xl opacity-20 animate-pulse"></div>
+                <div class="absolute bottom-0 right-0 w-96 h-96 bg-[#A78BFA] rounded-full filter blur-3xl opacity-20 animate-pulse" style="animation-delay: 1s"></div>
+                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-full filter blur-3xl opacity-10 animate-spin-slow"></div>
+            </div>
+            
+            <div class="container mx-auto px-4 relative z-10">
+                <!-- Section Header -->
+                <div class="text-center mb-12 animate-fadeInUp">
+                    <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full mb-4 backdrop-blur-sm">
+                        <span class="w-2 h-2 bg-[#3B82F6] rounded-full animate-pulse"></span>
+                        <span class="text-sm text-white/80 font-medium">Coming Soon</span>
+                    </div>
+                    <h2 class="text-4xl md:text-5xl font-bold text-white mb-4">
+                        The Future of Learning
+                    </h2>
+                    <p class="text-xl text-white/80 max-w-2xl mx-auto">
+                        We're building the ultimate AI learning companion with cutting-edge features
+                    </p>
+                </div>
                 
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto mb-8">
-                    <div class="bg-white/10 p-4 rounded-lg backdrop-blur-sm">
-                        <span class="text-3xl block mb-2">🎤</span>
-                        <span class="text-white font-semibold">Voice Input</span>
-                        <p class="text-white/70 text-xs mt-1">Ask questions naturally</p>
-                    </div>
-                    <div class="bg-white/10 p-4 rounded-lg backdrop-blur-sm">
-                        <span class="text-3xl block mb-2">🌐</span>
-                        <span class="text-white font-semibold">10+ Languages</span>
-                        <p class="text-white/70 text-xs mt-1">Learn in your language</p>
-                    </div>
-                    <div class="bg-white/10 p-4 rounded-lg backdrop-blur-sm">
-                        <span class="text-3xl block mb-2">👥</span>
-                        <span class="text-white font-semibold">Collaborative</span>
-                        <p class="text-white/70 text-xs mt-1">Study with friends</p>
-                    </div>
-                    <div class="bg-white/10 p-4 rounded-lg backdrop-blur-sm">
-                        <span class="text-3xl block mb-2">📊</span>
-                        <span class="text-white font-semibold">Smart Analytics</span>
-                        <p class="text-white/70 text-xs mt-1">Track your progress</p>
+                <!-- Features Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+                    ${features.map((feature, index) => `
+                        <div class="group relative bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:border-[#3B82F6] transition-all duration-300 hover:-translate-y-2 animate-fadeInUp" style="animation-delay: ${index * 0.1}s">
+                            <!-- Glow Effect -->
+                            <div class="absolute inset-0 bg-gradient-to-r ${feature.gradient} opacity-0 group-hover:opacity-10 rounded-2xl transition-opacity duration-300"></div>
+                            
+                            <!-- Icon -->
+                            <div class="relative w-16 h-16 bg-gradient-to-r ${feature.gradient} rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                                <span class="text-3xl">${feature.icon}</span>
+                            </div>
+                            
+                            <!-- Content -->
+                            <h3 class="text-xl font-bold text-white mb-2 group-hover:text-[#3B82F6] transition-colors">
+                                ${feature.title}
+                            </h3>
+                            <p class="text-white/60">
+                                ${feature.description}
+                            </p>
+                            
+                            <!-- Coming Soon Badge -->
+                            <div class="mt-4">
+                                <span class="text-xs px-2 py-1 bg-white/10 rounded-full text-white/50">Coming Soon</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <!-- Timeline Preview -->
+                <div class="bg-white/5 backdrop-blur-sm rounded-2xl p-8 mb-16 border border-white/10">
+                    <h3 class="text-2xl font-bold text-white text-center mb-8">Our Roadmap</h3>
+                    <div class="relative">
+                        <!-- Timeline Line -->
+                        <div class="absolute left-1/2 transform -translate-x-1/2 w-0.5 h-full bg-gradient-to-b from-[#3B82F6] to-[#A78BFA] hidden md:block"></div>
+                        
+                        <div class="space-y-8">
+                            <div class="flex flex-col md:flex-row items-center gap-6 animate-fadeInUp" style="animation-delay: 0.4s">
+                                <div class="md:w-1/2 text-right md:pr-8">
+                                    <div class="bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] inline-block px-4 py-1 rounded-full text-white text-sm font-semibold mb-2">Q3 2024</div>
+                                    <h4 class="text-xl font-bold text-white">Voice Input</h4>
+                                    <p class="text-white/60">Natural voice commands for hands-free learning</p>
+                                </div>
+                                <div class="md:w-1/2 md:pl-8">
+                                    <div class="w-4 h-4 bg-[#3B82F6] rounded-full border-2 border-white"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-col md:flex-row items-center gap-6 animate-fadeInUp" style="animation-delay: 0.5s">
+                                <div class="md:w-1/2 text-right md:pr-8">
+                                    <div class="bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] inline-block px-4 py-1 rounded-full text-white text-sm font-semibold mb-2">Q4 2024</div>
+                                    <h4 class="text-xl font-bold text-white">Multi-Language Support</h4>
+                                    <p class="text-white/60">Learn in 10+ languages including Hindi, Spanish, French</p>
+                                </div>
+                                <div class="md:w-1/2 md:pl-8">
+                                    <div class="w-4 h-4 bg-[#3B82F6] rounded-full border-2 border-white"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-col md:flex-row items-center gap-6 animate-fadeInUp" style="animation-delay: 0.6s">
+                                <div class="md:w-1/2 text-right md:pr-8">
+                                    <div class="bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] inline-block px-4 py-1 rounded-full text-white text-sm font-semibold mb-2">Q1 2025</div>
+                                    <h4 class="text-xl font-bold text-white">Collaborative Learning</h4>
+                                    <p class="text-white/60">Study groups, shared notes, and peer challenges</p>
+                                </div>
+                                <div class="md:w-1/2 md:pl-8">
+                                    <div class="w-4 h-4 bg-[#3B82F6] rounded-full border-2 border-white"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-col md:flex-row items-center gap-6 animate-fadeInUp" style="animation-delay: 0.7s">
+                                <div class="md:w-1/2 text-right md:pr-8">
+                                    <div class="bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] inline-block px-4 py-1 rounded-full text-white text-sm font-semibold mb-2">Q2 2025</div>
+                                    <h4 class="text-xl font-bold text-white">Smart Analytics</h4>
+                                    <p class="text-white/60">Deep insights into your learning patterns and progress</p>
+                                </div>
+                                <div class="md:w-1/2 md:pl-8">
+                                    <div class="w-4 h-4 bg-[#3B82F6] rounded-full border-2 border-white"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="flex gap-4 justify-center">
-                    <a href="#/register" 
-                       class="bg-white text-[#3B82F6] px-8 py-4 rounded-lg font-semibold hover:shadow-xl transition-all transform hover:scale-105">
-                        Join the Waitlist
-                    </a>
-                    <a href="#features" 
-                       class="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-[#3B82F6] transition-all">
-                        Learn More
-                    </a>
+                <!-- Call to Action -->
+                <div class="text-center">
+                    <div class="inline-flex flex-col sm:flex-row gap-4">
+                        <a href="#/register" 
+                           class="group relative overflow-hidden bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] hover:from-[#60A5FA] hover:to-[#8B5CF6] text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-xl">
+                            <span class="relative z-10 flex items-center gap-2">
+                                Join the Waitlist
+                                <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                                </svg>
+                            </span>
+                            <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        </a>
+                        <a href="#features" 
+                           class="group relative overflow-hidden border-2 border-white/30 hover:border-white text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105">
+                            <span class="relative z-10 flex items-center gap-2">
+                                Learn More
+                                <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </span>
+                        </a>
+                    </div>
                 </div>
                 
                 <!-- Stats Preview -->
-                <div class="mt-12 pt-8 border-t border-white/20">
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-white">
-                        <div>
-                            <div class="text-3xl font-bold">10K+</div>
-                            <div class="text-white/80 text-sm">Active Users</div>
+                <div class="mt-16 pt-8 border-t border-white/10">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                        <div class="text-center group animate-fadeInUp" style="animation-delay: 0.8s">
+                            <div class="text-3xl font-bold text-white group-hover:scale-110 transition-transform inline-block">
+                                10K+
+                            </div>
+                            <div class="text-white/60 text-sm mt-1">Active Users</div>
                         </div>
-                        <div>
-                            <div class="text-3xl font-bold">50K+</div>
-                            <div class="text-white/80 text-sm">Questions Generated</div>
+                        <div class="text-center group animate-fadeInUp" style="animation-delay: 0.9s">
+                            <div class="text-3xl font-bold text-white group-hover:scale-110 transition-transform inline-block">
+                                50K+
+                            </div>
+                            <div class="text-white/60 text-sm mt-1">Questions Generated</div>
                         </div>
-                        <div>
-                            <div class="text-3xl font-bold">100+</div>
-                            <div class="text-white/80 text-sm">Topics Covered</div>
+                        <div class="text-center group animate-fadeInUp" style="animation-delay: 1s">
+                            <div class="text-3xl font-bold text-white group-hover:scale-110 transition-transform inline-block">
+                                100+
+                            </div>
+                            <div class="text-white/60 text-sm mt-1">Topics Covered</div>
                         </div>
-                        <div>
-                            <div class="text-3xl font-bold">4.8</div>
-                            <div class="text-white/80 text-sm">User Rating</div>
+                        <div class="text-center group animate-fadeInUp" style="animation-delay: 1.1s">
+                            <div class="text-3xl font-bold text-white group-hover:scale-110 transition-transform inline-block">
+                                4.8
+                            </div>
+                            <div class="text-white/60 text-sm mt-1">User Rating</div>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
     `;
+}
+
+// Add CSS animations
+const futureVisionStyles = `
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes spin-slow {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+    
+    .animate-fadeInUp {
+        animation: fadeInUp 0.6s ease-out forwards;
+        opacity: 0;
+    }
+    
+    .animate-spin-slow {
+        animation: spin-slow 20s linear infinite;
+    }
+    
+    .future-vision-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+`;
+
+if (!document.querySelector('#future-vision-styles')) {
+    const style = document.createElement('style');
+    style.id = 'future-vision-styles';
+    style.textContent = futureVisionStyles;
+    document.head.appendChild(style);
 }

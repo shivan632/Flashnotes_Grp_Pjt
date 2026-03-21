@@ -1,5 +1,5 @@
 // frontend/src/components/layout/Sidebar.js
-// Left Sidebar - FIXED POSITION - Always visible with Logout button
+// Left Sidebar - Reduced width and proper alignment
 
 export function Sidebar() {
     const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
@@ -73,85 +73,83 @@ export function Sidebar() {
                     path: '/notifications', 
                     label: 'Notifications', 
                     icon: 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9'
-                },
-                { 
-                    path: '#', 
-                    label: 'Logout', 
-                    icon: 'M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1',
-                    action: 'logout',
-                    class: 'text-red-400 hover:text-red-500 hover:bg-red-500/10'
                 }
             ]
         }
     ];
     
     return `
-        <aside class="fixed left-0 top-0 h-full w-64 bg-[#1F2937] shadow-2xl z-50 overflow-y-auto">
-            <!-- Logo -->
-            <div class="flex items-center justify-center h-16 border-b border-[#374151] sticky top-0 bg-[#1F2937]">
-                <a href="#/" class="flex items-center space-x-2">
-                    <div class="w-8 h-8 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-lg flex items-center justify-center">
-                        <span class="text-white font-bold text-xl">F</span>
+        <aside class="fixed left-0 top-0 h-full w-56 bg-gradient-to-b from-[#1F2937] to-[#111827] shadow-xl z-50 overflow-y-auto border-r border-[#374151]/50 flex flex-col">
+            <!-- Logo Section -->
+            <div class="flex items-center justify-center h-14 border-b border-[#374151] sticky top-0 bg-gradient-to-r from-[#1F2937] to-[#111827] z-10 flex-shrink-0">
+                <a href="#/" class="flex items-center space-x-2 group">
+                    <div class="w-7 h-7 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-lg flex items-center justify-center shadow-md transform group-hover:rotate-3 transition-all duration-300">
+                        <span class="text-white font-bold text-sm">F</span>
                     </div>
-                    <span class="text-xl font-bold text-[#3B82F6]">Flashnotes</span>
+                    <span class="text-sm font-bold bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] bg-clip-text text-transparent">
+                        Flashnotes
+                    </span>
                 </a>
             </div>
             
             <!-- User Info -->
-            <div class="p-4 border-b border-[#374151]">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-full flex items-center justify-center">
-                        <span class="text-white font-semibold text-lg">${userName.charAt(0).toUpperCase()}</span>
+            <div class="p-3 border-b border-[#374151] bg-gradient-to-r from-[#1F2937] to-[#111827] flex-shrink-0">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-lg flex items-center justify-center shadow-md">
+                        <span class="text-white font-bold text-sm">${userName.charAt(0).toUpperCase()}</span>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-[#E5E7EB] font-medium truncate">${userName}</p>
-                        <p class="text-[#9CA3AF] text-sm truncate">${userEmail}</p>
+                        <p class="text-[#E5E7EB] text-xs font-medium truncate">${userName}</p>
+                        <p class="text-[#9CA3AF] text-[10px] truncate">${userEmail}</p>
                     </div>
                 </div>
             </div>
             
             <!-- Navigation Menu -->
-            <div class="py-4">
+            <div class="flex-1 overflow-y-auto py-3 px-2">
                 ${menuItems.map(section => `
-                    <div class="mb-6">
-                        <h3 class="px-4 mb-2 text-xs font-semibold text-[#9CA3AF] uppercase tracking-wider">
+                    <div class="mb-4">
+                        <h3 class="px-2 mb-1 text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider">
                             ${section.section}
                         </h3>
-                        <div class="space-y-1">
+                        <div class="space-y-0.5">
                             ${section.items.map(item => {
                                 const isActive = currentPath === item.path;
-                                const isLogout = item.action === 'logout';
-                                
-                                if (isLogout) {
-                                    // Render logout button
-                                    return `
-                                        <button id="sidebarLogoutBtn" 
-                                                class="flex items-center space-x-3 px-4 py-2 text-sm transition-all rounded-lg mx-2 w-full text-left ${item.class || 'text-[#E5E7EB] hover:bg-[#374151] hover:text-[#3B82F6]'}">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${item.icon}"></path>
-                                            </svg>
-                                            <span>${item.label}</span>
-                                        </button>
-                                    `;
-                                } else {
-                                    // Render regular link
-                                    return `
-                                        <a href="#${item.path}" 
-                                           class="flex items-center space-x-3 px-4 py-2 text-sm transition-all rounded-lg mx-2 sidebar-link
-                                                  ${isActive 
-                                                    ? 'bg-[#3B82F6] text-white' 
-                                                    : 'text-[#E5E7EB] hover:bg-[#374151] hover:text-[#3B82F6]'}">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${item.icon}"></path>
-                                            </svg>
-                                            <span>${item.label}</span>
-                                        </a>
-                                    `;
-                                }
+                                return `
+                                    <a href="#${item.path}" 
+                                       class="flex items-center space-x-2 px-2 py-1.5 text-xs transition-all duration-300 rounded-lg sidebar-link group
+                                              ${isActive 
+                                                ? 'bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] text-white shadow-md' 
+                                                : 'text-[#E5E7EB] hover:bg-[#374151] hover:text-[#3B82F6]'}">
+                                        <svg class="w-3.5 h-3.5 transition-transform duration-300 group-hover:scale-110 ${isActive ? 'text-white' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${item.icon}"></path>
+                                        </svg>
+                                        <span class="text-xs">${item.label}</span>
+                                        ${isActive ? '<span class="ml-auto w-1 h-1 bg-white rounded-full"></span>' : ''}
+                                    </a>
+                                `;
                             }).join('')}
                         </div>
                     </div>
                 `).join('')}
+            </div>
+            
+            <!-- Logout Button -->
+            <div class="p-3 border-t border-[#374151] bg-gradient-to-r from-[#1F2937] to-[#111827] flex-shrink-0">
+                <button id="sidebarLogoutBtn" 
+                        class="flex items-center space-x-2 px-2 py-1.5 text-xs transition-all duration-300 rounded-lg w-full text-left group text-red-400 hover:text-red-500 hover:bg-red-500/10">
+                    <svg class="w-3.5 h-3.5 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                    </svg>
+                    <span class="text-xs">Logout</span>
+                </button>
+            </div>
+            
+            <!-- Footer Badge -->
+            <div class="p-2 border-t border-[#374151] bg-[#111827]/30 flex-shrink-0">
+                <div class="text-center">
+                    <p class="text-[9px] text-[#6B7280]">v1.0.0</p>
+                </div>
             </div>
         </aside>
     `;
@@ -160,8 +158,11 @@ export function Sidebar() {
 export function setupSidebar() {
     // Highlight current page for regular links
     document.querySelectorAll('.sidebar-link').forEach(link => {
-        if (link.getAttribute('href') === `#${window.location.hash}`) {
-            link.classList.add('bg-[#3B82F6]', 'text-white');
+        const href = link.getAttribute('href');
+        if (href === `#${window.location.hash}`) {
+            link.classList.add('bg-gradient-to-r', 'from-[#3B82F6]', 'to-[#A78BFA]', 'text-white', 'shadow-md');
+            const svg = link.querySelector('svg');
+            if (svg) svg.classList.add('text-white');
         }
     });
     
@@ -170,10 +171,33 @@ export function setupSidebar() {
     if (sidebarLogoutBtn) {
         sidebarLogoutBtn.addEventListener('click', handleLogout);
     }
+    
+    // Add hover effect for all menu items
+    const menuItems = document.querySelectorAll('.sidebar-link, #sidebarLogoutBtn');
+    menuItems.forEach(item => {
+        item.addEventListener('mouseenter', () => {
+            const icon = item.querySelector('svg');
+            if (icon) {
+                icon.style.transform = 'scale(1.1) translateX(2px)';
+            }
+        });
+        item.addEventListener('mouseleave', () => {
+            const icon = item.querySelector('svg');
+            if (icon) {
+                icon.style.transform = 'scale(1) translateX(0)';
+            }
+        });
+    });
 }
 
-// Shared logout function
+// Shared logout function with animation
 function handleLogout() {
+    const logoutBtn = document.getElementById('sidebarLogoutBtn');
+    if (logoutBtn) {
+        logoutBtn.style.transform = 'scale(0.95)';
+        logoutBtn.style.opacity = '0.5';
+    }
+    
     // Clear all authentication data
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('authToken');
@@ -183,10 +207,44 @@ function handleLogout() {
     localStorage.removeItem('userId');
     localStorage.removeItem('pendingUser');
     localStorage.removeItem('notificationCount');
+    localStorage.removeItem('aiChatOpen');
+    localStorage.removeItem('sidebarCollapsed');
     
-    // Redirect to home page
-    window.location.hash = '#/';
+    setTimeout(() => {
+        window.location.hash = '#/';
+        window.location.reload();
+    }, 200);
+}
+
+// Add CSS animations
+const sidebarStyles = `
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
     
-    // Reload the page to reset all states
-    window.location.reload();
+    .sidebar-link, #sidebarLogoutBtn {
+        animation: slideIn 0.2s ease-out;
+        animation-fill-mode: both;
+    }
+    
+    .sidebar-link:nth-child(1) { animation-delay: 0.03s; }
+    .sidebar-link:nth-child(2) { animation-delay: 0.06s; }
+    .sidebar-link:nth-child(3) { animation-delay: 0.09s; }
+    .sidebar-link:nth-child(4) { animation-delay: 0.12s; }
+    .sidebar-link:nth-child(5) { animation-delay: 0.15s; }
+    .sidebar-link:nth-child(6) { animation-delay: 0.18s; }
+`;
+
+if (!document.querySelector('#sidebar-styles')) {
+    const style = document.createElement('style');
+    style.id = 'sidebar-styles';
+    style.textContent = sidebarStyles;
+    document.head.appendChild(style);
 }

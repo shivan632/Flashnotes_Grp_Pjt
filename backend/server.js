@@ -17,42 +17,60 @@ import scoreRoutes from './src/routes/score.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 10000;
 
-// Security middleware
-app.use(helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" }
-}));
-
-// Rate limiting
-const limiter = rateLimit({
-    windowMs: (process.env.RATE_LIMIT_WINDOW || 15) * 60 * 1000,
-    max: process.env.RATE_LIMIT_MAX || 100,
-    message: 'Too many requests from this IP, please try again later.'
-});
-app.use('/api', limiter);
-
-// CORS configuration
+// ============= CORS CONFIGURATION - FIX =============
 const allowedOrigins = [
-    'https://flashnotes-grp-pjt-1t3z.vercel.app',
     'http://localhost:3000',
-    'http://127.0.0.1:3000'
+    'http://127.0.0.1:3000',
+    'http://localhost:5000',
+    'http://127.0.0.1:5000',
+    'http://localhost:10000',
+    'http://127.0.0.1:10000',
+    'https://flashnotes-grp-pjt-1t3z.vercel.app',
+    'https://flashnotes-grp-pjt.onrender.com'
 ];
 
 app.use(cors({
     origin: function(origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl)
         if (!origin) return callback(null, true);
+        
         if (allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
         } else {
             console.log('⚠️ Blocked origin:', origin);
+            // For development, allow all origins
             callback(null, true);
         }
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    exposedHeaders: ['Content-Range', 'X-Content-Range'],
     optionsSuccessStatus: 200
+}));
+
+// ============= RATE LIMITING - FIX (Increase limit) =============
+const limiter = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minute window
+    max: 50, // Increased from 100 to 50 per minute
+    message: { error: 'Too many requests from this IP, please try again later.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => {
+        // Skip rate limiting for health checks
+        return req.path === '/api/health';
+    }
+});
+
+// Apply rate limiting to API routes
+app.use('/api', limiter);
+
+// Security middleware
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }
 }));
 
 // Body parsing middleware
@@ -71,10 +89,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/notes', notesRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/ai', aiRoutes);
-app.use('/api/quiz', quizRoutes);      
+app.use('/api/quiz', quizRoutes);
 app.use('/api/score', scoreRoutes);
 
-// Health check route
+// Health check route (no rate limit)
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',

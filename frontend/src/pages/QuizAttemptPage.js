@@ -1,29 +1,14 @@
 // frontend/src/pages/QuizAttemptPage.js
 // Quiz Attempt Page - Take a quiz
 
-import { Sidebar } from '../components/layout/Sidebar.js';
-import { AIChatSidebar } from '../components/layout/AIChatSidebar.js';
-import { Header } from '../components/common/Header.js';
-import { QuizQuestion } from '../components/quiz/QuizQuestion.js';
-import { QuizResult } from '../components/quiz/QuizResult.js';
-import { QuizTimer } from '../components/quiz/QuizTimer.js';
-import { LoadingSpinner } from '../components/common/LoadingSpinner.js';
-import { getQuizById, getQuizQuestions, startQuiz, submitQuiz } from '../services/quizService.js';
-import { showError } from '../components/common/ErrorMessage.js';
+import { startQuizAttempt, submitQuiz, getQuizById, getQuizQuestions } from '../services/quizService.js';
+import { showError, showSuccess } from '../components/common/ErrorMessage.js';
 
-let quizState = {
-    id: null,
-    title: '',
-    questions: [],
-    currentQuestion: 0,
-    answers: {},
-    timeLeft: 0,
-    totalTime: 0,
-    attemptId: null,
-    status: 'loading' // loading, taking, completed
-};
-
-let timerInterval = null;
+let quizTimer = null;
+let timeLeft = 0;
+let currentQuizId = null;
+let currentAttemptId = null;
+let startTime = null;
 
 export async function QuizAttemptPage() {
     const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
@@ -33,371 +18,374 @@ export async function QuizAttemptPage() {
         return '';
     }
     
-    // Extract quiz ID from hash - FIXED
+    // Get quiz ID from URL
     const hash = window.location.hash;
-    console.log('Current hash:', hash);
+    const match = hash.match(/\/quiz\/(\d+)\/attempt/);
+    const quizId = match ? match[1] : null;
     
-    // Match pattern #/quiz/123/attempt
-    const match = hash.match(/^#\/quiz\/(\d+)\/attempt$/);
-    
-    if (!match) {
-        console.error('Invalid quiz attempt URL:', hash);
+    if (!quizId) {
         window.location.hash = '#/quiz';
         return '';
     }
     
-    const quizId = parseInt(match[1]);
-    console.log('Extracted quiz ID:', quizId);
+    currentQuizId = quizId;
     
-    if (isNaN(quizId)) {
-        window.location.hash = '#/quiz';
-        return '';
-    }
-    
-    quizState.id = quizId;
-    quizState.status = 'loading';
-    
-    // Show loading state
-    return `
-        <div class="min-h-screen bg-[#111827] relative">
-            ${Sidebar()}
-            ${AIChatSidebar()}
-            <div id="mainContent" class="min-h-screen transition-all duration-300" 
-                 style="margin-left: 256px; margin-right: 384px; width: calc(100% - 640px);">
-                ${Header({ title: 'Loading Quiz...' })}
-                <main class="container mx-auto px-4 py-8">
-                    <div class="flex justify-center items-center h-64">
-                        ${LoadingSpinner()}
+    try {
+        // Fetch quiz details and questions
+        const [quiz, questions] = await Promise.all([
+            getQuizById(quizId),
+            getQuizQuestions(quizId)
+        ]);
+        
+        if (!quiz) {
+            showError('Quiz not found');
+            window.location.hash = '#/quiz';
+            return '';
+        }
+        
+        return `
+            <div class="min-h-screen bg-gradient-to-b from-[#111827] to-[#0F172A] py-12 px-4">
+                <div class="max-w-4xl mx-auto">
+                    <!-- Header -->
+                    <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-6 mb-8 border border-[#374151]">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h1 class="text-2xl font-bold text-white mb-2">${escapeHtml(quiz.title)}</h1>
+                                <p class="text-gray-400">Topic: ${escapeHtml(quiz.topic)}</p>
+                                <div class="flex gap-2 mt-3">
+                                    <span class="px-2 py-1 bg-[#3B82F6]/20 text-[#3B82F6] text-xs rounded-full">${quiz.difficulty || 'Medium'}</span>
+                                    <span class="px-2 py-1 bg-[#374151] text-gray-400 text-xs rounded-full">${questions.length} questions</span>
+                                </div>
+                            </div>
+                            <div id="quizTimer" class="bg-[#111827] rounded-xl px-4 py-2 text-center border border-[#374151]">
+                                <div class="text-xs text-gray-400">Time Left</div>
+                                <div class="text-2xl font-bold text-[#3B82F6]">--:--</div>
+                            </div>
+                        </div>
                     </div>
-                </main>
+                    
+                    <!-- Questions Form -->
+                    <form id="quizForm" class="space-y-6">
+                        ${questions.map((q, index) => `
+                            <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-6 border border-[#374151] hover:border-[#3B82F6]/30 transition-all">
+                                <div class="flex items-start gap-3 mb-4">
+                                    <span class="w-8 h-8 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-full flex items-center justify-center text-white text-sm font-bold">${index + 1}</span>
+                                    <h3 class="text-lg font-medium text-white flex-1">${escapeHtml(q.question)}</h3>
+                                </div>
+                                
+                                <div class="space-y-3 ml-11">
+                                    ${(q.options || []).map((option, optIndex) => `
+                                        <label class="flex items-center gap-3 p-3 bg-[#111827] rounded-xl cursor-pointer hover:bg-[#1F2937] transition-all group">
+                                            <input type="radio" 
+                                                   name="q${q.id}" 
+                                                   value="${optIndex}"
+                                                   class="w-4 h-4 text-[#3B82F6] focus:ring-[#3B82F6]">
+                                            <span class="text-gray-300 group-hover:text-white transition-colors">${escapeHtml(option)}</span>
+                                        </label>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `).join('')}
+                        
+                        <div class="flex gap-4">
+                            <button type="submit" 
+                                    id="submitQuizBtn"
+                                    class="flex-1 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] hover:from-[#60A5FA] hover:to-[#8B5CF6] text-white py-3 rounded-xl font-medium transition-all transform hover:scale-105 shadow-lg">
+                                Submit Quiz
+                            </button>
+                            <button type="button" 
+                                    id="cancelQuizBtn"
+                                    class="px-6 bg-[#374151] hover:bg-[#4B5563] text-white rounded-xl transition-all">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
-    `;
+        `;
+        
+    } catch (error) {
+        console.error('Error loading quiz attempt:', error);
+        showError('Failed to load quiz');
+        return `
+            <div class="min-h-screen flex items-center justify-center">
+                <div class="text-center">
+                    <div class="text-red-500 text-xl mb-4">Failed to load quiz</div>
+                    <a href="#/quiz" class="bg-[#3B82F6] text-white px-4 py-2 rounded-lg">Back to Quizzes</a>
+                </div>
+            </div>
+        `;
+    }
 }
 
 // Initialize quiz attempt
 export async function initQuizAttempt() {
+    const hash = window.location.hash;
+    const match = hash.match(/\/quiz\/(\d+)\/attempt/);
+    const quizId = match ? match[1] : null;
+    
+    if (!quizId) {
+        console.log('No quiz ID found in URL');
+        return;
+    }
+    
+    currentQuizId = quizId;
+    startTime = Date.now();
+    
+    const form = document.getElementById('quizForm');
+    const cancelBtn = document.getElementById('cancelQuizBtn');
+    const timerDisplay = document.getElementById('quizTimer');
+    
+    if (!form) {
+        console.log('Quiz form not found');
+        return;
+    }
+    
     try {
-        console.log('Initializing quiz attempt for ID:', quizState.id);
-        
-        if (!quizState.id) {
-            throw new Error('Quiz ID not found');
-        }
-        
-        // Get quiz details
-        const quiz = await getQuizById(quizState.id);
-        console.log('Quiz loaded:', quiz);
-        
-        if (!quiz) {
-            throw new Error('Quiz not found');
-        }
-        
-        quizState.title = quiz.title;
-        
-        // Get questions
-        const questions = await getQuizQuestions(quizState.id);
-        console.log('Questions loaded:', questions.length);
-        
-        if (!questions || questions.length === 0) {
-            throw new Error('No questions found for this quiz');
-        }
-        
-        quizState.questions = questions;
-        
         // Start quiz attempt
-        const result = await startQuiz(quizState.id);
-        console.log('Start quiz result:', result);
+        console.log('Starting quiz attempt for quiz ID:', quizId);
+        currentAttemptId = await startQuizAttempt(quizId);
+        console.log('Quiz attempt started with ID:', currentAttemptId);
         
-        if (!result || !result.attemptId) {
+        if (!currentAttemptId) {
             throw new Error('Failed to start quiz attempt');
         }
         
-        quizState.attemptId = result.attemptId;
-        
-        // Set timer
-        quizState.totalTime = (quiz.time_limit_minutes || 15) * 60;
-        quizState.timeLeft = quizState.totalTime;
-        quizState.status = 'taking';
-        
-        // Initialize answers object
-        quizState.answers = {};
-        questions.forEach(q => {
-            quizState.answers[q.id] = undefined;
-        });
+        // Set time limit (30 minutes default)
+        const timeLimit = 30 * 60; // 30 minutes in seconds
+        timeLeft = timeLimit;
         
         // Start timer
-        startTimer();
-        
-        // Render quiz
-        renderQuiz();
+        if (timerDisplay) {
+            updateTimerDisplay(timerDisplay);
+            if (quizTimer) clearInterval(quizTimer);
+            quizTimer = setInterval(() => {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    updateTimerDisplay(timerDisplay);
+                    
+                    if (timeLeft === 0) {
+                        clearInterval(quizTimer);
+                        submitQuizAuto(form);
+                    }
+                }
+            }, 1000);
+        }
         
     } catch (error) {
-        console.error('Error initializing quiz:', error);
-        showError(error.message || 'Failed to load quiz', 'error');
-        
-        // Redirect back to quiz page after 2 seconds
+        console.error('Error starting quiz:', error);
+        showError(error.message || 'Failed to start quiz. Please try again.');
         setTimeout(() => {
             window.location.hash = '#/quiz';
         }, 2000);
-    }
-}
-
-// Render quiz interface
-function renderQuiz() {
-    const mainContent = document.getElementById('mainContent');
-    if (!mainContent) return;
-    
-    const currentQ = quizState.questions[quizState.currentQuestion];
-    
-    mainContent.innerHTML = `
-        ${Header({ title: quizState.title })}
-        <main class="container mx-auto px-4 py-8">
-            <!-- Quiz Header -->
-            <div class="flex justify-between items-center mb-6">
-                <div>
-                    <h1 class="text-2xl font-bold text-[#E5E7EB]">${quizState.title}</h1>
-                    <p class="text-sm text-[#9CA3AF] mt-1">Question ${quizState.currentQuestion + 1} of ${quizState.questions.length}</p>
-                </div>
-                ${QuizTimer({ 
-                    seconds: quizState.timeLeft, 
-                    totalSeconds: quizState.totalTime 
-                })}
-            </div>
-            
-            <!-- Progress Bar -->
-            <div class="w-full bg-[#374151] rounded-full h-2 mb-8">
-                <div class="bg-[#3B82F6] h-2 rounded-full transition-all duration-300" 
-                     style="width: ${((quizState.currentQuestion + 1) / quizState.questions.length) * 100}%"></div>
-            </div>
-            
-            <!-- Question -->
-            ${QuizQuestion({
-                question: currentQ,
-                index: quizState.currentQuestion,
-                total: quizState.questions.length,
-                selectedOption: quizState.answers[currentQ.id],
-                onSelect: (option) => selectAnswer(currentQ.id, option)
-            })}
-            
-            <!-- Navigation Buttons -->
-            <div class="flex justify-between mt-6">
-                <button id="prevQuestionBtn" 
-                        class="px-6 py-2 bg-[#374151] text-[#E5E7EB] rounded-lg hover:bg-[#4B5563] transition-all ${quizState.currentQuestion === 0 ? 'opacity-50 cursor-not-allowed' : ''}"
-                        ${quizState.currentQuestion === 0 ? 'disabled' : ''}>
-                    Previous
-                </button>
-                ${quizState.currentQuestion === quizState.questions.length - 1 ? `
-                    <button id="submitQuizBtn" class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all">
-                        Submit Quiz
-                    </button>
-                ` : `
-                    <button id="nextQuestionBtn" class="px-6 py-2 bg-[#3B82F6] hover:bg-[#60A5FA] text-white rounded-lg transition-all">
-                        Next
-                    </button>
-                `}
-            </div>
-        </main>
-    `;
-    
-    // Attach event listeners
-    attachQuizEvents();
-}
-
-// Attach quiz events
-function attachQuizEvents() {
-    // Previous button
-    const prevBtn = document.getElementById('prevQuestionBtn');
-    if (prevBtn && quizState.currentQuestion > 0) {
-        prevBtn.addEventListener('click', () => {
-            quizState.currentQuestion--;
-            renderQuiz();
-        });
+        return;
     }
     
-    // Next button
-    const nextBtn = document.getElementById('nextQuestionBtn');
-    if (nextBtn) {
-        nextBtn.addEventListener('click', () => {
-            if (quizState.currentQuestion < quizState.questions.length - 1) {
-                // Check if current question is answered
-                const currentQ = quizState.questions[quizState.currentQuestion];
-                if (quizState.answers[currentQ.id] === undefined) {
-                    alert('Please select an answer before proceeding');
-                    return;
-                }
-                quizState.currentQuestion++;
-                renderQuiz();
+    // Handle form submission
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await submitQuizManual(form);
+    });
+    
+    // Handle cancel button
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to cancel this quiz? Your progress will be lost.')) {
+                if (quizTimer) clearInterval(quizTimer);
+                window.location.hash = '#/quiz';
             }
         });
     }
+}
+
+// Auto submit when time runs out
+async function submitQuizAuto(form) {
+    if (!currentAttemptId) {
+        showError('Quiz session expired. Please restart the quiz.');
+        window.location.hash = '#/quiz';
+        return;
+    }
     
-    // Submit button
     const submitBtn = document.getElementById('submitQuizBtn');
     if (submitBtn) {
-        submitBtn.addEventListener('click', submitQuizHandler);
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<div class="loading-spinner-small mx-auto"></div> Time\'s Up! Submitting...';
     }
     
-    // Radio buttons
-    document.querySelectorAll('input[type="radio"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            const questionId = parseInt(e.target.name.split('-')[1]);
-            const value = parseInt(e.target.value);
-            selectAnswer(questionId, value);
-        });
-    });
-}
-
-// Select answer
-function selectAnswer(questionId, optionIndex) {
-    console.log('Selected answer:', { questionId, optionIndex });
-    quizState.answers[questionId] = optionIndex;
-}
-
-// Start timer
-// Start timer - FIXED VERSION
-function startTimer() {
-    if (timerInterval) clearInterval(timerInterval);
+    // Collect answers
+    const answers = collectAnswers(form);
+    const timeTakenSeconds = Math.floor((Date.now() - startTime) / 1000);
     
-    timerInterval = setInterval(() => {
-        if (quizState.status !== 'taking') return;
+    try {
+        // CORRECT: Use submitQuiz with quizId, attemptId, answers, timeTakenSeconds
+        const result = await submitQuiz(currentQuizId, currentAttemptId, answers, timeTakenSeconds);
         
-        quizState.timeLeft--;
-        
-        // Update timer display
-        const timerElement = document.querySelector('.quiz-timer');
-        if (timerElement) {
-            const minutes = Math.floor(quizState.timeLeft / 60);
-            const seconds = quizState.timeLeft % 60;
-            const timerColor = quizState.timeLeft < quizState.totalTime * 0.2 ? 'text-red-500' : 
-                              quizState.timeLeft < quizState.totalTime * 0.5 ? 'text-yellow-500' : 'text-[#3B82F6]';
-            
-            // Update the text span
-            const timeSpan = timerElement.querySelector('span');
-            if (timeSpan) {
-                timeSpan.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                // Remove existing classes and add new ones
-                timeSpan.className = `font-mono text-lg ${timerColor}`;
-            }
-            
-            // Update the SVG icon
-            const svgIcon = timerElement.querySelector('svg');
-            if (svgIcon) {
-                // Remove existing classes and add new ones
-                svgIcon.className = `w-5 h-5 ${timerColor}`;
-            }
-        }
-        
-        // Auto-submit when time runs out
-        if (quizState.timeLeft <= 0) {
-            clearInterval(timerInterval);
-            submitQuizHandler();
-        }
-    }, 1000);
+        showSuccess(`Time's up! You scored ${result.score}/${result.totalQuestions} (${Math.round(result.percentage)}%)`);
+        setTimeout(() => {
+            window.location.hash = '#/score';
+        }, 2500);
+    } catch (error) {
+        console.error('Error auto-submitting quiz:', error);
+        showError(error.message || 'Failed to submit quiz. Please try again.');
+        window.location.hash = '#/quiz';
+    }
 }
 
-// Submit quiz handler
-async function submitQuizHandler() {
-    if (quizState.status !== 'taking') return;
+// Manual submit
+async function submitQuizManual(form) {
+    if (!currentAttemptId) {
+        showError('Quiz session expired. Please restart the quiz.');
+        window.location.hash = '#/quiz';
+        return;
+    }
     
     // Check if all questions are answered
-    const unanswered = quizState.questions.filter(q => quizState.answers[q.id] === undefined);
+    const allInputs = form.querySelectorAll('input[type="radio"]');
+    const questionGroups = {};
+    allInputs.forEach(input => {
+        const name = input.name;
+        if (!questionGroups[name]) questionGroups[name] = [];
+        questionGroups[name].push(input);
+    });
+    
+    const unanswered = [];
+    for (const [name, inputs] of Object.entries(questionGroups)) {
+        const isAnswered = Array.from(inputs).some(input => input.checked);
+        if (!isAnswered) {
+            unanswered.push(name);
+        }
+    }
+    
     if (unanswered.length > 0) {
-        if (!confirm(`You have ${unanswered.length} unanswered question(s). Submit anyway?`)) {
+        if (!confirm(`⚠️ You have ${unanswered.length} unanswered question(s). Submit anyway?`)) {
             return;
         }
     }
     
-    clearInterval(timerInterval);
-    quizState.status = 'submitting';
-    
-    // Show loading
     const submitBtn = document.getElementById('submitQuizBtn');
-    if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = 'Submitting...';
-    }
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<div class="loading-spinner-small mx-auto"></div> Submitting...';
+    submitBtn.disabled = true;
+    
+    if (quizTimer) clearInterval(quizTimer);
+    
+    // Collect answers
+    const answers = collectAnswers(form);
+    const timeTakenSeconds = Math.floor((Date.now() - startTime) / 1000);
     
     try {
-        const timeTaken = quizState.totalTime - quizState.timeLeft;
-        console.log('Submitting quiz with data:', {
-            quizId: quizState.id,
-            attemptId: quizState.attemptId,
-            answers: quizState.answers,
-            timeTaken
-        });
+        // CORRECT: Use submitQuiz with quizId, attemptId, answers, timeTakenSeconds
+        const result = await submitQuiz(currentQuizId, currentAttemptId, answers, timeTakenSeconds);
         
-        const result = await submitQuiz(
-            quizState.id,
-            quizState.attemptId,
-            quizState.answers,
-            timeTaken
-        );
+        showSuccess(`Quiz submitted! You scored ${result.score}/${result.totalQuestions} (${Math.round(result.percentage)}%)`);
         
-        console.log('Quiz result:', result);
-        
-        quizState.status = 'completed';
-        showResult(result);
+        setTimeout(() => {
+            window.location.hash = '#/score';
+        }, 2000);
         
     } catch (error) {
         console.error('Error submitting quiz:', error);
-        showError('Failed to submit quiz', 'error');
-        quizState.status = 'taking';
+        showError(error.message || 'Failed to submit quiz. Please try again.');
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
         
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = 'Submit Quiz';
+        // Restart timer
+        if (quizTimer) {
+            const timerDisplay = document.getElementById('quizTimer');
+            quizTimer = setInterval(() => {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    if (timerDisplay) updateTimerDisplay(timerDisplay);
+                }
+            }, 1000);
         }
     }
 }
 
-// Show result
-function showResult(result) {
-    const mainContent = document.getElementById('mainContent');
-    if (!mainContent) return;
+// Collect answers from form
+function collectAnswers(form) {
+    const formData = new FormData(form);
+    const answers = {};
     
-    mainContent.innerHTML = `
-        ${Header({ title: 'Quiz Results' })}
-        <main class="container mx-auto px-4 py-8 max-w-2xl">
-            ${QuizResult({
-                result,
-                onRetry: () => {
-                    window.location.hash = `#/quiz/${quizState.id}/attempt`;
-                },
-                onHome: () => {
-                    window.location.hash = '#/quiz';
-                }
-            })}
-        </main>
-    `;
-    
-    // Attach result events
-    const retryBtn = document.getElementById('retryQuizBtn');
-    if (retryBtn) {
-        retryBtn.addEventListener('click', () => {
-            // Reset state
-            quizState = {
-                ...quizState,
-                currentQuestion: 0,
-                answers: {},
-                timeLeft: quizState.totalTime,
-                status: 'loading'
-            };
-            window.location.hash = `#/quiz/${quizState.id}/attempt`;
-        });
+    for (let [key, value] of formData.entries()) {
+        const questionId = key.replace('q', '');
+        answers[questionId] = parseInt(value);
     }
     
-    const homeBtn = document.getElementById('homeBtn');
-    if (homeBtn) {
-        homeBtn.addEventListener('click', () => {
-            window.location.hash = '#/quiz';
-        });
+    return answers;
+}
+
+// Update timer display
+function updateTimerDisplay(container) {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    const timerValue = container.querySelector('.text-2xl');
+    if (timerValue) {
+        timerValue.textContent = timeString;
+        
+        if (timeLeft < 60) {
+            timerValue.classList.add('text-red-500');
+            timerValue.classList.remove('text-[#3B82F6]');
+        } else if (timeLeft < 300) {
+            timerValue.classList.add('text-yellow-500');
+            timerValue.classList.remove('text-[#3B82F6]');
+        } else {
+            timerValue.classList.remove('text-red-500', 'text-yellow-500');
+            timerValue.classList.add('text-[#3B82F6]');
+        }
     }
 }
 
-// Clean up timer
+// Cleanup quiz timer
 export function cleanupQuiz() {
-    if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
+    if (quizTimer) {
+        clearInterval(quizTimer);
+        quizTimer = null;
     }
+    currentAttemptId = null;
+    currentQuizId = null;
+    startTime = null;
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Add CSS animations
+const quizAttemptStyles = `
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .animate-fadeInUp {
+        animation: fadeInUp 0.5s ease-out forwards;
+    }
+    
+    .loading-spinner-small {
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        display: inline-block;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+`;
+
+if (!document.querySelector('#quiz-attempt-styles')) {
+    const style = document.createElement('style');
+    style.id = 'quiz-attempt-styles';
+    style.textContent = quizAttemptStyles;
+    document.head.appendChild(style);
 }

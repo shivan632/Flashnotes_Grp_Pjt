@@ -1,104 +1,195 @@
 // frontend/src/services/api.js
-// API service for communicating with backend
+// Vanilla JavaScript - Production Ready
 
-const API_URL = 'https://flashnotes-grp-pjt.onrender.com/api';
+// Get API URL from window (set in index.html) or use default
+const API_URL = (typeof window !== 'undefined' && window.API_URL) 
+    ? window.API_URL 
+    : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        ? 'http://localhost:10000/api'
+        : 'https://flashnotes-backend.onrender.com/api';
 
-// Generic fetch wrapper with error handling
-async function fetchAPI(endpoint, options = {}) {
-    const token = localStorage.getItem('authToken');
-    
-    const headers = {
-        'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` })
-    };
-    
+console.log('🔧 API_URL configured:', API_URL);
+
+// Helper function for API calls
+async function apiCall(url, options = {}) {
     try {
-        const response = await fetch(`${API_URL}${endpoint}`, {
+        const response = await fetch(url, {
             ...options,
             headers: {
-                ...headers,
-                ...options.headers
-            }
+                'Content-Type': 'application/json',
+                ...options.headers,
+            },
         });
         
         const data = await response.json();
         
         if (!response.ok) {
-            throw new Error(data.message || 'API request failed');
+            throw new Error(data.error || data.message || 'API request failed');
         }
         
         return data;
     } catch (error) {
-        console.error('API Error:', error);
+        console.error(`API Error (${url}):`, error);
         throw error;
     }
 }
 
-// Auth endpoints
+// ============= AUTH API =============
 export const authAPI = {
-    register: (userData) => fetchAPI('/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(userData)
-    }),
+    register: async (userData) => {
+        return apiCall(`${API_URL}/auth/register`, {
+            method: 'POST',
+            body: JSON.stringify(userData),
+        });
+    },
+
+    login: async (email, password) => {
+    console.log('Sending login request:', { email, passwordLength: password?.length });
     
-    login: (credentials) => fetchAPI('/auth/login', {
+    const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
-        body: JSON.stringify(credentials)
-    }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+    });
     
-    verifyOTP: (email, otp) => fetchAPI('/auth/verify-otp', {
-        method: 'POST',
-        body: JSON.stringify({ email, otp })
-    }),
+    const data = await response.json();
+    console.log('Login response:', data);
     
-    resendOTP: (email) => fetchAPI('/auth/resend-otp', {
-        method: 'POST',
-        body: JSON.stringify({ email })
-    }),
-    
-    logout: () => {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user');
-        localStorage.removeItem('isAuthenticated');
+    if (!response.ok) {
+        throw new Error(data.error || data.message || 'Login failed');
+    }
+    return data;
+},
+
+    verifyOTP: async (email, otp) => {
+        return apiCall(`${API_URL}/auth/verify-otp`, {
+            method: 'POST',
+            body: JSON.stringify({ email, otp }),
+        });
+    },
+
+    resendOTP: async (email) => {
+        return apiCall(`${API_URL}/auth/resend-otp`, {
+            method: 'POST',
+            body: JSON.stringify({ email }),
+        });
+    },
+
+    forgotPassword: async (email) => {
+        return apiCall(`${API_URL}/auth/forgot-password`, {
+            method: 'POST',
+            body: JSON.stringify({ email }),
+        });
+    },
+
+    resetPassword: async (token, newPassword) => {
+        return apiCall(`${API_URL}/auth/reset-password`, {
+            method: 'POST',
+            body: JSON.stringify({ token, newPassword }),
+        });
+    },
+
+    logout: async (token) => {
+        return apiCall(`${API_URL}/auth/logout`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
     }
 };
 
-// Notes endpoints
+// ============= NOTES API =============
 export const notesAPI = {
-    getAll: () => fetchAPI('/notes'),
-    getById: (id) => fetchAPI(`/notes/${id}`),
-    save: (note) => fetchAPI('/notes', {
-        method: 'POST',
-        body: JSON.stringify(note)
-    }),
-    update: (id, note) => fetchAPI(`/notes/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(note)
-    }),
-    delete: (id) => fetchAPI(`/notes/${id}`, {
-        method: 'DELETE'
-    })
+    saveNote: async (note) => {
+        const token = localStorage.getItem('token');
+        return apiCall(`${API_URL}/notes/save`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(note),
+        });
+    },
+
+    getNotes: async () => {
+        const token = localStorage.getItem('token');
+        return apiCall(`${API_URL}/notes`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+    },
+
+    deleteNote: async (noteId) => {
+        const token = localStorage.getItem('token');
+        return apiCall(`${API_URL}/notes/${noteId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+    }
 };
 
-// History endpoints
+// ============= HISTORY API =============
 export const historyAPI = {
-    getAll: () => fetchAPI('/history'),
-    add: (topic) => fetchAPI('/history', {
-        method: 'POST',
-        body: JSON.stringify({ topic })
-    }),
-    clear: () => fetchAPI('/history', {
-        method: 'DELETE'
-    })
+    addHistory: async (historyItem) => {
+        const token = localStorage.getItem('token');
+        return apiCall(`${API_URL}/history/add`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(historyItem),
+        });
+    },
+
+    getHistory: async () => {
+        const token = localStorage.getItem('token');
+        return apiCall(`${API_URL}/history`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+    },
+
+    clearHistory: async () => {
+        const token = localStorage.getItem('token');
+        return apiCall(`${API_URL}/history/clear`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+    }
 };
 
-// User endpoints
-export const userAPI = {
-    getProfile: () => fetchAPI('/user/profile'),
-    updateProfile: (data) => fetchAPI('/user/profile', {
-        method: 'PUT',
-        body: JSON.stringify(data)
-    })
+// ============= QUIZ API =============
+export const quizAPI = {
+    getQuiz: async (topic, count = 10) => {
+        const token = localStorage.getItem('token');
+        return apiCall(`${API_URL}/quiz/generate?topic=${encodeURIComponent(topic)}&count=${count}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+    },
+
+    submitQuiz: async (quizId, answers, score) => {
+        const token = localStorage.getItem('token');
+        return apiCall(`${API_URL}/quiz/submit`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ quizId, answers, score }),
+        });
+    }
 };
 
-export default fetchAPI;
+// Export default
+export default { authAPI, notesAPI, historyAPI, quizAPI };

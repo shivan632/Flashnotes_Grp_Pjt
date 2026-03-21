@@ -1,21 +1,22 @@
 // backend/src/routes/history.js
 import express from 'express';
-import { 
-    getHistory,
-    addToHistory,
-    clearHistory,
-    deleteHistoryItem
-} from '../controllers/historyController.js';
 import { authenticateToken } from '../middleware/auth.js';
+import {
+    getAllHistory,
+    addToHistory,
+    deleteHistory,
+    clearHistory
+} from '../controllers/historyController.js';
 
 const router = express.Router();
 
 // All routes require authentication
 router.use(authenticateToken);
 
-router.get('/', getHistory);
+// Routes
+router.get('/', getAllHistory);
 router.post('/', addToHistory);
-router.delete('/', clearHistory);
-router.delete('/:id', deleteHistoryItem);
+router.delete('/clear', clearHistory);
+router.delete('/:id', deleteHistory);
 
 export default router;

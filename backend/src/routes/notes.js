@@ -1,19 +1,20 @@
 // backend/src/routes/notes.js
 import express from 'express';
-import { 
+import { authenticateToken } from '../middleware/auth.js';
+import {
     getAllNotes,
     getNoteById,
     createNote,
     updateNote,
     deleteNote
 } from '../controllers/notesController.js';
-import { authenticateToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // All routes require authentication
 router.use(authenticateToken);
 
+// Routes
 router.get('/', getAllNotes);
 router.get('/:id', getNoteById);
 router.post('/', createNote);

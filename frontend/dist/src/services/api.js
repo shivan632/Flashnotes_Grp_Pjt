@@ -1,10 +1,9 @@
 // frontend/src/services/api.js
 // API service for communicating with backend
 
-// Hardcode the URL since live-server doesn't support import.meta.env
-const API_URL = 'https://flashnotes-grp-pjt.onrender.com';
+const API_URL = 'https://flashnotes-grp-pjt.onrender.com/api';
 
-// Generic fetch wrapper with error handling
+// Generic fetch wrapper
 async function fetchAPI(endpoint, options = {}) {
     const token = localStorage.getItem('authToken');
     
@@ -85,7 +84,7 @@ export const notesAPI = {
     })
 };
 
-// History endpoints
+// History endpoints - ADD THIS
 export const historyAPI = {
     getAll: () => fetchAPI('/history'),
     
@@ -96,6 +95,61 @@ export const historyAPI = {
     
     clear: () => fetchAPI('/history', {
         method: 'DELETE'
+    }),
+    
+    delete: (id) => fetchAPI(`/history/${id}`, {
+        method: 'DELETE'
+    })
+};
+
+// Quiz endpoints - ADD THIS
+export const quizAPI = {
+    getAll: () => fetchAPI('/quiz'),
+    
+    getById: (id) => fetchAPI(`/quiz/${id}`),
+    
+    getQuestions: (quizId) => fetchAPI(`/quiz/${quizId}/questions`),
+    
+    start: (quizId) => fetchAPI(`/quiz/${quizId}/start`, {
+        method: 'POST'
+    }),
+    
+    submit: (quizId, attemptId, answers, timeTakenSeconds) => fetchAPI(`/quiz/${quizId}/submit`, {
+        method: 'POST',
+        body: JSON.stringify({ attemptId, answers, timeTakenSeconds })
+    }),
+    
+    getAttempts: () => fetchAPI('/quiz/attempts/all'),
+    
+    getAttemptById: (attemptId) => fetchAPI(`/quiz/attempt/${attemptId}`)
+};
+
+// Score endpoints - ADD THIS
+export const scoreAPI = {
+    getUserScores: () => fetchAPI('/score'),
+    
+    getLeaderboard: (period = 'all', limit = 10) => fetchAPI(`/score/leaderboard?period=${period}&limit=${limit}`),
+    
+    getAchievements: () => fetchAPI('/score/achievements'),
+    
+    getStats: () => fetchAPI('/score/stats')
+};
+
+// AI endpoints - ADD THIS
+export const aiAPI = {
+    generateQA: (topic) => fetchAPI('/ai/generate', {
+        method: 'POST',
+        body: JSON.stringify({ topic })
+    }),
+    
+    chat: (message, context, history) => fetchAPI('/ai/chat', {
+        method: 'POST',
+        body: JSON.stringify({ message, context, history })
+    }),
+    
+    suggest: (topic) => fetchAPI('/ai/suggest', {
+        method: 'POST',
+        body: JSON.stringify({ topic })
     })
 };
 
@@ -106,7 +160,9 @@ export const userAPI = {
     updateProfile: (data) => fetchAPI('/user/profile', {
         method: 'PUT',
         body: JSON.stringify(data)
-    })
+    }),
+    
+    getStats: () => fetchAPI('/user/stats')
 };
 
 export default fetchAPI;

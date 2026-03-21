@@ -1,12 +1,12 @@
 // frontend/src/pages/QuizAttemptPage.js
-// Quiz Attempt Page - Take a quiz
+// Quiz Attempt Page - Take a quiz with enhanced UI
 
 import { Sidebar } from '../components/layout/Sidebar.js';
 import { AIChatSidebar } from '../components/layout/AIChatSidebar.js';
 import { Header } from '../components/common/Header.js';
 import { QuizQuestion } from '../components/quiz/QuizQuestion.js';
 import { QuizResult } from '../components/quiz/QuizResult.js';
-import { QuizTimer } from '../components/quiz/QuizTimer.js';
+import { QuizTimer, DigitalTimer, TimerBar } from '../components/quiz/QuizTimer.js';
 import { LoadingSpinner } from '../components/common/LoadingSpinner.js';
 import { getQuizById, getQuizQuestions, startQuiz, submitQuiz } from '../services/quizService.js';
 import { showError } from '../components/common/ErrorMessage.js';
@@ -33,11 +33,9 @@ export async function QuizAttemptPage() {
         return '';
     }
     
-    // Extract quiz ID from hash - FIXED
     const hash = window.location.hash;
     console.log('Current hash:', hash);
     
-    // Match pattern #/quiz/123/attempt
     const match = hash.match(/^#\/quiz\/(\d+)\/attempt$/);
     
     if (!match) {
@@ -57,17 +55,23 @@ export async function QuizAttemptPage() {
     quizState.id = quizId;
     quizState.status = 'loading';
     
-    // Show loading state
     return `
-        <div class="min-h-screen bg-[#111827] relative">
+        <div class="min-h-screen bg-gradient-to-b from-[#111827] to-[#0F172A] relative">
             ${Sidebar()}
             ${AIChatSidebar()}
             <div id="mainContent" class="min-h-screen transition-all duration-300" 
                  style="margin-left: 256px; margin-right: 384px; width: calc(100% - 640px);">
                 ${Header({ title: 'Loading Quiz...' })}
                 <main class="container mx-auto px-4 py-8">
-                    <div class="flex justify-center items-center h-64">
-                        ${LoadingSpinner()}
+                    <div class="flex justify-center items-center h-96">
+                        <div class="text-center">
+                            <div class="loading-spinner w-20 h-20 mx-auto mb-4">
+                                <div></div>
+                                <div></div>
+                                <div></div>
+                            </div>
+                            <p class="text-[#9CA3AF] animate-pulse">Loading quiz questions...</p>
+                        </div>
                     </div>
                 </main>
             </div>
@@ -75,7 +79,6 @@ export async function QuizAttemptPage() {
     `;
 }
 
-// Initialize quiz attempt
 export async function initQuizAttempt() {
     try {
         console.log('Initializing quiz attempt for ID:', quizState.id);
@@ -84,7 +87,32 @@ export async function initQuizAttempt() {
             throw new Error('Quiz ID not found');
         }
         
-        // Get quiz details
+        // Show loading with progress
+        const mainContent = document.getElementById('mainContent');
+        if (mainContent) {
+            mainContent.innerHTML = `
+                ${Header({ title: 'Loading Quiz...' })}
+                <main class="container mx-auto px-4 py-8">
+                    <div class="max-w-3xl mx-auto">
+                        <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-8 border border-[#374151]">
+                            <div class="flex items-center gap-4 mb-6">
+                                <div class="w-12 h-12 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-xl animate-pulse"></div>
+                                <div class="flex-1">
+                                    <div class="h-6 bg-[#374151] rounded-lg w-3/4 animate-pulse"></div>
+                                    <div class="h-4 bg-[#374151] rounded-lg w-1/2 mt-2 animate-pulse"></div>
+                                </div>
+                            </div>
+                            <div class="space-y-3">
+                                ${Array(5).fill(0).map(() => `
+                                    <div class="h-16 bg-[#374151] rounded-xl animate-pulse"></div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            `;
+        }
+        
         const quiz = await getQuizById(quizState.id);
         console.log('Quiz loaded:', quiz);
         
@@ -94,7 +122,6 @@ export async function initQuizAttempt() {
         
         quizState.title = quiz.title;
         
-        // Get questions
         const questions = await getQuizQuestions(quizState.id);
         console.log('Questions loaded:', questions.length);
         
@@ -104,7 +131,6 @@ export async function initQuizAttempt() {
         
         quizState.questions = questions;
         
-        // Start quiz attempt
         const result = await startQuiz(quizState.id);
         console.log('Start quiz result:', result);
         
@@ -113,99 +139,132 @@ export async function initQuizAttempt() {
         }
         
         quizState.attemptId = result.attemptId;
-        
-        // Set timer
         quizState.totalTime = (quiz.time_limit_minutes || 15) * 60;
         quizState.timeLeft = quizState.totalTime;
         quizState.status = 'taking';
         
-        // Initialize answers object
         quizState.answers = {};
         questions.forEach(q => {
             quizState.answers[q.id] = undefined;
         });
         
-        // Start timer
         startTimer();
-        
-        // Render quiz
         renderQuiz();
         
     } catch (error) {
         console.error('Error initializing quiz:', error);
         showError(error.message || 'Failed to load quiz', 'error');
         
-        // Redirect back to quiz page after 2 seconds
         setTimeout(() => {
             window.location.hash = '#/quiz';
         }, 2000);
     }
 }
 
-// Render quiz interface
 function renderQuiz() {
     const mainContent = document.getElementById('mainContent');
     if (!mainContent) return;
     
     const currentQ = quizState.questions[quizState.currentQuestion];
+    const progress = ((quizState.currentQuestion + 1) / quizState.questions.length) * 100;
     
     mainContent.innerHTML = `
         ${Header({ title: quizState.title })}
-        <main class="container mx-auto px-4 py-8">
-            <!-- Quiz Header -->
-            <div class="flex justify-between items-center mb-6">
-                <div>
-                    <h1 class="text-2xl font-bold text-[#E5E7EB]">${quizState.title}</h1>
-                    <p class="text-sm text-[#9CA3AF] mt-1">Question ${quizState.currentQuestion + 1} of ${quizState.questions.length}</p>
+        <main class="container mx-auto px-4 py-8 max-w-4xl">
+            <div class="animate-fadeInUp">
+                <!-- Quiz Header with Enhanced Timer -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                    <div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-8 h-8 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-lg flex items-center justify-center">
+                                <span class="text-white text-sm font-bold">${quizState.currentQuestion + 1}</span>
+                            </div>
+                            <h1 class="text-2xl font-bold bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] bg-clip-text text-transparent">
+                                ${quizState.title}
+                            </h1>
+                        </div>
+                        <p class="text-sm text-[#9CA3AF]">Question ${quizState.currentQuestion + 1} of ${quizState.questions.length}</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        ${DigitalTimer({ 
+                            seconds: quizState.timeLeft, 
+                            totalSeconds: quizState.totalTime 
+                        })}
+                    </div>
                 </div>
-                ${QuizTimer({ 
-                    seconds: quizState.timeLeft, 
-                    totalSeconds: quizState.totalTime 
-                })}
-            </div>
-            
-            <!-- Progress Bar -->
-            <div class="w-full bg-[#374151] rounded-full h-2 mb-8">
-                <div class="bg-[#3B82F6] h-2 rounded-full transition-all duration-300" 
-                     style="width: ${((quizState.currentQuestion + 1) / quizState.questions.length) * 100}%"></div>
-            </div>
-            
-            <!-- Question -->
-            ${QuizQuestion({
-                question: currentQ,
-                index: quizState.currentQuestion,
-                total: quizState.questions.length,
-                selectedOption: quizState.answers[currentQ.id],
-                onSelect: (option) => selectAnswer(currentQ.id, option)
-            })}
-            
-            <!-- Navigation Buttons -->
-            <div class="flex justify-between mt-6">
-                <button id="prevQuestionBtn" 
-                        class="px-6 py-2 bg-[#374151] text-[#E5E7EB] rounded-lg hover:bg-[#4B5563] transition-all ${quizState.currentQuestion === 0 ? 'opacity-50 cursor-not-allowed' : ''}"
-                        ${quizState.currentQuestion === 0 ? 'disabled' : ''}>
-                    Previous
-                </button>
-                ${quizState.currentQuestion === quizState.questions.length - 1 ? `
-                    <button id="submitQuizBtn" class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all">
-                        Submit Quiz
+                
+                <!-- Enhanced Progress Bar -->
+                <div class="mb-8">
+                    <div class="flex justify-between text-xs text-[#9CA3AF] mb-2">
+                        <span>Progress</span>
+                        <span>${Math.round(progress)}%</span>
+                    </div>
+                    <div class="w-full bg-[#374151] rounded-full h-2 overflow-hidden">
+                        <div class="bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] h-2 rounded-full transition-all duration-500 ease-out" 
+                             style="width: ${progress}%"></div>
+                    </div>
+                </div>
+                
+                <!-- Question Card with Animation -->
+                <div class="quiz-question-container animate-slideInUp">
+                    ${QuizQuestion({
+                        question: currentQ,
+                        index: quizState.currentQuestion,
+                        total: quizState.questions.length,
+                        selectedOption: quizState.answers[currentQ.id],
+                        onSelect: (option) => selectAnswer(currentQ.id, option)
+                    })}
+                </div>
+                
+                <!-- Navigation Buttons with Enhanced UI -->
+                <div class="flex justify-between mt-8 gap-4">
+                    <button id="prevQuestionBtn" 
+                            class="group relative overflow-hidden px-6 py-3 bg-[#374151] hover:bg-[#4B5563] text-[#E5E7EB] rounded-xl transition-all duration-300 flex items-center gap-2 ${quizState.currentQuestion === 0 ? 'opacity-50 cursor-not-allowed' : ''}"
+                            ${quizState.currentQuestion === 0 ? 'disabled' : ''}>
+                        <svg class="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                        Previous
                     </button>
-                ` : `
-                    <button id="nextQuestionBtn" class="px-6 py-2 bg-[#3B82F6] hover:bg-[#60A5FA] text-white rounded-lg transition-all">
-                        Next
-                    </button>
-                `}
+                    ${quizState.currentQuestion === quizState.questions.length - 1 ? `
+                        <button id="submitQuizBtn" 
+                                class="group relative overflow-hidden px-8 py-3 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center gap-2">
+                            <span>Submit Quiz</span>
+                            <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                            <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        </button>
+                    ` : `
+                        <button id="nextQuestionBtn" 
+                                class="group relative overflow-hidden px-8 py-3 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] hover:from-[#60A5FA] hover:to-[#8B5CF6] text-white rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center gap-2">
+                            <span>Next Question</span>
+                            <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                            <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        </button>
+                    `}
+                </div>
+                
+                <!-- Answer Status Indicator -->
+                <div class="mt-6 flex justify-center gap-2">
+                    ${quizState.questions.map((q, idx) => {
+                        const isAnswered = quizState.answers[q.id] !== undefined;
+                        const isCurrent = idx === quizState.currentQuestion;
+                        return `
+                            <div class="w-2 h-2 rounded-full transition-all duration-300 ${isAnswered ? 'bg-[#3B82F6]' : 'bg-[#374151]'} ${isCurrent ? 'scale-150 ring-2 ring-[#3B82F6]' : ''}"></div>
+                        `;
+                    }).join('')}
+                </div>
             </div>
         </main>
     `;
     
-    // Attach event listeners
     attachQuizEvents();
 }
 
-// Attach quiz events
 function attachQuizEvents() {
-    // Previous button
     const prevBtn = document.getElementById('prevQuestionBtn');
     if (prevBtn && quizState.currentQuestion > 0) {
         prevBtn.addEventListener('click', () => {
@@ -214,15 +273,13 @@ function attachQuizEvents() {
         });
     }
     
-    // Next button
     const nextBtn = document.getElementById('nextQuestionBtn');
     if (nextBtn) {
         nextBtn.addEventListener('click', () => {
             if (quizState.currentQuestion < quizState.questions.length - 1) {
-                // Check if current question is answered
                 const currentQ = quizState.questions[quizState.currentQuestion];
                 if (quizState.answers[currentQ.id] === undefined) {
-                    alert('Please select an answer before proceeding');
+                    showError('Please select an answer before proceeding', 'warning');
                     return;
                 }
                 quizState.currentQuestion++;
@@ -231,29 +288,41 @@ function attachQuizEvents() {
         });
     }
     
-    // Submit button
     const submitBtn = document.getElementById('submitQuizBtn');
     if (submitBtn) {
         submitBtn.addEventListener('click', submitQuizHandler);
     }
     
-    // Radio buttons
     document.querySelectorAll('input[type="radio"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             const questionId = parseInt(e.target.name.split('-')[1]);
             const value = parseInt(e.target.value);
             selectAnswer(questionId, value);
+            
+            // Add visual feedback
+            const label = e.target.closest('.option-label');
+            if (label) {
+                label.classList.add('ring-2', 'ring-[#3B82F6]', 'scale-[1.02]');
+                setTimeout(() => {
+                    label.classList.remove('ring-2', 'ring-[#3B82F6]', 'scale-[1.02]');
+                }, 200);
+            }
         });
     });
 }
 
-// Select answer
 function selectAnswer(questionId, optionIndex) {
     console.log('Selected answer:', { questionId, optionIndex });
     quizState.answers[questionId] = optionIndex;
+    
+    // Update answer status indicator
+    const indicators = document.querySelectorAll('.w-2.h-2');
+    if (indicators[quizState.currentQuestion]) {
+        indicators[quizState.currentQuestion].classList.add('bg-[#3B82F6]');
+        indicators[quizState.currentQuestion].classList.remove('bg-[#374151]');
+    }
 }
 
-// Start timer
 function startTimer() {
     if (timerInterval) clearInterval(timerInterval);
     
@@ -262,21 +331,27 @@ function startTimer() {
         
         quizState.timeLeft--;
         
-        // Update timer display
-        const timerElement = document.querySelector('.quiz-timer');
+        const timerElement = document.querySelector('.digital-timer');
         if (timerElement) {
             const minutes = Math.floor(quizState.timeLeft / 60);
             const seconds = quizState.timeLeft % 60;
-            const timerColor = quizState.timeLeft < quizState.totalTime * 0.2 ? 'text-red-500' : 
-                              quizState.timeLeft < quizState.totalTime * 0.5 ? 'text-yellow-500' : 'text-[#3B82F6]';
+            const percentage = (quizState.timeLeft / quizState.totalTime) * 100;
+            const isWarning = percentage < 20;
             
-            timerElement.querySelector('span').textContent = 
-                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            timerElement.querySelector('span').className = `font-mono text-lg ${timerColor}`;
-            timerElement.querySelector('svg').className = `w-5 h-5 ${timerColor}`;
+            const minutesSpan = timerElement.querySelector('.minutes');
+            const secondsSpan = timerElement.querySelector('.seconds');
+            const progressBar = timerElement.querySelector('.timer-progress');
+            
+            if (minutesSpan) minutesSpan.textContent = minutes.toString().padStart(2, '0');
+            if (secondsSpan) secondsSpan.textContent = seconds.toString().padStart(2, '0');
+            if (progressBar) progressBar.style.width = `${percentage}%`;
+            
+            if (isWarning) {
+                minutesSpan?.classList.add('text-red-500');
+                secondsSpan?.classList.add('text-red-500');
+            }
         }
         
-        // Auto-submit when time runs out
         if (quizState.timeLeft <= 0) {
             clearInterval(timerInterval);
             submitQuizHandler();
@@ -284,14 +359,12 @@ function startTimer() {
     }, 1000);
 }
 
-// Submit quiz handler
 async function submitQuizHandler() {
     if (quizState.status !== 'taking') return;
     
-    // Check if all questions are answered
     const unanswered = quizState.questions.filter(q => quizState.answers[q.id] === undefined);
     if (unanswered.length > 0) {
-        if (!confirm(`You have ${unanswered.length} unanswered question(s). Submit anyway?`)) {
+        if (!confirm(`⚠️ You have ${unanswered.length} unanswered question(s). Submit anyway?`)) {
             return;
         }
     }
@@ -299,22 +372,14 @@ async function submitQuizHandler() {
     clearInterval(timerInterval);
     quizState.status = 'submitting';
     
-    // Show loading
     const submitBtn = document.getElementById('submitQuizBtn');
     if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.innerHTML = 'Submitting...';
+        submitBtn.innerHTML = '<div class="loading-spinner-small mx-auto"></div> Submitting...';
     }
     
     try {
         const timeTaken = quizState.totalTime - quizState.timeLeft;
-        console.log('Submitting quiz with data:', {
-            quizId: quizState.id,
-            attemptId: quizState.attemptId,
-            answers: quizState.answers,
-            timeTaken
-        });
-        
         const result = await submitQuiz(
             quizState.id,
             quizState.attemptId,
@@ -323,7 +388,6 @@ async function submitQuizHandler() {
         );
         
         console.log('Quiz result:', result);
-        
         quizState.status = 'completed';
         showResult(result);
         
@@ -339,31 +403,30 @@ async function submitQuizHandler() {
     }
 }
 
-// Show result
 function showResult(result) {
     const mainContent = document.getElementById('mainContent');
     if (!mainContent) return;
     
     mainContent.innerHTML = `
         ${Header({ title: 'Quiz Results' })}
-        <main class="container mx-auto px-4 py-8 max-w-2xl">
-            ${QuizResult({
-                result,
-                onRetry: () => {
-                    window.location.hash = `#/quiz/${quizState.id}/attempt`;
-                },
-                onHome: () => {
-                    window.location.hash = '#/quiz';
-                }
-            })}
+        <main class="container mx-auto px-4 py-8 max-w-3xl">
+            <div class="animate-fadeInUp">
+                ${QuizResult({
+                    result,
+                    onRetry: () => {
+                        window.location.hash = `#/quiz/${quizState.id}/attempt`;
+                    },
+                    onHome: () => {
+                        window.location.hash = '#/quiz';
+                    }
+                })}
+            </div>
         </main>
     `;
     
-    // Attach result events
     const retryBtn = document.getElementById('retryQuizBtn');
     if (retryBtn) {
         retryBtn.addEventListener('click', () => {
-            // Reset state
             quizState = {
                 ...quizState,
                 currentQuestion: 0,
@@ -383,10 +446,54 @@ function showResult(result) {
     }
 }
 
-// Clean up timer
 export function cleanupQuiz() {
     if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
     }
+}
+
+// Add CSS animations
+const quizAttemptStyles = `
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .animate-fadeInUp {
+        animation: fadeInUp 0.5s ease-out forwards;
+    }
+    
+    .animate-slideInUp {
+        animation: slideInUp 0.4s ease-out forwards;
+    }
+    
+    .quiz-question-container {
+        opacity: 0;
+        animation: fadeInUp 0.5s ease-out forwards;
+    }
+`;
+
+if (!document.querySelector('#quiz-attempt-styles')) {
+    const style = document.createElement('style');
+    style.id = 'quiz-attempt-styles';
+    style.textContent = quizAttemptStyles;
+    document.head.appendChild(style);
 }

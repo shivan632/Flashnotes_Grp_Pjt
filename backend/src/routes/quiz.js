@@ -10,12 +10,17 @@ import {
     getQuizAttempts,
     getQuizAttemptById
 } from '../controllers/quizController.js';
+import {
+    generateAIQuiz,
+    submitAIQuiz
+} from '../controllers/quizGeneratorController.js';
 
 const router = express.Router();
 
 // All routes require authentication
 router.use(authenticateToken);
 
+// ============= PRE-MADE QUIZZES =============
 // Get all available quizzes
 router.get('/', getAllQuizzes);
 
@@ -36,5 +41,12 @@ router.get('/attempts/all', getQuizAttempts);
 
 // Get specific quiz attempt
 router.get('/attempt/:attemptId', getQuizAttemptById);
+
+// ============= AI-GENERATED QUIZZES =============
+// Generate AI quiz on the fly
+router.get('/ai/generate', generateAIQuiz);
+
+// Submit AI-generated quiz
+router.post('/ai/submit', submitAIQuiz);
 
 export default router;

@@ -6,22 +6,55 @@
     <title>Flashnotes - AI-Powered Learning</title>
     
     <!-- Favicon -->
-    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
     
-    <!-- Tailwind CSS (CDN for development - will be replaced by compiled CSS in production) -->
+    <!-- API Configuration - IMPORTANT: Update with your actual Render backend URL -->
+       <script>
+    (function() {
+        const isLocal = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1';
+        
+        if (isLocal) {
+            window.API_URL = 'http://localhost:10000/api';
+            console.log('🔧 Local mode - API_URL:', window.API_URL);
+        } else {
+            // Replace with your actual Render backend URL
+            window.API_URL = 'https://your-backend.onrender.com/api';
+            console.log('🚀 Production mode - API_URL:', window.API_URL);
+        }
+    })();
+</script>
+    
+    <!-- Tailwind CSS (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Custom CSS - FOR PRODUCTION: use /dist/style.css -->
-    <!-- For development: /src/style.css, for production: /dist/style.css -->
-    <link rel="stylesheet" href="/dist/style.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        background: '#111827',
+                        card: '#1F2937',
+                        primary: '#3B82F6',
+                        secondary: '#60A5FA',
+                        text: '#E5E7EB',
+                        accent: '#A78BFA',
+                    }
+                }
+            }
+        }
+    </script>
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Font Awesome for icons (fallback) -->
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/src/style.css">
+    
     <style>
+        /* Additional Styles */
         body {
             font-family: 'Inter', sans-serif;
             background-color: #111827;
@@ -125,7 +158,6 @@
             border-top-color: white;
             animation: spin 0.8s linear infinite;
             display: inline-block;
-            margin-left: 8px;
         }
         
         /* Animated background */
@@ -139,6 +171,156 @@
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
+        }
+        
+        /* OTP Side Box - Right Side Position */
+        .otp-side-box {
+            position: absolute;
+            top: 20px;
+            right: -120px;
+            background: linear-gradient(135deg, #14532d 0%, #166534 100%);
+            border: 1px solid #22c55e;
+            border-radius: 12px;
+            padding: 12px 16px;
+            min-width: 140px;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+            animation: slideInRight 0.3s ease-out;
+            z-index: 50;
+        }
+        
+        .otp-side-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        
+        .otp-side-code {
+            font-size: 28px;
+            font-family: monospace;
+            font-weight: bold;
+            letter-spacing: 4px;
+            color: #86efac;
+        }
+        
+        .otp-side-copy {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 8px;
+            padding: 6px;
+            cursor: pointer;
+            color: #bbf7d0;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .otp-side-copy:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+        
+        .otp-side-timer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            font-size: 10px;
+            color: #86efac;
+            margin-top: 8px;
+        }
+        
+        .otp-side-timer span {
+            font-family: monospace;
+            font-weight: 600;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        /* OTP Input Styles */
+        .otp-digit {
+            width: 52px;
+            height: 52px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            background: #111827;
+            border: 2px solid #3B82F6;
+            border-radius: 12px;
+            color: #E5E7EB;
+            transition: all 0.2s;
+        }
+        
+        .otp-digit:focus {
+            outline: none;
+            border-color: #A78BFA;
+            transform: scale(1.02);
+            box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.3);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .otp-side-box {
+                position: static;
+                margin-bottom: 20px;
+                max-width: 200px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+            
+            .otp-digit {
+                width: 45px;
+                height: 45px;
+                font-size: 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .otp-digit {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+        }
+        
+        /* Hide class */
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Toast styles */
+        .toast-success {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #10B981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        .toast-error {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #EF4444;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            animation: slideInRight 0.3s ease-out;
         }
     </style>
 </head>

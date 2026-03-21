@@ -1,10 +1,9 @@
 {
   "type": "module",
-"scripts": {
-  "dev": "live-server --port=3000",
-  "build": "node build.js"
-},
-
+  "scripts": {
+    "dev": "live-server --port=3000",
+    "build": "node build.js"
+  },
   "name": "frontend",
   "version": "1.0.0",
   "description": "",

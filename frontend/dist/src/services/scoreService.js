@@ -1,7 +1,7 @@
 // frontend/src/services/scoreService.js
-// Score API service
+// Score API service - Complete with all exports
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://flashnotes-grp-pjt.onrender.com/api';
 
 // Get auth token
 const getToken = () => localStorage.getItem('authToken');
@@ -77,6 +77,28 @@ export async function getUserAchievements() {
     }
 }
 
+// Get quiz attempts - ADDED
+export async function getQuizAttempts() {
+    try {
+        const data = await fetchAPI('/quiz/attempts/all');
+        return data.attempts || [];
+    } catch (error) {
+        console.error('Error fetching quiz attempts:', error);
+        return [];
+    }
+}
+
+// Get specific quiz attempt
+export async function getQuizAttemptById(attemptId) {
+    try {
+        const data = await fetchAPI(`/quiz/attempt/${attemptId}`);
+        return data.attempt;
+    } catch (error) {
+        console.error('Error fetching quiz attempt:', error);
+        return null;
+    }
+}
+
 // Get quick stats for dashboard
 export async function getQuickStats() {
     try {
@@ -87,3 +109,93 @@ export async function getQuickStats() {
         return {};
     }
 }
+
+// Get performance analytics
+export async function getPerformanceAnalytics() {
+    try {
+        const scores = await getUserScores();
+        const achievements = await getUserAchievements();
+        
+        const { stats, recentAttempts } = scores;
+        
+        // Calculate trends
+        const last5Scores = recentAttempts.slice(0, 5).map(a => a.percentage || 0);
+        const trend = last5Scores.length > 1 
+            ? last5Scores[0] - last5Scores[last5Scores.length - 1]
+            : 0;
+        
+        return {
+            overview: {
+                totalQuizzes: stats.totalQuizzes || 0,
+                averageScore: stats.averageScore || 0,
+                perfectScores: stats.perfectScores || 0,
+                totalPoints: stats.totalPoints || 0,
+                currentStreak: stats.currentStreak || 0,
+                bestStreak: stats.longestStreak || 0
+            },
+            trends: {
+                trend: trend > 0 ? 'improving' : trend < 0 ? 'declining' : 'stable',
+                last5Scores
+            },
+            achievements: {
+                earned: achievements.totalEarned || 0,
+                total: achievements.totalAvailable || 0,
+                progress: achievements.totalAvailable > 0 
+                    ? (achievements.totalEarned / achievements.totalAvailable * 100).toFixed(1) 
+                    : 0,
+                recent: achievements.achievements.filter(a => a.earned).slice(0, 5)
+            },
+            recentActivity: recentAttempts.slice(0, 10).map(a => ({
+                quiz: a.quizzes?.title,
+                score: a.percentage,
+                date: a.completed_at,
+                passed: (a.percentage || 0) >= 70
+            }))
+        };
+    } catch (error) {
+        console.error('Error fetching performance analytics:', error);
+        return null;
+    }
+}
+
+// Get user ranking
+export async function getUserRanking() {
+    try {
+        const scores = await getUserScores();
+        const leaderboard = await getLeaderboard('all', 100);
+        
+        const userEmail = localStorage.getItem('userEmail');
+        const userName = localStorage.getItem('userName');
+        const userEntry = leaderboard.find(entry => 
+            entry.email === userEmail || entry.name === userName
+        );
+        
+        if (userEntry) {
+            return {
+                rank: userEntry.rank,
+                totalPlayers: leaderboard.length,
+                percentile: ((leaderboard.length - userEntry.rank) / leaderboard.length * 100).toFixed(1),
+                points: userEntry.points,
+                nextRank: userEntry.rank > 1 ? leaderboard[userEntry.rank - 2] : null,
+                pointsToNext: userEntry.rank > 1 ? (leaderboard[userEntry.rank - 2]?.points - userEntry.points) : 0
+            };
+        }
+        
+        return null;
+    } catch (error) {
+        console.error('Error fetching user ranking:', error);
+        return null;
+    }
+}
+
+// Export all functions
+export default {
+    getUserScores,
+    getLeaderboard,
+    getUserAchievements,
+    getQuizAttempts,
+    getQuizAttemptById,
+    getQuickStats,
+    getPerformanceAnalytics,
+    getUserRanking
+};

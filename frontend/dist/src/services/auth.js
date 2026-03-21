@@ -1,381 +1,193 @@
-// Authentication service with Supabase integration
+// frontend/src/services/auth.js
+// Authentication service - Uses backend API only
 
-import { supabase, handleSupabaseError, isSupabaseConfigured } from './supabase.js';
+import { authAPI as apiAuth } from './api.js';
 
-// For development without Supabase - will use localStorage
-const USE_MOCK = !isSupabaseConfigured();
-
-// Mock user database (for development without Supabase)
-let mockUsers = JSON.parse(localStorage.getItem('mock_users') || '[]');
-
-// Generate random OTP
-function generateOTP() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+// Validate email
+export function validateEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(String(email).toLowerCase());
 }
 
-// Send OTP via email (mock - will be replaced with actual email service)
-async function sendOTPEmail(email, otp) {
-    console.log(`[MOCK] Sending OTP ${otp} to ${email}`);
-    // In production with Supabase, you'll use a proper email service
-    // Supabase Auth can handle email verification automatically
-    return true;
+// Validate password strength
+export function validatePasswordStrength(password) {
+    const checks = {
+        length: password.length >= 8,
+        uppercase: /[A-Z]/.test(password),
+        lowercase: /[a-z]/.test(password),
+        number: /[0-9]/.test(password),
+        special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    };
+    
+    const score = Object.values(checks).filter(Boolean).length;
+    let strength = 'weak';
+    if (score >= 5) strength = 'strong';
+    else if (score >= 3) strength = 'medium';
+    
+    return {
+        isValid: checks.length && checks.uppercase && checks.lowercase && checks.number,
+        checks,
+        strength,
+        score
+    };
 }
 
-// Register new user (works with both mock and Supabase)
+// Register user
 export async function registerUser(userData) {
     const { name, email, password } = userData;
     
-    if (USE_MOCK) {
-        // Mock implementation for development
-        console.log('Using mock authentication');
-        
-        // Check if user exists
-        const existingUser = mockUsers.find(u => u.email === email);
-        if (existingUser) {
-            throw new Error('User already exists with this email');
-        }
-        
-        // Generate OTP
-        const otp = generateOTP();
-        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-        
-        // Create pending user
-        const pendingUser = {
-            id: Date.now().toString(),
-            name,
-            email,
-            password, // In production, never store plain passwords!
-            otp,
-            otpExpiry,
-            verified: false,
-            createdAt: new Date().toISOString()
-        };
-        
-        // Store temporarily
-        localStorage.setItem('pendingUser', JSON.stringify(pendingUser));
-        
-        // Send OTP email
-        await sendOTPEmail(email, otp);
-        
-        return { 
-            success: true, 
-            message: 'OTP sent to email', 
-            email,
-            user: { name, email }
-        };
-        
-    } else {
-        // Supabase implementation for production
-        try {
-            // Sign up with Supabase Auth
-            const { data, error } = await supabase.auth.signUp({
-                email,
-                password,
-                options: {
-                    data: {
-                        name: name,
-                        role: 'user'
-                    },
-                    emailRedirectTo: `${window.location.origin}/verify-otp`
-                }
-            });
-            
-            if (error) throw error;
-            
-            // Store additional user data in profiles table
-            if (data.user) {
-                const { error: profileError } = await supabase
-                    .from('profiles')
-                    .insert([
-                        {
-                            id: data.user.id,
-                            name: name,
-                            email: email,
-                            created_at: new Date().toISOString()
-                        }
-                    ]);
-                
-                if (profileError) console.error('Profile creation error:', profileError);
-            }
-            
-            return {
-                success: true,
-                message: 'Registration successful! Please check your email for verification.',
-                email,
-                user: data.user
-            };
-            
-        } catch (error) {
-            throw handleSupabaseError(error);
-        }
+    if (!name || !email || !password) {
+        throw new Error('All fields are required');
+    }
+    
+    if (!validateEmail(email)) {
+        throw new Error('Please enter a valid email address');
+    }
+    
+    const passwordValidation = validatePasswordStrength(password);
+    if (!passwordValidation.isValid) {
+        throw new Error('Password must contain at least 8 characters, one uppercase, one lowercase, and one number');
+    }
+    
+    try {
+        const result = await apiAuth.register({ name, email, password });
+        return result;
+    } catch (error) {
+        throw error;
     }
 }
 
-// Verify OTP (works with both mock and Supabase)
+// Verify OTP
 export async function verifyOTP(email, otp) {
-    if (USE_MOCK) {
-        // Mock implementation
-        const pendingUser = JSON.parse(localStorage.getItem('pendingUser'));
-        
-        if (!pendingUser || pendingUser.email !== email) {
-            throw new Error('No pending registration found');
-        }
-        
-        if (new Date() > new Date(pendingUser.otpExpiry)) {
-            throw new Error('OTP has expired');
-        }
-        
-        if (pendingUser.otp !== otp) {
-            throw new Error('Invalid OTP');
-        }
-        
-        // Mark as verified
-        pendingUser.verified = true;
-        delete pendingUser.otp;
-        delete pendingUser.otpExpiry;
-        
-        // Add to mock users
-        mockUsers.push(pendingUser);
-        localStorage.setItem('mock_users', JSON.stringify(mockUsers));
-        localStorage.removeItem('pendingUser');
-        
-        // Set session
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('userName', pendingUser.name);
-        localStorage.setItem('userEmail', pendingUser.email);
-        
-        return {
-            success: true,
-            message: 'Email verified successfully',
-            user: { name: pendingUser.name, email: pendingUser.email }
-        };
-        
-    } else {
-        // Supabase implementation
-        try {
-            // In Supabase, email verification is handled automatically
-            // You can check if the user's email is confirmed
-            const { data: { user }, error } = await supabase.auth.getUser();
-            
-            if (error) throw error;
-            
-            if (user && user.email_confirmed_at) {
-                return {
-                    success: true,
-                    message: 'Email verified successfully',
-                    user
-                };
-            } else {
-                throw new Error('Email not verified yet');
-            }
-            
-        } catch (error) {
-            throw handleSupabaseError(error);
-        }
+    try {
+        const result = await apiAuth.verifyOTP(email, otp);
+        return result;
+    } catch (error) {
+        throw error;
     }
 }
 
-// Login user
-export async function loginUser(email, password) {
-    if (USE_MOCK) {
-        // Mock implementation
-        const user = mockUsers.find(u => u.email === email && u.password === password);
+// Login
+export async function loginUser(email, password, rememberMe = false) {
+    if (!email || !password) {
+        throw new Error('Email and password are required');
+    }
+    
+    try {
+        const result = await apiAuth.login({ email, password });
         
-        if (!user) {
-            throw new Error('Invalid email or password');
+        if (rememberMe) {
+            localStorage.setItem('rememberedEmail', email);
+        } else {
+            localStorage.removeItem('rememberedEmail');
         }
         
-        if (!user.verified) {
-            throw new Error('Please verify your email first');
-        }
-        
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('userName', user.name);
-        localStorage.setItem('userEmail', user.email);
-        localStorage.setItem('userId', user.id);
-        
-        return {
-            success: true,
-            message: 'Login successful',
-            user: { name: user.name, email: user.email, id: user.id }
-        };
-        
-    } else {
-        // Supabase implementation
-        try {
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email,
-                password
-            });
-            
-            if (error) throw error;
-            
-            // Get user profile
-            const { data: profile, error: profileError } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', data.user.id)
-                .single();
-            
-            localStorage.setItem('isAuthenticated', 'true');
-            localStorage.setItem('userName', profile?.name || data.user.email);
-            localStorage.setItem('userEmail', data.user.email);
-            localStorage.setItem('userId', data.user.id);
-            
-            return {
-                success: true,
-                message: 'Login successful',
-                user: data.user,
-                profile
-            };
-            
-        } catch (error) {
-            throw handleSupabaseError(error);
-        }
+        return result;
+    } catch (error) {
+        throw error;
     }
 }
 
 // Resend OTP
 export async function resendOTP(email) {
-    if (USE_MOCK) {
-        const pendingUser = JSON.parse(localStorage.getItem('pendingUser'));
-        
-        if (!pendingUser || pendingUser.email !== email) {
-            throw new Error('No pending registration found');
-        }
-        
-        const newOTP = generateOTP();
-        pendingUser.otp = newOTP;
-        pendingUser.otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
-        
-        localStorage.setItem('pendingUser', JSON.stringify(pendingUser));
-        await sendOTPEmail(email, newOTP);
-        
-        return { success: true, message: 'OTP resent successfully' };
-        
-    } else {
-        // Supabase can resend verification email
-        try {
-            const { error } = await supabase.auth.resend({
-                type: 'signup',
-                email: email
-            });
-            
-            if (error) throw error;
-            
-            return { success: true, message: 'Verification email resent' };
-            
-        } catch (error) {
-            throw handleSupabaseError(error);
-        }
+    try {
+        const result = await authAPI.resendOTP(email);
+        // The OTP is returned in the response for development
+        return result;
+    } catch (error) {
+        console.error('Resend OTP error:', error);
+        throw error;
     }
 }
 
-// Logout user
+// Logout
 export async function logoutUser() {
-    if (!USE_MOCK) {
-        try {
-            const { error } = await supabase.auth.signOut();
-            if (error) throw error;
-        } catch (error) {
-            console.error('Logout error:', error);
-        }
-    }
-    
-    // Clear local storage
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('userName');
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userId');
     localStorage.removeItem('pendingUser');
-    
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    localStorage.removeItem('rememberedEmail');
     return { success: true };
 }
 
 // Get current user profile
 export async function getCurrentUserProfile() {
-    if (USE_MOCK) {
-        const userId = localStorage.getItem('userId');
-        const user = mockUsers.find(u => u.id === userId);
-        
-        if (!user) return null;
-        
-        return {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            created_at: user.createdAt
-        };
-        
-    } else {
-        try {
-            const { data: { user }, error } = await supabase.auth.getUser();
-            if (error) throw error;
-            
-            if (!user) return null;
-            
-            // Get profile from profiles table
-            const { data: profile, error: profileError } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', user.id)
-                .single();
-            
-            return {
-                ...user,
-                profile: profile || null
-            };
-            
-        } catch (error) {
-            console.error('Error getting user profile:', error);
-            return null;
-        }
+    try {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        return user;
+    } catch (error) {
+        return null;
     }
 }
 
-// Update user profile
+// Update profile
 export async function updateUserProfile(updates) {
-    if (USE_MOCK) {
-        const userId = localStorage.getItem('userId');
-        const userIndex = mockUsers.findIndex(u => u.id === userId);
-        
-        if (userIndex === -1) throw new Error('User not found');
-        
-        mockUsers[userIndex] = { ...mockUsers[userIndex], ...updates };
-        localStorage.setItem('mock_users', JSON.stringify(mockUsers));
+    try {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const updatedUser = { ...user, ...updates };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
         
         if (updates.name) localStorage.setItem('userName', updates.name);
+        if (updates.email) localStorage.setItem('userEmail', updates.email);
         
-        return { success: true, user: mockUsers[userIndex] };
-        
-    } else {
-        try {
-            const { data: { user }, error } = await supabase.auth.getUser();
-            if (error) throw error;
-            
-            // Update auth metadata if needed
-            if (updates.name) {
-                const { error: updateError } = await supabase.auth.updateUser({
-                    data: { name: updates.name }
-                });
-                if (updateError) throw updateError;
-            }
-            
-            // Update profiles table
-            const { error: profileError } = await supabase
-                .from('profiles')
-                .update({
-                    name: updates.name,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', user.id);
-            
-            if (profileError) throw profileError;
-            
-            return { success: true };
-            
-        } catch (error) {
-            throw handleSupabaseError(error);
-        }
+        return { success: true, user: updatedUser };
+    } catch (error) {
+        throw error;
     }
 }
+
+// Check if authenticated
+export async function isAuthenticated() {
+    const token = localStorage.getItem('authToken');
+    const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+    return !!(token && isAuth);
+}
+
+// Get user stats
+export async function getUserStats() {
+    return {
+        totalQuizzes: parseInt(localStorage.getItem('totalQuizzes') || '0'),
+        savedNotes: parseInt(localStorage.getItem('savedNotesCount') || '0'),
+        perfectScores: parseInt(localStorage.getItem('perfectScores') || '0'),
+        currentStreak: parseInt(localStorage.getItem('currentStreak') || '0'),
+        longestStreak: parseInt(localStorage.getItem('longestStreak') || '0'),
+        totalPoints: parseInt(localStorage.getItem('totalPoints') || '0')
+    };
+}
+
+// Increment stat
+export async function incrementUserStat(statName, increment = 1) {
+    const currentValue = parseInt(localStorage.getItem(statName) || '0');
+    localStorage.setItem(statName, (currentValue + increment).toString());
+    return true;
+}
+
+// ============= EXPORT authAPI for compatibility =============
+// This is what main.js is trying to import
+export const authAPI = {
+    register: apiAuth.register,
+    login: apiAuth.login,
+    verifyOTP: apiAuth.verifyOTP,
+    resendOTP: apiAuth.resendOTP,
+    logout: apiAuth.logout
+};
+
+// Also export the original functions for direct use
+export default {
+    validateEmail,
+    validatePasswordStrength,
+    registerUser,
+    verifyOTP,
+    loginUser,
+    resendOTP,
+    logoutUser,
+    getCurrentUserProfile,
+    updateUserProfile,
+    isAuthenticated,
+    getUserStats,
+    incrementUserStat,
+    authAPI
+};

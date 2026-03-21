@@ -1,5 +1,6 @@
 // backend/src/controllers/quizController.js
 import { supabase, supabaseAdmin } from '../config/supabase.js';
+import jwt from 'jsonwebtoken';
 
 // Get all available quizzes
 export const getAllQuizzes = async (req, res) => {
@@ -110,44 +111,123 @@ export const getQuizQuestions = async (req, res) => {
     }
 };
 
-// Start a new quiz attempt
+// Start a new quiz attempt - FIXED FOREIGN KEY ERROR
+// backend/src/controllers/quizController.js - REPLACE startQuiz function
+
 export const startQuiz = async (req, res) => {
     try {
         const quizId = req.params.id;
+        
+        // Get user from request (set by auth middleware)
+        if (!req.user) {
+            console.error('❌ No user in request');
+            return res.status(401).json({
+                success: false,
+                message: 'User not authenticated'
+            });
+        }
+
         const userId = req.user.id;
+        const userEmail = req.user.email;
         
         console.log('🎯 Starting quiz attempt:');
         console.log('  - Quiz ID:', quizId);
         console.log('  - User ID:', userId);
+        console.log('  - User Email:', userEmail);
         
-        // Get quiz details
+        // ============= STEP 1: Verify user exists =============
+        const { data: userCheck, error: userError } = await supabase
+            .from('users')
+            .select('id, email, email_verified')
+            .eq('id', userId)
+            .maybeSingle();
+        
+        if (userError) {
+            console.error('❌ User check error:', userError);
+            return res.status(500).json({
+                success: false,
+                message: 'Database error'
+            });
+        }
+        
+        if (!userCheck) {
+            console.error('❌ User not found:', userId);
+            return res.status(404).json({
+                success: false,
+                message: 'User not found. Please login again.'
+            });
+        }
+        
+        if (!userCheck.email_verified) {
+            console.error('❌ Email not verified:', userEmail);
+            return res.status(403).json({
+                success: false,
+                message: 'Please verify your email first.'
+            });
+        }
+        
+        console.log('✅ User verified:', userCheck.id);
+        
+        // ============= STEP 2: Get quiz details =============
         const { data: quiz, error: quizError } = await supabase
             .from('quizzes')
-            .select('total_questions')
+            .select('id, total_questions')
             .eq('id', quizId)
             .single();
 
         if (quizError) {
             console.error('❌ Quiz fetch error:', quizError);
-            throw quizError;
+            return res.status(404).json({
+                success: false,
+                message: 'Quiz not found'
+            });
         }
         
-        // Create new attempt using supabaseAdmin (bypasses RLS)
-        const { data: attempt, error } = await supabaseAdmin
+        console.log('✅ Quiz found:', quiz.id);
+        
+        // ============= STEP 3: Check existing in-progress attempt =============
+        const { data: existingAttempt, error: attemptError } = await supabase
             .from('quiz_attempts')
-            .insert([{
-                user_id: userId,
-                quiz_id: parseInt(quizId),
-                total_questions: quiz.total_questions,
-                status: 'in_progress',
-                started_at: new Date().toISOString()
-            }])
+            .select('id, status, started_at')
+            .eq('user_id', userId)
+            .eq('quiz_id', parseInt(quizId))
+            .eq('status', 'in_progress')
+            .maybeSingle();
+        
+        if (existingAttempt) {
+            console.log('⚠️ Using existing attempt:', existingAttempt.id);
+            return res.json({
+                success: true,
+                attemptId: existingAttempt.id,
+                startedAt: existingAttempt.started_at,
+                existing: true
+            });
+        }
+        
+        // ============= STEP 4: Create new attempt =============
+        const newAttempt = {
+            user_id: userId,
+            quiz_id: parseInt(quizId),
+            total_questions: quiz.total_questions,
+            status: 'in_progress',
+            started_at: new Date().toISOString(),
+            created_at: new Date().toISOString()
+        };
+        
+        console.log('📝 Creating attempt with user_id:', userId);
+        
+        const { data: attempt, error: insertError } = await supabase
+            .from('quiz_attempts')
+            .insert([newAttempt])
             .select()
             .single();
 
-        if (error) {
-            console.error('❌ Insert error details:', error);
-            throw error;
+        if (insertError) {
+            console.error('❌ Insert error:', insertError);
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to start quiz: ' + insertError.message
+            });
         }
         
         console.log('✅ Quiz attempt created:', attempt.id);
@@ -222,52 +302,81 @@ async function updateUserScores(userId, correctCount, totalQuestions, percentage
 }
 
 // Submit quiz answers
+// backend/src/controllers/quizController.js
+// Replace the entire submitQuiz function
+
+// Submit quiz answers - COMPLETE FIX
 export const submitQuiz = async (req, res) => {
     try {
         const quizId = req.params.id;
         const userId = req.user.id;
         const { attemptId, answers, timeTakenSeconds } = req.body;
+        
+        console.log('📝 Submitting quiz:');
+        console.log('  - Quiz ID:', quizId);
+        console.log('  - User ID:', userId);
+        console.log('  - Attempt ID:', attemptId);
+        console.log('  - Answers:', answers);
+        console.log('  - Time Taken:', timeTakenSeconds);
 
-        // Get the attempt
-        const { data: attempt, error: attemptError } = await supabaseAdmin
+        // ============= STEP 1: Verify attempt exists =============
+        const { data: attempt, error: attemptError } = await supabase
             .from('quiz_attempts')
             .select('*')
             .eq('id', attemptId)
             .eq('user_id', userId)
-            .eq('quiz_id', quizId)
             .single();
 
         if (attemptError || !attempt) {
+            console.error('❌ Attempt not found:', attemptError);
             return res.status(404).json({
                 success: false,
                 message: 'Quiz attempt not found'
             });
         }
 
-        // Get all questions and correct answers
+        console.log('✅ Attempt found:', attempt.id, 'Status:', attempt.status);
+
+        // ============= STEP 2: Get questions for this quiz =============
         const { data: questions, error: questionsError } = await supabase
             .from('quiz_questions')
             .select('id, correct_option, points')
             .eq('quiz_id', quizId);
 
-        if (questionsError) throw questionsError;
+        if (questionsError) {
+            console.error('❌ Questions fetch error:', questionsError);
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to fetch questions'
+            });
+        }
 
-        // Calculate score
+        console.log('✅ Questions fetched:', questions.length);
+
+        // ============= STEP 3: Calculate score =============
         let correctCount = 0;
         const questionMap = new Map(questions.map(q => [q.id, q]));
 
         Object.entries(answers).forEach(([questionId, selectedOption]) => {
             const question = questionMap.get(parseInt(questionId));
-            if (question && question.correct_option === selectedOption) {
+            if (question && question.correct_option === parseInt(selectedOption)) {
                 correctCount++;
+                console.log(`  ✅ Question ${questionId}: Correct`);
+            } else {
+                console.log(`  ❌ Question ${questionId}: Wrong (selected: ${selectedOption}, correct: ${question?.correct_option})`);
             }
         });
 
         const totalQuestions = questions.length;
         const percentage = (correctCount / totalQuestions) * 100;
 
-        // Update attempt using supabaseAdmin
-        const { data: updatedAttempt, error: updateError } = await supabaseAdmin
+        console.log('📊 Score calculation:');
+        console.log('  - Correct:', correctCount);
+        console.log('  - Total:', totalQuestions);
+        console.log('  - Percentage:', percentage);
+
+        // ============= STEP 4: Update attempt =============
+        const { data: updatedAttempt, error: updateError } = await supabase
             .from('quiz_attempts')
             .update({
                 score: correctCount,
@@ -282,10 +391,23 @@ export const submitQuiz = async (req, res) => {
             .select()
             .single();
 
-        if (updateError) throw updateError;
+        if (updateError) {
+            console.error('❌ Update error:', updateError);
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to update attempt: ' + updateError.message
+            });
+        }
 
-        // Update user_scores
-        await updateUserScores(userId, correctCount, totalQuestions, percentage);
+        console.log('✅ Attempt updated:', updatedAttempt.id);
+
+        // ============= STEP 5: Update user scores =============
+        try {
+            await updateUserScores(userId, correctCount, totalQuestions, percentage);
+        } catch (scoreError) {
+            console.error('⚠️ Score update error (non-critical):', scoreError);
+            // Don't fail the whole request if score update fails
+        }
 
         res.json({
             success: true,
@@ -299,10 +421,10 @@ export const submitQuiz = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Submit quiz error:', error);
+        console.error('❌ Submit quiz error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to submit quiz'
+            message: error.message || 'Failed to submit quiz'
         });
     }
 };

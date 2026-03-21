@@ -4,8 +4,8 @@ import { authenticateToken } from '../middleware/auth.js';
 import {
     getUserScores,
     getLeaderboard,
-    getUserAchievements,
-    getStats
+    getUserStats,
+    getUserAchievements
 } from '../controllers/scoreController.js';
 
 const router = express.Router();
@@ -13,16 +13,16 @@ const router = express.Router();
 // All routes require authentication
 router.use(authenticateToken);
 
-// Get user's scores and statistics
+// Get user's scores
 router.get('/', getUserScores);
 
-// Get global leaderboard
+// Get user stats
+router.get('/stats', getUserStats);
+
+// Get leaderboard
 router.get('/leaderboard', getLeaderboard);
 
-// Get user's achievements
+// Get user achievements
 router.get('/achievements', getUserAchievements);
-
-// Get quick stats for dashboard
-router.get('/stats', getStats);
 
 export default router;

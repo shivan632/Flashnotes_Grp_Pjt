@@ -1,25 +1,30 @@
-// frontend/src/main.js - COMPLETE UPDATED VERSION WITH ALL ROUTES
+// frontend/src/main.js - COMPLETE UPDATED VERSION WITH ALL NEW FEATURES
 
 // ============= UTILITIES =============
-import { setupNavigation } from './utils/navigation.js';
-import { formatDate, truncateText } from './utils/helpers.js';
-import { validateTopic } from './utils/validation.js';
-import { ROUTES, QUICK_TOPICS, ERROR_MESSAGES } from './utils/constants.js';
+import { setupNavigation, getCurrentPath, redirectIfNotAuthenticated, redirectIfAuthenticated } from './utils/navigation.js';
+import { formatDate, truncateText, getInitials, debounce } from './utils/helpers.js';
+import { validateTopic, validateSearch } from './utils/validation.js';
+import { ROUTES, QUICK_TOPICS, ERROR_MESSAGES, SUCCESS_MESSAGES, APP_CONFIG } from './utils/constants.js';
 
 // ============= SERVICES =============
 import { generateQA } from './services/ai.js';
-import { authAPI } from './services/api.js';
+import { authAPI, getCurrentUserProfile } from './services/auth.js';
+
 import { 
     saveNote, 
     getSavedNotes, 
     addToHistory, 
     getSearchHistory,
-    deleteNote 
+    deleteNote,
+    syncPendingData,
+    exportData,
+    importData
 } from './services/storage.js';
+import { initNotifications, addNotificationListener, getUnreadCount, markAsRead } from './services/notificationService.js';
 
 // ============= COMMON COMPONENTS =============
 import { LoadingSpinner } from './components/common/LoadingSpinner.js';
-import { showError } from './components/common/ErrorMessage.js';
+import { showError, showSuccess } from './components/common/ErrorMessage.js';
 import { Header, setupHeader } from './components/common/Header.js';
 import { Footer } from './components/common/Footer.js';
 
@@ -47,15 +52,14 @@ import { Introduction } from './components/welcome/Introduction.js';
 import { FutureVision } from './components/welcome/FutureVision.js';
 
 // ============= PAGE IMPORTS =============
-import { SavedPage } from './pages/SavedPage.js';
-import { QuizPage } from './pages/QuizPage.js';
-import { ScorePage } from './pages/ScorePage.js';
-import { ProfilePage } from './pages/ProfilePage.js';
-import { SettingsPage } from './pages/SettingsPage.js';
-import { NotificationsPage } from './pages/NotificationsPage.js';
+import { SavedPage, setupSavedPage } from './pages/SavedPage.js';
+import { QuizPage, setupQuizPage } from './pages/QuizPage.js';
+import { ScorePage, setupScorePage } from './pages/ScorePage.js';
+import { ProfilePage, setupProfilePage } from './pages/ProfilePage.js';
+import { SettingsPage, setupSettingsPage } from './pages/SettingsPage.js';
+import { NotificationsPage, setupNotificationsPage } from './pages/NotificationsPage.js';
 import { QuizAttemptPage, initQuizAttempt, cleanupQuiz } from './pages/QuizAttemptPage.js';
-import { setupQuizPage } from './pages/QuizPage.js';
-import { setupScorePage } from './pages/ScorePage.js';
+import { VerifyOTPPage, setupVerifyOTP } from './pages/VerifyOTPPage.js';
 
 // ============= PAGE COMPONENTS =============
 
@@ -96,12 +100,12 @@ function LoginPage() {
     `;
 }
 
-function VerifyOTPPage() {
+function VerifyOTPPageComponent() {
     return `
         <div class="min-h-screen flex flex-col">
             ${Navbar()}
             <div class="flex-1">
-                ${OTPVerification()}
+                ${VerifyOTPPage()}
             </div>
             ${Footer()}
         </div>
@@ -117,7 +121,7 @@ async function DashboardPage() {
     }
     
     return `
-        <div class="min-h-screen bg-[#111827] relative">
+        <div class="min-h-screen bg-gradient-to-b from-[#111827] to-[#0F172A] relative">
             ${Sidebar()}
             ${AIChatSidebar()}
             <div id="mainContent" class="min-h-screen transition-all duration-300" 
@@ -140,7 +144,7 @@ async function HistoryPage() {
     const history = await getSearchHistory();
     
     return `
-        <div class="min-h-screen bg-[#111827] relative">
+        <div class="min-h-screen bg-gradient-to-b from-[#111827] to-[#0F172A] relative">
             ${Sidebar()}
             ${AIChatSidebar()}
             <div id="mainContent" class="min-h-screen transition-all duration-300" 
@@ -150,20 +154,65 @@ async function HistoryPage() {
                     <div class="mb-8">
                         <h1 class="text-3xl font-bold text-[#E5E7EB]">Your Learning Journey</h1>
                         <p class="text-[#9CA3AF] mt-2">Track all your saved notes and search history</p>
+                        <div class="w-24 h-1 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-full mt-4"></div>
                     </div>
                     
                     <div class="flex gap-4 mb-8">
-                        <div class="bg-[#1F2937] px-4 py-2 rounded-lg">
-                            <span class="text-[#3B82F6] font-bold">${notes.length}</span>
-                            <span class="text-[#9CA3AF] text-sm ml-1">Notes</span>
+                        <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-xl px-4 py-2 border border-[#374151]">
+                            <div class="text-2xl font-bold text-[#3B82F6]">${notes.length}</div>
+                            <div class="text-xs text-[#9CA3AF]">Saved Notes</div>
                         </div>
-                        <div class="bg-[#1F2937] px-4 py-2 rounded-lg">
-                            <span class="text-[#3B82F6] font-bold">${history.length}</span>
-                            <span class="text-[#9CA3AF] text-sm ml-1">Searches</span>
+                        <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-xl px-4 py-2 border border-[#374151]">
+                            <div class="text-2xl font-bold text-[#3B82F6]">${history.length}</div>
+                            <div class="text-xs text-[#9CA3AF]">Topics Searched</div>
                         </div>
                     </div>
                     
-                    <!-- Rest of your history content -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Saved Notes Section -->
+                        <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-6 border border-[#374151]">
+                            <div class="flex items-center gap-2 mb-4">
+                                <div class="w-8 h-8 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-lg flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+                                    </svg>
+                                </div>
+                                <h3 class="text-lg font-bold text-[#E5E7EB]">Saved Notes</h3>
+                            </div>
+                            <div class="space-y-3 max-h-[500px] overflow-y-auto custom-scrollbar">
+                                ${notes.length > 0 ? notes.map(note => `
+                                    <div class="bg-[#111827] p-3 rounded-xl hover:bg-[#1F2937] transition-all">
+                                        <div class="flex justify-between items-start">
+                                            <span class="bg-[#3B82F6] text-white text-xs px-2 py-1 rounded">${note.topic}</span>
+                                            <span class="text-[#9CA3AF] text-xs">${formatDate(note.savedAt)}</span>
+                                        </div>
+                                        <p class="text-[#3B82F6] font-semibold mt-2">Q: ${truncateText(note.question, 60)}</p>
+                                        <p class="text-[#E5E7EB] text-sm mt-1">${truncateText(note.answer, 80)}</p>
+                                    </div>
+                                `).join('') : '<div class="text-center py-8 text-[#9CA3AF]">No saved notes</div>'}
+                            </div>
+                        </div>
+                        
+                        <!-- Search History Section -->
+                        <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-6 border border-[#374151]">
+                            <div class="flex items-center gap-2 mb-4">
+                                <div class="w-8 h-8 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-lg flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                                <h3 class="text-lg font-bold text-[#E5E7EB]">Search History</h3>
+                            </div>
+                            <div class="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar">
+                                ${history.length > 0 ? history.map(entry => `
+                                    <div class="flex justify-between items-center p-2 bg-[#111827] rounded-lg hover:bg-[#1F2937] transition-all cursor-pointer history-item" data-topic="${entry.topic}">
+                                        <span class="text-[#E5E7EB]">${entry.topic}</span>
+                                        <span class="text-[#9CA3AF] text-xs">${formatDate(entry.searchedAt)}</span>
+                                    </div>
+                                `).join('') : '<div class="text-center py-8 text-[#9CA3AF]">No search history</div>'}
+                            </div>
+                        </div>
+                    </div>
                 </main>
             </div>
         </div>
@@ -176,7 +225,7 @@ const routes = {
     [ROUTES.WELCOME]: WelcomePage,
     [ROUTES.REGISTER]: RegisterPage,
     [ROUTES.LOGIN]: LoginPage,
-    [ROUTES.VERIFY_OTP]: VerifyOTPPage,
+    [ROUTES.VERIFY_OTP]: VerifyOTPPageComponent,
     [ROUTES.DASHBOARD]: DashboardPage,
     [ROUTES.HISTORY]: HistoryPage,
     [ROUTES.SAVED]: SavedPage,
@@ -192,6 +241,34 @@ routes[/^\/quiz\/\d+\/attempt$/] = QuizAttemptPage;
 
 // ============= GLOBAL STATE =============
 let isGenerating = false;
+let notificationUnsubscribe = null;
+
+// ============= NOTIFICATION HANDLER =============
+function setupNotificationListener() {
+    // Update notification badge in navbar
+    const updateNotificationBadge = () => {
+        const unreadCount = getUnreadCount();
+        const notificationBtn = document.getElementById('notificationBtn');
+        if (notificationBtn) {
+            const existingBadge = notificationBtn.querySelector('.notification-badge');
+            if (unreadCount > 0) {
+                if (existingBadge) {
+                    existingBadge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+                } else {
+                    const badge = document.createElement('span');
+                    badge.className = 'notification-badge absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-xs rounded-full flex items-center justify-center px-1 animate-pulse';
+                    badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+                    notificationBtn.appendChild(badge);
+                }
+            } else if (existingBadge) {
+                existingBadge.remove();
+            }
+        }
+    };
+    
+    notificationUnsubscribe = addNotificationListener(updateNotificationBadge);
+    updateNotificationBadge();
+}
 
 // ============= HANDLE GENERATE FUNCTION =============
 async function handleGenerate() {
@@ -249,7 +326,7 @@ async function handleGenerate() {
                 // Setup card events
                 setupQACardEvents();
                 
-                showError('Questions generated successfully!', 'success');
+                showSuccess(SUCCESS_MESSAGES.NOTE_SAVED.replace('Note', 'Questions'), 'success');
             } else {
                 qaDisplay.innerHTML = `
                     <div class="text-center py-12 bg-[#1F2937] rounded-xl">
@@ -267,7 +344,7 @@ async function handleGenerate() {
         if (qaDisplay) {
             qaDisplay.innerHTML = `
                 <div class="bg-red-500/10 border border-red-500 text-red-500 p-4 rounded-lg text-center">
-                    ${ERROR_MESSAGES.GENERIC || 'Error generating questions. Please try again.'}
+                    ${ERROR_MESSAGES.GENERIC}
                 </div>
             `;
         }
@@ -388,7 +465,7 @@ async function router() {
             } else if (path === ROUTES.LOGIN) {
                 setupLoginForm();
             } else if (path === ROUTES.VERIFY_OTP) {
-                setupOTPVerification();
+                setupVerifyOTP();
             } else if (path === ROUTES.DASHBOARD) {
                 setupDashboardEvents();
                 setupDashboard();
@@ -398,6 +475,14 @@ async function router() {
                 setupQuizPage();
             } else if (path === ROUTES.SCORE) {
                 setupScorePage();
+            } else if (path === ROUTES.SAVED) {
+                setupSavedPage();
+            } else if (path === ROUTES.PROFILE) {
+                setupProfilePage();
+            } else if (path === ROUTES.SETTINGS) {
+                setupSettingsPage();
+            } else if (path === ROUTES.NOTIFICATIONS) {
+                setupNotificationsPage();
             } else if (path.match(/^\/quiz\/\d+\/attempt$/)) {
                 // Initialize quiz attempt
                 initQuizAttempt();
@@ -406,25 +491,80 @@ async function router() {
         
     } catch (error) {
         console.error('Router error:', error);
-        app.innerHTML = `<div class="min-h-screen flex items-center justify-center">Error loading page</div>`;
+        app.innerHTML = `
+            <div class="min-h-screen flex items-center justify-center">
+                <div class="text-center">
+                    <div class="text-red-500 text-xl mb-4">Error loading page</div>
+                    <button onclick="window.location.reload()" class="bg-[#3B82F6] text-white px-4 py-2 rounded-lg">Reload</button>
+                </div>
+            </div>
+        `;
     }
 }
 
-// ============= INITIALIZE APP =============
-// Listen for hash changes
-window.addEventListener('hashchange', router);
+// ============= SYNC DATA WHEN ONLINE =============
+function setupOnlineSync() {
+    window.addEventListener('online', async () => {
+        console.log('Back online, syncing data...');
+        showSuccess('Back online! Syncing your data...', 'info');
+        const result = await syncPendingData();
+        if (result && result.notes.success + result.history.success > 0) {
+            showSuccess(`Synced ${result.notes.success + result.history.success} items`, 'success');
+            // Refresh dashboard if on dashboard
+            if (getCurrentPath() === ROUTES.DASHBOARD) {
+                await refreshSections();
+            }
+        }
+    });
+}
 
-// Initial route when page loads
-document.addEventListener('DOMContentLoaded', () => {
+// ============= INITIALIZE APP =============
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('Flashnotes App Initializing...');
+    
+    // Initialize notifications
+    initNotifications();
+    setupNotificationListener();
+    
+    // Setup online sync
+    setupOnlineSync();
+    
+    // Check authentication and redirect
+    const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+    const currentPath = getCurrentPath();
+    
+    if (!isAuthenticated && currentPath !== '/' && currentPath !== '/welcome' && 
+        currentPath !== '/login' && currentPath !== '/register' && currentPath !== '/verify-otp') {
+        window.location.hash = '#/login';
+        return;
+    }
+    
     // If no hash, set to home
     if (!window.location.hash) {
         window.location.hash = '#/';
     } else {
         router();
     }
+    
+    // Sync data in background if online
+    if (navigator.onLine && isAuthenticated) {
+        setTimeout(async () => {
+            await syncPendingData();
+        }, 3000);
+    }
+    
+    // Preload user profile if authenticated
+    if (isAuthenticated) {
+        try {
+            await getCurrentUserProfile();
+        } catch (error) {
+            console.error('Failed to load profile:', error);
+        }
+    }
 });
 
-// Handle browser back/forward buttons
+// Listen for hash changes
+window.addEventListener('hashchange', router);
 window.addEventListener('popstate', router);
 
 // Export for use in other files

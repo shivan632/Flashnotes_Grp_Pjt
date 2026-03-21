@@ -1,5 +1,5 @@
 // frontend/src/components/layout/Navbar.js
-// Complete Navbar with Dashboard, Saved List, Quiz, Score, Profile, and Notifications
+// Complete Navbar with Dashboard, Saved List, Quiz, Score, Profile, and Notifications - Enhanced UI
 
 export function Navbar() {
     const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
@@ -11,27 +11,27 @@ export function Navbar() {
     const notificationCount = parseInt(localStorage.getItem('notificationCount') || '3');
     
     return `
-        <nav class="bg-[#1F2937] shadow-lg sticky top-0 z-50 border-b border-[#374151]">
-            <div class="container mx-auto px-4">
-                <div class="flex items-center justify-between h-16">
+        <nav class="bg-gradient-to-r from-[#1F2937] to-[#111827] shadow-2xl sticky top-0 z-50 border-b border-[#374151]/50 backdrop-blur-sm">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16 lg:h-20">
                     <!-- Logo and Brand -->
                     <div class="flex items-center space-x-6">
                         <a href="#/" class="flex items-center space-x-2 group">
-                            <div class="w-8 h-8 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-lg flex items-center justify-center transform group-hover:rotate-3 transition-transform">
+                            <div class="w-9 h-9 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-xl flex items-center justify-center shadow-lg transform group-hover:rotate-3 group-hover:scale-105 transition-all duration-300">
                                 <span class="text-white font-bold text-xl">F</span>
                             </div>
-                            <span class="text-xl font-bold bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] bg-clip-text text-transparent">
+                            <span class="text-xl font-bold bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] bg-clip-text text-transparent group-hover:opacity-80 transition-opacity">
                                 Flashnotes
                             </span>
                         </a>
                         
                         <!-- Main Navigation Links - Visible when authenticated -->
                         ${isAuthenticated ? `
-                            <div class="hidden md:flex items-center space-x-1">
+                            <div class="hidden md:flex items-center space-x-1 lg:space-x-2">
                                 <a href="#/dashboard" 
-                                   class="nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all
+                                   class="nav-link relative px-4 py-2 text-sm font-medium rounded-xl transition-all duration-300
                                           ${window.location.hash === '#/dashboard' || window.location.hash === '#/' 
-                                            ? 'bg-[#3B82F6] text-white' 
+                                            ? 'bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] text-white shadow-lg' 
                                             : 'text-[#E5E7EB] hover:bg-[#374151] hover:text-[#3B82F6]'}">
                                     <span class="flex items-center space-x-2">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -42,9 +42,9 @@ export function Navbar() {
                                 </a>
                                 
                                 <a href="#/saved" 
-                                   class="nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all
+                                   class="nav-link relative px-4 py-2 text-sm font-medium rounded-xl transition-all duration-300
                                           ${window.location.hash === '#/saved' 
-                                            ? 'bg-[#3B82F6] text-white' 
+                                            ? 'bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] text-white shadow-lg' 
                                             : 'text-[#E5E7EB] hover:bg-[#374151] hover:text-[#3B82F6]'}">
                                     <span class="flex items-center space-x-2">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,9 +55,9 @@ export function Navbar() {
                                 </a>
                                 
                                 <a href="#/quiz" 
-                                   class="nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all
+                                   class="nav-link relative px-4 py-2 text-sm font-medium rounded-xl transition-all duration-300
                                           ${window.location.hash === '#/quiz' 
-                                            ? 'bg-[#3B82F6] text-white' 
+                                            ? 'bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] text-white shadow-lg' 
                                             : 'text-[#E5E7EB] hover:bg-[#374151] hover:text-[#3B82F6]'}">
                                     <span class="flex items-center space-x-2">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,9 +68,9 @@ export function Navbar() {
                                 </a>
                                 
                                 <a href="#/score" 
-                                   class="nav-link px-4 py-2 text-sm font-medium rounded-lg transition-all
+                                   class="nav-link relative px-4 py-2 text-sm font-medium rounded-xl transition-all duration-300
                                           ${window.location.hash === '#/score' 
-                                            ? 'bg-[#3B82F6] text-white' 
+                                            ? 'bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] text-white shadow-lg' 
                                             : 'text-[#E5E7EB] hover:bg-[#374151] hover:text-[#3B82F6]'}">
                                     <span class="flex items-center space-x-2">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,17 +84,17 @@ export function Navbar() {
                     </div>
                     
                     <!-- Right side icons and user menu -->
-                    <div class="flex items-center space-x-3">
+                    <div class="flex items-center space-x-2 sm:space-x-3">
                         ${isAuthenticated ? `
                             <!-- AI Chat Toggle Button -->
                             <button id="aiChatToggle" 
-                                    class="relative p-2 text-[#E5E7EB] hover:text-[#3B82F6] transition-colors rounded-lg hover:bg-[#374151] group"
+                                    class="relative p-2 text-[#E5E7EB] hover:text-[#3B82F6] transition-all duration-300 rounded-xl hover:bg-[#374151] group"
                                     title="AI Assistant">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-5 h-5 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
                                 </svg>
-                                <span class="absolute -top-1 -right-1 w-2 h-2 bg-[#3B82F6] rounded-full animate-pulse"></span>
-                                <span class="absolute hidden group-hover:block bg-[#1F2937] text-white text-xs px-2 py-1 rounded -bottom-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
+                                <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#3B82F6] rounded-full animate-pulse shadow-lg"></span>
+                                <span class="absolute hidden group-hover:block bg-[#111827] text-white text-xs px-2 py-1 rounded -bottom-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap shadow-lg">
                                     AI Assistant
                                 </span>
                             </button>
@@ -102,13 +102,13 @@ export function Navbar() {
                             <!-- Notification Icon with Counter -->
                             <div class="relative group">
                                 <button id="notificationBtn" 
-                                        class="relative p-2 text-[#E5E7EB] hover:text-[#3B82F6] transition-colors rounded-lg hover:bg-[#374151]"
+                                        class="relative p-2 text-[#E5E7EB] hover:text-[#3B82F6] transition-all duration-300 rounded-xl hover:bg-[#374151] group"
                                         title="Notifications">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-5 h-5 group-hover:scale-110 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                                     </svg>
                                     ${notificationCount > 0 ? `
-                                        <span class="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-xs rounded-full flex items-center justify-center px-1 animate-pulse">
+                                        <span class="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-gradient-to-r from-red-500 to-red-600 text-white text-xs rounded-full flex items-center justify-center px-1 shadow-lg animate-pulse">
                                             ${notificationCount > 9 ? '9+' : notificationCount}
                                         </span>
                                     ` : ''}
@@ -116,66 +116,90 @@ export function Navbar() {
                                 
                                 <!-- Notification Dropdown -->
                                 <div id="notificationDropdown" 
-                                     class="absolute right-0 mt-2 w-80 bg-[#1F2937] border border-[#374151] rounded-lg shadow-xl hidden group-hover:block hover:block z-50">
-                                    <div class="p-3 border-b border-[#374151] flex justify-between items-center">
-                                        <h3 class="font-semibold text-[#E5E7EB]">Notifications</h3>
-                                        <button id="markAllRead" class="text-xs text-[#60A5FA] hover:text-[#3B82F6]">Mark all as read</button>
+                                     class="absolute right-0 mt-3 w-80 bg-gradient-to-b from-[#1F2937] to-[#111827] border border-[#374151] rounded-2xl shadow-2xl hidden group-hover:block hover:block z-50 animate-fadeIn">
+                                    <div class="p-4 border-b border-[#374151] flex justify-between items-center bg-gradient-to-r from-[#1F2937] to-[#111827] rounded-t-2xl">
+                                        <h3 class="font-semibold text-[#E5E7EB] flex items-center gap-2">
+                                            <span class="w-2 h-2 bg-[#3B82F6] rounded-full animate-pulse"></span>
+                                            Notifications
+                                        </h3>
+                                        <button id="markAllRead" class="text-xs text-[#60A5FA] hover:text-[#3B82F6] transition-colors hover:underline">
+                                            Mark all as read
+                                        </button>
                                     </div>
-                                    <div class="max-h-96 overflow-y-auto" id="notificationList">
+                                    <div class="max-h-96 overflow-y-auto custom-scrollbar" id="notificationList">
                                         ${generateNotifications()}
                                     </div>
-                                    <div class="p-2 border-t border-[#374151] text-center">
-                                        <a href="#/notifications" class="text-sm text-[#60A5FA] hover:text-[#3B82F6]">View all</a>
+                                    <div class="p-3 border-t border-[#374151] text-center bg-[#111827]/50 rounded-b-2xl">
+                                        <a href="#/notifications" class="text-sm text-[#60A5FA] hover:text-[#3B82F6] transition-colors hover:underline flex items-center justify-center gap-1">
+                                            View all
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                            </svg>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
                             
                             <!-- Profile Menu -->
                             <div class="relative group">
-                                <button class="flex items-center space-x-2 text-[#E5E7EB] hover:text-[#3B82F6] transition-colors p-1 rounded-lg hover:bg-[#374151]">
-                                    <div class="w-8 h-8 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-full flex items-center justify-center">
+                                <button class="flex items-center space-x-2 text-[#E5E7EB] hover:text-[#3B82F6] transition-all duration-300 p-1.5 rounded-xl hover:bg-[#374151] group">
+                                    <div class="w-8 h-8 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
                                         <span class="text-white text-sm font-semibold">${userAvatar}</span>
                                     </div>
                                     <span class="hidden lg:inline text-sm font-medium">${userName}</span>
-                                    <svg class="w-4 h-4 hidden lg:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-4 h-4 hidden lg:block transition-transform duration-300 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                                     </svg>
                                 </button>
                                 
                                 <!-- Profile Dropdown -->
-                                <div class="absolute right-0 mt-2 w-56 bg-[#1F2937] border border-[#374151] rounded-lg shadow-xl hidden group-hover:block hover:block z-50">
-                                    <div class="px-4 py-3 border-b border-[#374151]">
-                                        <p class="text-sm text-[#E5E7EB] font-medium">${userName}</p>
+                                <div class="absolute right-0 mt-3 w-64 bg-gradient-to-b from-[#1F2937] to-[#111827] border border-[#374151] rounded-2xl shadow-2xl hidden group-hover:block hover:block z-50 animate-fadeIn">
+                                    <div class="px-4 py-3 border-b border-[#374151] bg-gradient-to-r from-[#1F2937] to-[#111827] rounded-t-2xl">
+                                        <p class="text-sm font-semibold text-[#E5E7EB]">${userName}</p>
                                         <p class="text-xs text-[#9CA3AF] truncate">${userEmail}</p>
                                     </div>
-                                    <a href="#/profile" class="flex items-center space-x-2 px-4 py-2 text-sm text-[#E5E7EB] hover:bg-[#374151] transition-colors">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                        </svg>
-                                        <span>My Profile</span>
-                                    </a>
-                                    <a href="#/settings" class="flex items-center space-x-2 px-4 py-2 text-sm text-[#E5E7EB] hover:bg-[#374151] transition-colors">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                                        </svg>
-                                        <span>Settings</span>
-                                    </a>
-                                    <hr class="border-[#374151] my-1">
-                                    <button id="logoutBtn" class="w-full flex items-center space-x-2 px-4 py-2 text-sm text-red-400 hover:bg-[#374151] transition-colors">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                                        </svg>
-                                        <span>Logout</span>
-                                    </button>
+                                    <div class="py-2">
+                                        <a href="#/profile" class="flex items-center space-x-3 px-4 py-2.5 text-sm text-[#E5E7EB] hover:bg-[#374151] transition-all duration-200 group">
+                                            <svg class="w-4 h-4 text-[#9CA3AF] group-hover:text-[#3B82F6] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                            </svg>
+                                            <span>My Profile</span>
+                                        </a>
+                                        <a href="#/settings" class="flex items-center space-x-3 px-4 py-2.5 text-sm text-[#E5E7EB] hover:bg-[#374151] transition-all duration-200 group">
+                                            <svg class="w-4 h-4 text-[#9CA3AF] group-hover:text-[#3B82F6] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                            </svg>
+                                            <span>Settings</span>
+                                        </a>
+                                        <a href="#/notifications" class="flex items-center space-x-3 px-4 py-2.5 text-sm text-[#E5E7EB] hover:bg-[#374151] transition-all duration-200 group">
+                                            <svg class="w-4 h-4 text-[#9CA3AF] group-hover:text-[#3B82F6] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                                            </svg>
+                                            <span>Notifications</span>
+                                        </a>
+                                    </div>
+                                    <hr class="border-[#374151]">
+                                    <div class="py-2">
+                                        <button id="logoutBtn" class="w-full flex items-center space-x-3 px-4 py-2.5 text-sm text-red-400 hover:bg-[#374151] transition-all duration-200 group">
+                                            <svg class="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                            </svg>
+                                            <span>Logout</span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         ` : `
-                            <a href="#/login" class="text-[#E5E7EB] hover:text-[#3B82F6] px-4 py-2 text-sm font-medium">Login</a>
-                            <a href="#/register" class="bg-[#3B82F6] hover:bg-[#60A5FA] text-white px-4 py-2 rounded-lg text-sm font-medium transition-all transform hover:scale-105">Sign Up</a>
+                            <a href="#/login" class="text-[#E5E7EB] hover:text-[#3B82F6] transition-all duration-300 px-4 py-2 text-sm font-medium hover:bg-[#374151] rounded-xl">
+                                Login
+                            </a>
+                            <a href="#/register" class="bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] hover:from-[#60A5FA] hover:to-[#8B5CF6] text-white px-5 py-2 rounded-xl text-sm font-medium transition-all duration-300 transform hover:scale-105 hover:shadow-lg">
+                                Sign Up
+                            </a>
                         `}
                         
                         <!-- Mobile menu button -->
-                        <button id="mobileMenuBtn" class="md:hidden text-[#E5E7EB] hover:text-[#3B82F6] transition-colors p-2">
+                        <button id="mobileMenuBtn" class="md:hidden p-2 text-[#E5E7EB] hover:text-[#3B82F6] transition-all duration-300 rounded-xl hover:bg-[#374151]">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                             </svg>
@@ -184,19 +208,19 @@ export function Navbar() {
                 </div>
                 
                 <!-- Mobile Navigation Menu -->
-                <div id="mobileMenu" class="hidden md:hidden py-4 border-t border-[#374151]">
+                <div id="mobileMenu" class="hidden md:hidden py-4 border-t border-[#374151] space-y-2 animate-slideDown">
                     ${isAuthenticated ? `
-                        <a href="#/dashboard" class="block py-2 px-4 text-[#E5E7EB] hover:text-[#3B82F6] transition-colors">Dashboard</a>
-                        <a href="#/saved" class="block py-2 px-4 text-[#E5E7EB] hover:text-[#3B82F6] transition-colors">Saved List</a>
-                        <a href="#/quiz" class="block py-2 px-4 text-[#E5E7EB] hover:text-[#3B82F6] transition-colors">Quiz</a>
-                        <a href="#/score" class="block py-2 px-4 text-[#E5E7EB] hover:text-[#3B82F6] transition-colors">Score</a>
+                        <a href="#/dashboard" class="block py-2.5 px-4 text-[#E5E7EB] hover:text-[#3B82F6] hover:bg-[#374151] rounded-xl transition-all duration-200">Dashboard</a>
+                        <a href="#/saved" class="block py-2.5 px-4 text-[#E5E7EB] hover:text-[#3B82F6] hover:bg-[#374151] rounded-xl transition-all duration-200">Saved List</a>
+                        <a href="#/quiz" class="block py-2.5 px-4 text-[#E5E7EB] hover:text-[#3B82F6] hover:bg-[#374151] rounded-xl transition-all duration-200">Quiz</a>
+                        <a href="#/score" class="block py-2.5 px-4 text-[#E5E7EB] hover:text-[#3B82F6] hover:bg-[#374151] rounded-xl transition-all duration-200">Score</a>
                         <hr class="border-[#374151] my-2">
-                        <a href="#/profile" class="block py-2 px-4 text-[#E5E7EB] hover:text-[#3B82F6] transition-colors">My Profile</a>
-                        <a href="#/settings" class="block py-2 px-4 text-[#E5E7EB] hover:text-[#3B82F6] transition-colors">Settings</a>
-                        <button id="mobileLogoutBtn" class="w-full text-left py-2 px-4 text-red-400 hover:bg-[#374151] transition-colors">Logout</button>
+                        <a href="#/profile" class="block py-2.5 px-4 text-[#E5E7EB] hover:text-[#3B82F6] hover:bg-[#374151] rounded-xl transition-all duration-200">My Profile</a>
+                        <a href="#/settings" class="block py-2.5 px-4 text-[#E5E7EB] hover:text-[#3B82F6] hover:bg-[#374151] rounded-xl transition-all duration-200">Settings</a>
+                        <button id="mobileLogoutBtn" class="w-full text-left py-2.5 px-4 text-red-400 hover:bg-[#374151] rounded-xl transition-all duration-200">Logout</button>
                     ` : `
-                        <a href="#/login" class="block py-2 px-4 text-[#E5E7EB] hover:text-[#3B82F6] transition-colors">Login</a>
-                        <a href="#/register" class="block py-2 px-4 text-[#3B82F6] font-medium">Register</a>
+                        <a href="#/login" class="block py-2.5 px-4 text-[#E5E7EB] hover:text-[#3B82F6] hover:bg-[#374151] rounded-xl transition-all duration-200">Login</a>
+                        <a href="#/register" class="block py-2.5 px-4 text-[#3B82F6] font-medium rounded-xl">Register</a>
                     `}
                 </div>
             </div>
@@ -204,7 +228,7 @@ export function Navbar() {
     `;
 }
 
-// Helper function to generate notifications
+// Helper function to generate notifications with improved UI
 function generateNotifications() {
     const notifications = [
         {
@@ -242,15 +266,17 @@ function generateNotifications() {
     ];
     
     return notifications.map(notif => `
-        <div class="notification-item p-3 hover:bg-[#374151] transition-colors border-b border-[#374151] last:border-0 ${!notif.read ? 'bg-[#1F2937]' : ''}" data-id="${notif.id}">
+        <div class="notification-item p-4 hover:bg-[#374151] transition-all duration-300 border-b border-[#374151] last:border-0 cursor-pointer group ${!notif.read ? 'bg-gradient-to-r from-[#1F2937] to-[#111827]' : ''}" data-id="${notif.id}">
             <div class="flex items-start space-x-3">
-                <div class="text-xl">${notif.icon}</div>
+                <div class="text-2xl">${notif.icon}</div>
                 <div class="flex-1">
-                    <p class="text-sm font-medium text-[#E5E7EB]">${notif.title}</p>
-                    <p class="text-xs text-[#9CA3AF] mt-1">${notif.message}</p>
-                    <p class="text-xs text-[#60A5FA] mt-1">${notif.time}</p>
+                    <div class="flex justify-between items-start">
+                        <p class="text-sm font-semibold text-[#E5E7EB]">${notif.title}</p>
+                        <span class="text-xs text-[#9CA3AF]">${notif.time}</span>
+                    </div>
+                    <p class="text-xs text-[#9CA3AF] mt-1 leading-relaxed">${notif.message}</p>
                 </div>
-                ${!notif.read ? '<span class="w-2 h-2 bg-[#3B82F6] rounded-full mt-2"></span>' : ''}
+                ${!notif.read ? '<span class="w-2 h-2 bg-[#3B82F6] rounded-full animate-pulse mt-1"></span>' : ''}
             </div>
         </div>
     `).join('');
@@ -265,6 +291,10 @@ export function setupNavbar() {
     if (mobileBtn && mobileMenu) {
         mobileBtn.addEventListener('click', () => {
             mobileMenu.classList.toggle('hidden');
+            const icon = mobileBtn.querySelector('svg');
+            if (icon) {
+                icon.style.transform = mobileMenu.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(90deg)';
+            }
         });
     }
     
@@ -307,12 +337,10 @@ export function setupNavbar() {
 
 // Notification functions - FIXED VERSION
 function setupNotifications() {
-    // Initialize notification count if not set
     if (!localStorage.getItem('notificationCount')) {
         localStorage.setItem('notificationCount', '4');
     }
     
-    // Close dropdown when clicking outside
     document.addEventListener('click', (e) => {
         const notifBtn = document.getElementById('notificationBtn');
         const notifDropdown = document.getElementById('notificationDropdown');
@@ -322,7 +350,6 @@ function setupNotifications() {
         }
     });
     
-    // Toggle dropdown on button click
     const notifBtn = document.getElementById('notificationBtn');
     const notifDropdown = document.getElementById('notificationDropdown');
     
@@ -338,16 +365,14 @@ function setupNotifications() {
 function markNotificationRead(id) {
     console.log('Marking notification as read:', id);
     
-    // Update notification count
     const currentCount = parseInt(localStorage.getItem('notificationCount') || '0');
     if (currentCount > 0) {
         localStorage.setItem('notificationCount', (currentCount - 1).toString());
     }
     
-    // Update the badge - FIXED SELECTOR
     const notifBtn = document.getElementById('notificationBtn');
     if (notifBtn) {
-        const existingBadge = notifBtn.querySelector('span.bg-red-500');
+        const existingBadge = notifBtn.querySelector('span.bg-gradient-to-r');
         if (existingBadge) {
             const newCount = currentCount - 1;
             if (newCount > 0) {
@@ -358,11 +383,10 @@ function markNotificationRead(id) {
         }
     }
     
-    // Mark this notification as read in UI
     const notificationItem = document.querySelector(`.notification-item[data-id="${id}"]`);
     if (notificationItem) {
-        notificationItem.classList.remove('bg-[#1F2937]');
-        const unreadDot = notificationItem.querySelector('span.w-2');
+        notificationItem.classList.remove('bg-gradient-to-r');
+        const unreadDot = notificationItem.querySelector('span.animate-pulse');
         if (unreadDot) unreadDot.remove();
     }
 }
@@ -371,21 +395,18 @@ function markAllNotificationsRead() {
     console.log('Marking all notifications as read');
     localStorage.setItem('notificationCount', '0');
     
-    // Remove badge - FIXED
     const notifBtn = document.getElementById('notificationBtn');
     if (notifBtn) {
-        const badge = notifBtn.querySelector('span.bg-red-500');
+        const badge = notifBtn.querySelector('span.bg-gradient-to-r');
         if (badge) badge.remove();
     }
     
-    // Remove all unread indicators from notifications
     document.querySelectorAll('.notification-item').forEach(item => {
-        item.classList.remove('bg-[#1F2937]');
-        const dot = item.querySelector('span.w-2');
+        item.classList.remove('bg-gradient-to-r');
+        const dot = item.querySelector('span.animate-pulse');
         if (dot) dot.remove();
     });
     
-    // Hide dropdown
     const dropdown = document.getElementById('notificationDropdown');
     if (dropdown) dropdown.classList.add('hidden');
 }
