@@ -654,83 +654,86 @@ html {
     }
 }
 
-/* OTP Display Box - Right Side */
-.otp-display-box {
+/* OTP Display Box - Enhanced (More Right, Larger Size) */
+.otp-display-box-enhanced {
     position: absolute;
     top: 20px;
-    right: -120px;
+    right: -180px;
     background: linear-gradient(135deg, #14532d 0%, #166534 100%);
-    border: 1px solid #22c55e;
-    border-radius: 16px;
-    padding: 16px 20px;
-    min-width: 180px;
-    box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
+    border: 2px solid #22c55e;
+    border-radius: 20px;
+    padding: 20px 24px;
+    min-width: 260px;
+    box-shadow: 0 10px 30px rgba(34, 197, 94, 0.4);
     animation: slideInRight 0.4s ease-out;
     z-index: 50;
     backdrop-filter: blur(4px);
 }
 
-.otp-display-content {
+.otp-display-content-enhanced {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 18px;
 }
 
-.otp-display-icon {
-    background: rgba(34, 197, 94, 0.2);
-    border-radius: 12px;
-    padding: 10px;
+.otp-display-icon-enhanced {
+    background: rgba(34, 197, 94, 0.25);
+    border-radius: 14px;
+    padding: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #86efac;
 }
 
-.otp-display-text {
+.otp-display-text-enhanced {
     flex: 1;
 }
 
-.otp-display-label {
-    font-size: 11px;
-    font-weight: 500;
+.otp-display-label-enhanced {
+    font-size: 12px;
+    font-weight: 600;
     color: #bbf7d0;
     letter-spacing: 0.5px;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
 }
 
-.otp-display-code {
-    font-size: 32px;
+.otp-display-code-enhanced {
+    font-size: 42px;
     font-family: monospace;
     font-weight: bold;
-    letter-spacing: 4px;
+    letter-spacing: 6px;
     color: #86efac;
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.25);
     display: inline-block;
-    padding: 4px 12px;
-    border-radius: 10px;
-    margin: 4px 0;
+    padding: 8px 16px;
+    border-radius: 12px;
+    margin: 6px 0;
+    text-shadow: 0 0 5px rgba(34, 197, 94, 0.5);
 }
 
-.otp-display-timer {
+.otp-display-timer-enhanced {
     display: flex;
     align-items: center;
-    gap: 4px;
-    font-size: 10px;
+    gap: 6px;
+    font-size: 11px;
     color: #86efac;
-    margin-top: 6px;
+    margin-top: 8px;
 }
 
-.otp-display-timer span {
+.otp-display-timer-enhanced span {
     font-family: monospace;
     font-weight: 600;
     color: #facc15;
+    font-size: 12px;
 }
 
-.otp-display-copy {
-    background: rgba(255, 255, 255, 0.1);
+.otp-display-copy-enhanced {
+    background: rgba(255, 255, 255, 0.12);
     border: none;
-    border-radius: 10px;
-    padding: 8px;
+    border-radius: 12px;
+    padding: 10px;
     cursor: pointer;
     color: #bbf7d0;
     transition: all 0.2s;
@@ -739,15 +742,15 @@ html {
     justify-content: center;
 }
 
-.otp-display-copy:hover {
-    background: rgba(255, 255, 255, 0.2);
+.otp-display-copy-enhanced:hover {
+    background: rgba(255, 255, 255, 0.25);
     transform: scale(1.05);
 }
 
 @keyframes slideInRight {
     from {
         opacity: 0;
-        transform: translateX(50px);
+        transform: translateX(80px);
     }
     to {
         opacity: 1;
@@ -757,11 +760,12 @@ html {
 
 /* Responsive */
 @media (max-width: 768px) {
-    .otp-display-box {
+    .otp-display-box-enhanced {
         position: static;
         margin-bottom: 20px;
         margin-left: auto;
         margin-right: auto;
-        max-width: 260px;
+        max-width: 280px;
+        right: auto;
     }
 }

@@ -21,26 +21,26 @@ export function VerifyOTPPage() {
                     <p class="text-[#60A5FA] font-medium">${email}</p>
                 </div>
 
-                <!-- OTP DISPLAY BOX - Right Side Position -->
-                <div id="otpDisplayBox" class="otp-display-box">
-                    <div class="otp-display-content">
-                        <div class="otp-display-icon">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- OTP DISPLAY BOX - Right Side, Larger Size -->
+                <div id="otpDisplayBox" class="otp-display-box-enhanced">
+                    <div class="otp-display-content-enhanced">
+                        <div class="otp-display-icon-enhanced">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
                         </div>
-                        <div class="otp-display-text">
-                            <div class="otp-display-label">Your Verification Code</div>
-                            <div class="otp-display-code" id="otpCodeValue">${devOTP || '------'}</div>
-                            <div class="otp-display-timer">
+                        <div class="otp-display-text-enhanced">
+                            <div class="otp-display-label-enhanced">Your Verification Code</div>
+                            <div class="otp-display-code-enhanced" id="otpCodeValue">${devOTP || '------'}</div>
+                            <div class="otp-display-timer-enhanced">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 <span>Valid for <span id="boxTimer">05:00</span></span>
                             </div>
                         </div>
-                        <button class="otp-display-copy" id="copyOtpBtn" title="Copy code">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button class="otp-display-copy-enhanced" id="copyOtpBtn" title="Copy code">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
                         </button>
@@ -133,14 +133,38 @@ export function setupVerifyOTP() {
         return;
     }
     
-    // Update OTP display if available
-    if (currentOTP && otpCodeDisplay) {
-        otpCodeDisplay.textContent = currentOTP;
-        otpCodeDisplay.classList.add('animate-pulse');
-        setTimeout(() => {
-            otpCodeDisplay.classList.remove('animate-pulse');
-        }, 2000);
+    // Fetch OTP from backend if not available in localStorage
+    async function fetchOTP() {
+        if (!currentOTP) {
+            try {
+                const result = await authAPI.resendOTP(email);
+                if (result.success && result.otp) {
+                    currentOTP = result.otp;
+                    localStorage.setItem('devOTP', result.otp);
+                    if (otpCodeDisplay) {
+                        otpCodeDisplay.textContent = result.otp;
+                        otpCodeDisplay.classList.add('animate-pulse');
+                        setTimeout(() => {
+                            otpCodeDisplay.classList.remove('animate-pulse');
+                        }, 2000);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch OTP:', error);
+            }
+        } else {
+            if (otpCodeDisplay) {
+                otpCodeDisplay.textContent = currentOTP;
+                otpCodeDisplay.classList.add('animate-pulse');
+                setTimeout(() => {
+                    otpCodeDisplay.classList.remove('animate-pulse');
+                }, 2000);
+            }
+        }
     }
+    
+    // Call fetchOTP on page load
+    fetchOTP();
     
     let timeLeft = 300;
     let timerInterval;
@@ -384,9 +408,9 @@ export function setupVerifyOTP() {
             const otpCode = document.getElementById('otpCodeValue')?.textContent;
             if (otpCode && otpCode !== '------' && otpCode !== 'EXPIRED') {
                 navigator.clipboard.writeText(otpCode);
-                copyBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+                copyBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
                 setTimeout(() => {
-                    copyBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>';
+                    copyBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>';
                 }, 2000);
             }
         });
