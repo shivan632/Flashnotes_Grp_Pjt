@@ -9,19 +9,18 @@
     <link rel="icon" href="public/favicon.ico">
     
     <!-- API Configuration - IMPORTANT: Update with your actual Render backend URL -->
-       <script>
+<script>
     (function() {
         const isLocal = window.location.hostname === 'localhost' || 
                        window.location.hostname === '127.0.0.1';
         
         if (isLocal) {
             window.API_URL = 'http://localhost:10000/api';
-            console.log('🔧 Local mode - API_URL:', window.API_URL);
         } else {
-            // Use BACKEND URL, not frontend URL
-            window.API_URL = 'https://flashnotes-backend.onrender.com/api';
-            console.log('🚀 Production mode - API_URL:', window.API_URL);
+            // Use your Render backend URL
+            window.API_URL = 'https://flashnotes-api.onrender.com/api';
         }
+        console.log('🔧 API_URL:', window.API_URL);
     })();
 </script>
     
