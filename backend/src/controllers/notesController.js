@@ -1,233 +1,160 @@
-// backend/src/controllers/notesController.js
+// backend/src/controllers/historyController.js
 import { supabase } from '../config/supabase.js';
 
-// Get all notes for a user
-export const getAllNotes = async (req, res) => {
+// Add to history
+export const addToHistory = async (req, res) => {
     try {
         const userId = req.user.id;
-        
-        const { data: notes, error } = await supabase
-            .from('saved_notes')
-            .select('*')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false });
-        
-        if (error) throw error;
-        
-        // Transform to frontend format
-        const formattedNotes = notes.map(note => ({
-            id: note.id,
-            topic: note.topic,
-            question: note.question,
-            answer: note.answer,
-            savedAt: note.created_at
-        }));
-        
-        res.json({
-            success: true,
-            notes: formattedNotes
-        });
-        
-    } catch (error) {
-        console.error('Get all notes error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch notes'
-        });
-    }
-};
+        const { topic } = req.body;
 
-// Get single note by ID
-export const getNoteById = async (req, res) => {
-    try {
-        const userId = req.user.id;
-        const noteId = req.params.id;
-        
-        const { data: note, error } = await supabase
-            .from('saved_notes')
-            .select('*')
-            .eq('id', noteId)
-            .eq('user_id', userId)
-            .single();
-        
-        if (error) {
-            if (error.code === 'PGRST116') {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Note not found'
-                });
-            }
-            throw error;
-        }
-        
-        res.json({
-            success: true,
-            note: {
-                id: note.id,
-                topic: note.topic,
-                question: note.question,
-                answer: note.answer,
-                savedAt: note.created_at
-            }
-        });
-        
-    } catch (error) {
-        console.error('Get note by ID error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch note'
-        });
-    }
-};
+        console.log('📝 Adding to history:', { userId, topic });
 
-// Create new note
-export const createNote = async (req, res) => {
-    try {
-        const userId = req.user.id;
-        const { topic, question, answer } = req.body;
-        
-        // Validate input
-        if (!topic || !question || !answer) {
+        if (!topic) {
             return res.status(400).json({
                 success: false,
-                message: 'Topic, question, and answer are required'
+                message: 'Topic is required'
             });
         }
-        
-        const { data: note, error } = await supabase
-            .from('saved_notes')
+
+        // Check if topic already exists in history
+        const { data: existing, error: checkError } = await supabase
+            .from('history')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('topic', topic)
+            .maybeSingle();
+
+        if (existing) {
+            // Update existing history entry
+            const { data: updated, error: updateError } = await supabase
+                .from('history')
+                .update({ searched_at: new Date().toISOString() })
+                .eq('id', existing.id)
+                .select()
+                .single();
+
+            if (updateError) throw updateError;
+
+            return res.json({
+                success: true,
+                message: 'History updated',
+                history: {
+                    id: updated.id,
+                    topic: updated.topic,
+                    searchedAt: updated.searched_at
+                }
+            });
+        }
+
+        // Create new history entry
+        const { data: history, error } = await supabase
+            .from('history')
             .insert([{
                 user_id: userId,
                 topic,
-                question,
-                answer,
-                created_at: new Date().toISOString()
+                searched_at: new Date().toISOString()
             }])
             .select()
             .single();
-        
+
         if (error) throw error;
-        
+
         res.status(201).json({
             success: true,
-            message: 'Note saved successfully',
-            note: {
-                id: note.id,
-                topic: note.topic,
-                question: note.question,
-                answer: note.answer,
-                savedAt: note.created_at
+            message: 'Added to history',
+            history: {
+                id: history.id,
+                topic: history.topic,
+                searchedAt: history.searched_at
             }
         });
-        
+
     } catch (error) {
-        console.error('Create note error:', error);
+        console.error('Add to history error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to save note'
+            message: error.message || 'Failed to add to history'
         });
     }
 };
 
-// Update note
-export const updateNote = async (req, res) => {
+// Get user's history
+export const getHistory = async (req, res) => {
     try {
         const userId = req.user.id;
-        const noteId = req.params.id;
-        const { topic, question, answer } = req.body;
-        
-        // Check if note exists and belongs to user
-        const { data: existingNote, error: checkError } = await supabase
-            .from('saved_notes')
-            .select('id')
-            .eq('id', noteId)
+
+        const { data: history, error } = await supabase
+            .from('history')
+            .select('*')
             .eq('user_id', userId)
-            .single();
-        
-        if (checkError || !existingNote) {
-            return res.status(404).json({
-                success: false,
-                message: 'Note not found'
-            });
-        }
-        
-        // Update note
-        const { data: note, error } = await supabase
-            .from('saved_notes')
-            .update({
-                topic: topic || existingNote.topic,
-                question: question || existingNote.question,
-                answer: answer || existingNote.answer,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', noteId)
-            .eq('user_id', userId)
-            .select()
-            .single();
-        
+            .order('searched_at', { ascending: false });
+
         if (error) throw error;
-        
+
         res.json({
             success: true,
-            message: 'Note updated successfully',
-            note: {
-                id: note.id,
-                topic: note.topic,
-                question: note.question,
-                answer: note.answer,
-                savedAt: note.created_at
-            }
+            history: history || []
         });
-        
+
     } catch (error) {
-        console.error('Update note error:', error);
+        console.error('Get history error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to update note'
+            message: 'Failed to fetch history'
         });
     }
 };
 
-// Delete note
-export const deleteNote = async (req, res) => {
+// Delete history entry
+export const deleteHistory = async (req, res) => {
     try {
         const userId = req.user.id;
-        const noteId = req.params.id;
-        
-        // Check if note exists and belongs to user
-        const { data: existingNote, error: checkError } = await supabase
-            .from('saved_notes')
-            .select('id')
-            .eq('id', noteId)
-            .eq('user_id', userId)
-            .single();
-        
-        if (checkError || !existingNote) {
-            return res.status(404).json({
-                success: false,
-                message: 'Note not found'
-            });
-        }
-        
-        // Delete note
+        const { id } = req.params;
+
         const { error } = await supabase
-            .from('saved_notes')
+            .from('history')
             .delete()
-            .eq('id', noteId)
+            .eq('id', id)
             .eq('user_id', userId);
-        
+
         if (error) throw error;
-        
+
         res.json({
             success: true,
-            message: 'Note deleted successfully'
+            message: 'History entry deleted'
         });
-        
+
     } catch (error) {
-        console.error('Delete note error:', error);
+        console.error('Delete history error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to delete note'
+            message: 'Failed to delete history'
+        });
+    }
+};
+
+// Clear all history
+export const clearHistory = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const { error } = await supabase
+            .from('history')
+            .delete()
+            .eq('user_id', userId);
+
+        if (error) throw error;
+
+        res.json({
+            success: true,
+            message: 'All history cleared'
+        });
+
+    } catch (error) {
+        console.error('Clear history error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to clear history'
         });
     }
 };

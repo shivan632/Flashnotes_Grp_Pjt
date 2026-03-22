@@ -1,31 +1,25 @@
-const admin = require('firebase-admin');
+import admin from 'firebase-admin';
+import dotenv from 'dotenv';
 
-// Initialize Firebase Admin SDK
-let firebaseApp = null;
+dotenv.config();
 
-const initializeFirebase = () => {
-  if (firebaseApp) return firebaseApp;
+if (!admin.apps.length) {
+    try {
+        // Simplified - only essential keys
+        const serviceAccount = {
+            projectId: process.env.FIREBASE_PROJECT_ID,
+            privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        };
 
-  try {
-    const serviceAccount = {
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    };
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount)
+        });
 
-    firebaseApp = admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      databaseURL: process.env.FIREBASE_DATABASE_URL,
-    });
+        console.log('✅ Firebase Admin initialized');
+    } catch (error) {
+        console.error('❌ Firebase error:', error.message);
+    }
+}
 
-    console.log('✅ Firebase initialized successfully');
-    return firebaseApp;
-  } catch (error) {
-    console.error('❌ Firebase initialization failed:', error.message);
-    return null;
-  }
-};
-
-initializeFirebase();
-
-module.exports = { admin };
+export default admin;

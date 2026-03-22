@@ -4,7 +4,7 @@ import { authenticateToken } from '../middleware/auth.js';
 import {
     getAllNotes,
     getNoteById,
-    createNote,
+    saveNote,
     updateNote,
     deleteNote
 } from '../controllers/notesController.js';
@@ -17,7 +17,7 @@ router.use(authenticateToken);
 // Routes
 router.get('/', getAllNotes);
 router.get('/:id', getNoteById);
-router.post('/', createNote);
+router.post('/save', saveNote);
 router.put('/:id', updateNote);
 router.delete('/:id', deleteNote);
 
