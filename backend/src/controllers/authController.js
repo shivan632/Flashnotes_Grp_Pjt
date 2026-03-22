@@ -8,7 +8,7 @@ import nodemailer from 'nodemailer';
 // OTP Storage
 const otpStore = new Map();
 
-// Email transporter setup - FIXED
+// Email transporter with higher timeouts for Render
 const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.EMAIL_PORT) || 587,
@@ -18,10 +18,11 @@ const transporter = nodemailer.createTransport({
         pass: process.env.EMAIL_PASS,
     },
     // Timeout settings for Render
-    connectionTimeout: 30000,
-    greetingTimeout: 30000,
-    socketTimeout: 30000,
-    // TLS settings
+    connectionTimeout: 60000,  // 60 seconds
+    greetingTimeout: 60000,
+    socketTimeout: 60000,
+    pool: true,
+    maxConnections: 1,
     tls: {
         rejectUnauthorized: false
     }
@@ -32,75 +33,59 @@ const generateOTP = () => {
     return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Send OTP email
-const sendOTPEmail = async (email, otp) => {
-    try {
-        const mailOptions = {
-            from: `"Flashnotes" <${process.env.EMAIL_USER}>`,
-            to: email,
-            subject: 'Flashnotes - Email Verification Code',
-            html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #111827; color: #E5E7EB; border-radius: 12px;">
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <div style="background: linear-gradient(135deg, #3B82F6, #A78BFA); width: 60px; height: 60px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;">
-                            <svg style="width: 30px; height: 30px; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                            </svg>
-                        </div>
-                        <h2 style="color: #3B82F6; margin-top: 15px;">Flashnotes Verification</h2>
+// Send OTP email with retry logic
+const sendOTPEmail = async (email, otp, retries = 2) => {
+    const mailOptions = {
+        from: `"Flashnotes" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: 'Flashnotes - Email Verification Code',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #111827; color: #E5E7EB; border-radius: 12px;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="background: linear-gradient(135deg, #3B82F6, #A78BFA); width: 60px; height: 60px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;">
+                        <svg style="width: 30px; height: 30px; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
                     </div>
-                    
-                    <div style="background: #1F2937; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
-                        <p style="margin-bottom: 15px;">Hello,</p>
-                        <p style="margin-bottom: 15px;">Use the following verification code to complete your registration:</p>
-                        <div style="text-align: center; margin: 25px 0;">
-                            <div style="background: #111827; padding: 15px; border-radius: 10px; display: inline-block;">
-                                <span style="font-size: 36px; font-family: monospace; font-weight: bold; letter-spacing: 8px; color: #60A5FA;">${otp}</span>
-                            </div>
-                        </div>
-                        <p style="margin-bottom: 15px;">This code will expire in <strong style="color: #F59E0B;">5 minutes</strong>.</p>
-                        <p style="margin-bottom: 5px;">If you didn't request this code, please ignore this email.</p>
-                    </div>
-                    
-                    <div style="text-align: center; font-size: 12px; color: #6B7280;">
-                        <p>© 2026 Flashnotes. All rights reserved.</p>
-                    </div>
+                    <h2 style="color: #3B82F6; margin-top: 15px;">Flashnotes Verification</h2>
                 </div>
-            `,
-        };
+                
+                <div style="background: #1F2937; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                    <p style="margin-bottom: 15px;">Hello,</p>
+                    <p style="margin-bottom: 15px;">Use the following verification code to complete your registration:</p>
+                    <div style="text-align: center; margin: 25px 0;">
+                        <div style="background: #111827; padding: 15px; border-radius: 10px; display: inline-block;">
+                            <span style="font-size: 36px; font-family: monospace; font-weight: bold; letter-spacing: 8px; color: #60A5FA;">${otp}</span>
+                        </div>
+                    </div>
+                    <p style="margin-bottom: 15px;">This code will expire in <strong style="color: #F59E0B;">5 minutes</strong>.</p>
+                    <p style="margin-bottom: 5px;">If you didn't request this code, please ignore this email.</p>
+                </div>
+                
+                <div style="text-align: center; font-size: 12px; color: #6B7280;">
+                    <p>© 2026 Flashnotes. All rights reserved.</p>
+                </div>
+            </div>
+        `,
+    };
 
-        // Send email with timeout
-        const result = await Promise.race([
-            transporter.sendMail(mailOptions),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Email timeout')), 15000))
-        ]);
-        
-        console.log('📧 OTP email sent to:', email);
-        return true;
-        
-    } catch (error) {
-        console.error('❌ Email error:', error.message);
-        
-        // Log OTP in console for development (so you can still test)
-        if (process.env.NODE_ENV !== 'production') {
-            console.log('📝 [DEV] OTP for', email, ':', otp);
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            console.log(`📧 Email attempt ${attempt} for ${email}...`);
+            await transporter.sendMail(mailOptions);
+            console.log('✅ OTP email sent to:', email);
+            return true;
+        } catch (error) {
+            console.error(`❌ Email attempt ${attempt} failed:`, error.message);
+            if (attempt === retries) {
+                console.log('📝 [DEV] OTP for', email, ':', otp);
+                return false;
+            }
+            await new Promise(resolve => setTimeout(resolve, 2000));
         }
-        
-        return false;
     }
+    return false;
 };
-
-// In register function - call with fallback
-// After creating user and generating OTP
-try {
-    const emailSent = await sendOTPEmail(email, otp);
-    if (!emailSent && process.env.NODE_ENV === 'production') {
-        console.log('⚠️ Email failed but continuing registration');
-    }
-} catch (emailError) {
-    console.error('Email sending error:', emailError.message);
-    // Don't fail registration if email fails
-}
 
 // ============= REGISTER =============
 export const register = async (req, res) => {
@@ -132,7 +117,7 @@ export const register = async (req, res) => {
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Create user in users table
+        // Create user
         const { data: newUser, error: createError } = await supabase
             .from('users')
             .insert({
@@ -153,27 +138,9 @@ export const register = async (req, res) => {
 
         console.log('✅ User created:', newUser.id);
 
-        // Create profile in profiles table (if exists)
-        // In register function - use correct column names based on your table
-try {
-    const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-            id: newUser.id,
-            username: name.toLowerCase().replace(/\s/g, '_'),
-            full_name: name,
-            email: email
-        });
-    
-    if (profileError) {
-        console.log('⚠️ Profile creation error:', profileError.message);
-    }
-} catch (err) {
-    console.log('⚠️ Profile creation skipped');
-}
-
         // Generate OTP
         const otp = generateOTP();
+        console.log('🔐 Generated OTP:', otp);
         
         // Store OTP
         otpStore.set(email, {
@@ -182,14 +149,12 @@ try {
             attempts: 0,
             userId: newUser.id,
         });
+        console.log('📦 OTP stored for:', email);
 
         // Send OTP email
-        try {
-            await sendOTPEmail(email, otp);
-            console.log('📧 OTP email sent to:', email);
-        } catch (emailError) {
-            console.error('❌ Email error:', emailError);
-        }
+        console.log('📧 Attempting to send OTP to:', email);
+        const emailSent = await sendOTPEmail(email, otp);
+        console.log('📧 Email sent status:', emailSent);
 
         res.status(201).json({
             success: true,
@@ -210,6 +175,8 @@ export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
+        console.log('🔐 Login attempt:', { email });
+
         if (!email || !password) {
             return res.status(400).json({ error: 'Email and password are required' });
         }
@@ -222,24 +189,34 @@ export const login = async (req, res) => {
             .maybeSingle();
 
         if (!user) {
+            console.log('❌ User not found:', email);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
+
+        console.log('✅ User found:', user.id);
 
         // Check password
         const isValidPassword = await bcrypt.compare(password, user.password);
         if (!isValidPassword) {
+            console.log('❌ Invalid password for:', email);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
         // Check if email is verified
         if (!user.email_verified) {
+            console.log('⚠️ Email not verified:', email);
+            
+            // Resend OTP
             const otp = generateOTP();
+            console.log('🔐 New OTP generated:', otp);
+            
             otpStore.set(email, {
                 otp,
                 expiresAt: Date.now() + 5 * 60 * 1000,
                 attempts: 0,
                 userId: user.id,
             });
+            
             await sendOTPEmail(email, otp);
             
             return res.status(403).json({
@@ -257,6 +234,8 @@ export const login = async (req, res) => {
             { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
         );
 
+        console.log('✅ Login successful for:', email);
+
         res.json({
             success: true,
             token,
@@ -269,7 +248,7 @@ export const login = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('❌ Login error:', error);
         res.status(500).json({ error: 'Login failed' });
     }
 };
@@ -279,22 +258,33 @@ export const verifyOTP = async (req, res) => {
     try {
         const { email, otp } = req.body;
 
+        console.log('🔐 OTP Verification attempt for:', email);
+        console.log('📝 Received OTP:', otp);
+
         if (!email || !otp) {
             return res.status(400).json({ error: 'Email and OTP are required' });
         }
 
         const storedData = otpStore.get(email);
+        console.log('📦 Stored OTP data:', storedData ? { 
+            otp: storedData.otp, 
+            expiresAt: storedData.expiresAt,
+            attempts: storedData.attempts 
+        } : 'No OTP found');
 
         if (!storedData) {
+            console.log('❌ No OTP found for:', email);
             return res.status(400).json({ error: 'No OTP found. Please request a new one.' });
         }
 
         if (Date.now() > storedData.expiresAt) {
+            console.log('❌ OTP expired for:', email);
             otpStore.delete(email);
             return res.status(400).json({ error: 'OTP has expired. Please request a new one.' });
         }
 
         if (storedData.attempts >= 5) {
+            console.log('❌ Too many attempts for:', email);
             otpStore.delete(email);
             return res.status(400).json({ error: 'Too many attempts. Please request a new OTP.' });
         }
@@ -302,8 +292,11 @@ export const verifyOTP = async (req, res) => {
         if (storedData.otp !== otp) {
             storedData.attempts++;
             otpStore.set(email, storedData);
+            console.log('❌ Invalid OTP for:', email, `(Attempt ${storedData.attempts}/5)`);
             return res.status(400).json({ error: 'Invalid OTP. Please try again.' });
         }
+
+        console.log('✅ OTP verified for:', email);
 
         // Update user email_verified
         const { data: user, error: updateError } = await supabase
@@ -317,17 +310,20 @@ export const verifyOTP = async (req, res) => {
             .single();
 
         if (updateError) {
-            console.error('Update error:', updateError);
+            console.error('❌ Update error:', updateError);
             return res.status(500).json({ error: 'Failed to update user' });
         }
 
         otpStore.delete(email);
+        console.log('🗑️ OTP cleared from store for:', email);
 
         const token = jwt.sign(
             { id: user.id, email: user.email, name: user.name },
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
         );
+
+        console.log('✅ Verification successful for:', email);
 
         res.json({
             success: true,
@@ -341,7 +337,7 @@ export const verifyOTP = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('OTP verification error:', error);
+        console.error('❌ OTP verification error:', error);
         res.status(500).json({ error: 'Verification failed' });
     }
 };
@@ -350,6 +346,8 @@ export const verifyOTP = async (req, res) => {
 export const resendOTP = async (req, res) => {
     try {
         const { email } = req.body;
+
+        console.log('🔄 Resend OTP requested for:', email);
 
         if (!email) {
             return res.status(400).json({ error: 'Email is required' });
@@ -362,10 +360,12 @@ export const resendOTP = async (req, res) => {
             .maybeSingle();
 
         if (!user) {
+            console.log('❌ User not found for resend:', email);
             return res.status(404).json({ error: 'User not found' });
         }
 
         const otp = generateOTP();
+        console.log('🔐 New OTP generated:', otp);
 
         otpStore.set(email, {
             otp,
@@ -376,6 +376,8 @@ export const resendOTP = async (req, res) => {
 
         await sendOTPEmail(email, otp);
 
+        console.log('✅ OTP resent to:', email);
+
         res.json({
             success: true,
             message: 'New OTP sent to your email',
@@ -383,7 +385,7 @@ export const resendOTP = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Resend OTP error:', error);
+        console.error('❌ Resend OTP error:', error);
         res.status(500).json({ error: 'Failed to resend OTP' });
     }
 };
@@ -512,9 +514,16 @@ export const logout = async (req, res) => {
 // Cleanup expired OTPs every minute
 setInterval(() => {
     const now = Date.now();
+    let deletedCount = 0;
     for (const [email, data] of otpStore.entries()) {
         if (now > data.expiresAt) {
             otpStore.delete(email);
+            deletedCount++;
         }
     }
+    if (deletedCount > 0) {
+        console.log(`🗑️ Cleaned up ${deletedCount} expired OTPs`);
+    }
 }, 60000);
+
+console.log('✅ Auth controller loaded with email retry logic');
