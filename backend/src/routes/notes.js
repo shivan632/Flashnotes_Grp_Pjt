@@ -1,4 +1,3 @@
-// backend/src/routes/notes.js
 import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
 import {
@@ -11,10 +10,8 @@ import {
 
 const router = express.Router();
 
-// All routes require authentication
 router.use(authenticateToken);
 
-// Routes
 router.get('/', getAllNotes);
 router.get('/:id', getNoteById);
 router.post('/save', saveNote);

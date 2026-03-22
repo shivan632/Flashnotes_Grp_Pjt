@@ -1,4 +1,3 @@
-// backend/src/routes/history.js
 import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
 import {
@@ -10,10 +9,8 @@ import {
 
 const router = express.Router();
 
-// All routes require authentication
 router.use(authenticateToken);
 
-// Routes
 router.get('/', getHistory);
 router.post('/add', addToHistory);
 router.delete('/clear', clearHistory);
