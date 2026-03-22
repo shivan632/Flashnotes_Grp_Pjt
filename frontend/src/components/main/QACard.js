@@ -2,7 +2,7 @@
 // QA Card Component - Enhanced UI with modern design
 
 import { saveNote } from '../../services/storage.js';
-import { showError } from '../common/ErrorMessage.js';
+import { showError, showSuccess } from '../common/ErrorMessage.js';
 
 export function QACard(question, answer, topic, index) {
     const cardId = `qa-card-${Date.now()}-${index}`;
@@ -72,13 +72,23 @@ export function setupQACardEvents() {
             const question = btn.dataset.question;
             const answer = btn.dataset.answer;
             
+            // Debug log
+            console.log('Saving note data:', { topic, question, answer });
+            
             btn.disabled = true;
             const originalText = btn.innerHTML;
             btn.innerHTML = '<div class="loading-spinner-small"></div> Saving...';
             
             try {
-                await saveNote(topic, question, answer);
-                showError('Note saved successfully!', 'success');
+                // Create note object with correct structure
+                const noteData = {
+                    topic: topic,
+                    question: question,
+                    answer: answer
+                };
+                
+                await saveNote(noteData);
+                showSuccess('Note saved successfully!', 'success');
                 
                 // Update button to show success
                 btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Saved!';
@@ -124,7 +134,6 @@ export function setupQACardEvents() {
             try {
                 await navigator.clipboard.writeText(shareText);
                 
-                // Show success feedback on button
                 const originalText = btn.innerHTML;
                 btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Copied!';
                 btn.classList.add('bg-green-600', 'hover:bg-green-700');
@@ -146,20 +155,17 @@ export function setupQACardEvents() {
         btn.addEventListener('click', async () => {
             const question = btn.dataset.question;
             
-            // Open AI chat sidebar
             const aiSidebar = document.getElementById('aiChatSidebar');
             if (aiSidebar) {
                 aiSidebar.classList.remove('translate-x-full');
                 aiSidebar.classList.add('translate-x-0');
             }
             
-            // Set the input value
             const aiInput = document.getElementById('aiChatInput');
             if (aiInput) {
                 aiInput.value = `Can you explain this in more detail: ${question}`;
                 aiInput.dispatchEvent(new Event('input'));
                 
-                // Trigger send message after a short delay
                 setTimeout(() => {
                     const sendBtn = document.getElementById('sendAIMessage');
                     if (sendBtn && !sendBtn.disabled) {
@@ -168,7 +174,6 @@ export function setupQACardEvents() {
                 }, 500);
             }
             
-            // Scroll to AI chat
             setTimeout(() => {
                 const aiChatSidebar = document.getElementById('aiChatSidebar');
                 if (aiChatSidebar) {

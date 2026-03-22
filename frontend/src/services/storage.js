@@ -33,23 +33,41 @@ function saveToLocalStorage(key, data) {
 
 // ============= NOTES FUNCTIONS =============
 
-// Save a note
-export async function saveNote(note) {
+// Save a note - EXPECTS OBJECT WITH topic, question, answer
+export async function saveNote(noteData) {
     try {
+        console.log('📝 saveNote received:', noteData);
+        
+        // Validate input - check if it's an object with required fields
+        if (!noteData || typeof noteData !== 'object') {
+            console.error('Invalid note data:', noteData);
+            throw new Error('Invalid note data: expected object');
+        }
+        
+        // Extract fields (support both object and direct params)
+        const topic = noteData.topic;
+        const question = noteData.question;
+        const answer = noteData.answer;
+        
+        if (!topic || !question || !answer) {
+            console.error('Missing required fields:', { topic, question, answer });
+            throw new Error('Topic, question, and answer are required');
+        }
+        
         const token = localStorage.getItem('token');
         const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
         
         const newNote = {
             id: Date.now().toString(),
-            topic: note.topic,
-            question: note.question,
-            answer: note.answer,
-            savedAt: new Date().toISOString(),
-            ...note
+            topic: topic,
+            question: question,
+            answer: answer,
+            savedAt: new Date().toISOString()
         };
         
+        console.log('📝 Creating note:', newNote);
+        
         if (isAuthenticated && token) {
-            // Save to backend
             try {
                 const result = await notesAPI.saveNote(newNote);
                 if (result && result.success) {
@@ -58,7 +76,6 @@ export async function saveNote(note) {
                 }
             } catch (error) {
                 console.error('Failed to save to backend, saving locally:', error);
-                // Fallback to local storage
             }
         }
         
@@ -67,7 +84,6 @@ export async function saveNote(note) {
         notes.unshift(newNote);
         saveToLocalStorage(STORAGE_KEYS.NOTES, notes);
         
-        // Add to pending if offline
         if (isAuthenticated && !navigator.onLine) {
             const pending = getFromLocalStorage(STORAGE_KEYS.PENDING_NOTES);
             pending.push(newNote);
@@ -79,7 +95,7 @@ export async function saveNote(note) {
         
     } catch (error) {
         console.error('Error saving note:', error);
-        showError('Failed to save note', 'error');
+        showError(error.message || 'Failed to save note', 'error');
         return null;
     }
 }
@@ -101,7 +117,6 @@ export async function getSavedNotes() {
             }
         }
         
-        // Return from local storage
         return getFromLocalStorage(STORAGE_KEYS.NOTES);
         
     } catch (error) {
@@ -124,7 +139,6 @@ export async function deleteNote(noteId) {
             }
         }
         
-        // Delete from local storage
         const notes = getFromLocalStorage(STORAGE_KEYS.NOTES);
         const updatedNotes = notes.filter(note => note.id !== noteId);
         saveToLocalStorage(STORAGE_KEYS.NOTES, updatedNotes);
@@ -165,14 +179,11 @@ export async function addToHistory(topic, result = null) {
             }
         }
         
-        // Save to local storage
         const history = getFromLocalStorage(STORAGE_KEYS.HISTORY);
         history.unshift(historyItem);
-        // Keep only last 50 items
         if (history.length > 50) history.pop();
         saveToLocalStorage(STORAGE_KEYS.HISTORY, history);
         
-        // Add to pending if offline
         if (isAuthenticated && !navigator.onLine) {
             const pending = getFromLocalStorage(STORAGE_KEYS.PENDING_HISTORY);
             pending.push(historyItem);
@@ -204,7 +215,6 @@ export async function getSearchHistory() {
             }
         }
         
-        // Return from local storage
         return getFromLocalStorage(STORAGE_KEYS.HISTORY);
         
     } catch (error) {
@@ -227,7 +237,6 @@ export async function clearHistory() {
             }
         }
         
-        // Clear local storage
         saveToLocalStorage(STORAGE_KEYS.HISTORY, []);
         saveToLocalStorage(STORAGE_KEYS.PENDING_HISTORY, []);
         
@@ -243,7 +252,6 @@ export async function clearHistory() {
 
 // ============= SYNC FUNCTIONS =============
 
-// Sync pending data when online
 export async function syncPendingData() {
     if (!navigator.onLine) return null;
     
@@ -257,7 +265,6 @@ export async function syncPendingData() {
         history: { success: 0, failed: 0 }
     };
     
-    // Sync pending notes
     const pendingNotes = getFromLocalStorage(STORAGE_KEYS.PENDING_NOTES);
     for (const note of pendingNotes) {
         try {
@@ -270,7 +277,6 @@ export async function syncPendingData() {
     }
     saveToLocalStorage(STORAGE_KEYS.PENDING_NOTES, []);
     
-    // Sync pending history
     const pendingHistory = getFromLocalStorage(STORAGE_KEYS.PENDING_HISTORY);
     for (const item of pendingHistory) {
         try {
@@ -288,7 +294,6 @@ export async function syncPendingData() {
 
 // ============= EXPORT/IMPORT FUNCTIONS =============
 
-// Export all data
 export async function exportData() {
     try {
         const notes = await getSavedNotes();
@@ -321,7 +326,6 @@ export async function exportData() {
     }
 }
 
-// Import data
 export async function importData(jsonData) {
     try {
         const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
@@ -330,7 +334,6 @@ export async function importData(jsonData) {
             throw new Error('Invalid backup file format');
         }
         
-        // Save to local storage
         saveToLocalStorage(STORAGE_KEYS.NOTES, data.notes);
         saveToLocalStorage(STORAGE_KEYS.HISTORY, data.history);
         

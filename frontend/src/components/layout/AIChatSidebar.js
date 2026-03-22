@@ -315,7 +315,7 @@ if (!document.querySelector('#ai-chat-styles')) {
     document.head.appendChild(style);
 }
 
-// Send message function (unchanged - only UI)
+// Send message function - FIXED API URL
 async function sendMessage(message) {
     const input = document.getElementById('aiChatInput');
     const sendBtn = document.getElementById('sendAIMessage');
@@ -336,9 +336,16 @@ async function sendMessage(message) {
     try {
         const topicInput = document.getElementById('topicInput');
         const currentTopic = topicInput ? topicInput.value : 'general';
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem('token');
         
-        const response = await fetch('https://flashnotes-grp-pjt.onrender.com/api/ai/chat', {
+        // FIXED: Use window.API_URL instead of hardcoded URL
+        const API_URL = window.API_URL || 'https://flashnotes-api.onrender.com/api';
+        const url = `${API_URL}/ai/chat`;
+        
+        console.log('AI Chat API_URL:', API_URL);
+        console.log('AI Chat URL:', url);
+        
+        const response = await fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -369,10 +376,11 @@ async function sendMessage(message) {
             input.disabled = false;
             input.focus();
         }
+        if (sendBtn) sendBtn.disabled = false;
     }
 }
 
-// Rest of the helper functions remain the same...
+// Rest of the helper functions
 function getChatHistory() {
     const container = document.getElementById('aiChatMessages');
     if (!container) return [];
@@ -478,6 +486,7 @@ function getUserInitials() {
 }
 
 function escapeHtml(text) {
+    if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
