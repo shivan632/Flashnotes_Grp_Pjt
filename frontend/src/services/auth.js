@@ -113,6 +113,7 @@ export async function verifyOTP(email, otp) {
 }
 
 // Resend OTP
+// In auth.js, update resendOTP function
 export async function resendOTP(email) {
     try {
         const response = await apiAuth.resendOTP(email);
@@ -123,8 +124,7 @@ export async function resendOTP(email) {
             }
             return { success: true, otp: response.otp, message: response.message };
         }
-        
-        return { success: false, error: response.error || 'Failed to resend OTP' };
+        return { success: false, error: response.error };
     } catch (error) {
         console.error('Resend OTP error:', error);
         return { success: false, error: error.message };

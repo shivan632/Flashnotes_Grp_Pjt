@@ -21,29 +21,31 @@ export function VerifyOTPPage() {
                     <p class="text-[#60A5FA] font-medium">${email}</p>
                 </div>
 
-                <!-- OTP Box -->
-                ${devOTP ? `
-                <div class="otp-side-box" id="otpSideBox">
-                    <div class="otp-side-content">
-                        <div class="otp-side-code" id="otpCodeDisplay">${devOTP}</div>
-                        <button class="otp-side-copy" id="copyOtpBtn" title="Copy code">
+                <!-- OTP DISPLAY BOX - Right Side Position -->
+                <div id="otpDisplayBox" class="otp-display-box">
+                    <div class="otp-display-content">
+                        <div class="otp-display-icon">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <div class="otp-display-text">
+                            <div class="otp-display-label">Your Verification Code</div>
+                            <div class="otp-display-code" id="otpCodeValue">${devOTP || '------'}</div>
+                            <div class="otp-display-timer">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>Valid for <span id="boxTimer">05:00</span></span>
+                            </div>
+                        </div>
+                        <button class="otp-display-copy" id="copyOtpBtn" title="Copy code">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
                         </button>
                     </div>
-                    <div class="otp-side-timer">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span>Expires in <span id="sideTimer" class="font-mono text-yellow-400">05:00</span></span>
-                    </div>
                 </div>
-                ` : `
-                <div class="bg-[#1F2937] rounded-xl p-3 text-center border border-[#374151] mb-4">
-                    <p class="text-xs text-[#9CA3AF]">📧 Sending verification code...</p>
-                </div>
-                `}
 
                 <!-- Error Message -->
                 <div id="errorMessage" class="mb-4 p-3 bg-red-500/20 border border-red-500 rounded-lg text-red-400 text-sm text-center hidden"></div>
@@ -118,16 +120,26 @@ export function setupVerifyOTP() {
     const errorDiv = document.getElementById('errorMessage');
     const successDiv = document.getElementById('successMessage');
     const timerDisplay = document.getElementById('timerValue');
-    const sideTimerDisplay = document.getElementById('sideTimer');
+    const boxTimerDisplay = document.getElementById('boxTimer');
+    const otpCodeDisplay = document.getElementById('otpCodeValue');
     
     if (!form) return;
     
     const email = localStorage.getItem('pendingVerification');
-    const pendingUserName = localStorage.getItem('pendingUserName');
+    let currentOTP = localStorage.getItem('devOTP') || '';
     
     if (!email) {
         window.location.hash = '#/register';
         return;
+    }
+    
+    // Update OTP display if available
+    if (currentOTP && otpCodeDisplay) {
+        otpCodeDisplay.textContent = currentOTP;
+        otpCodeDisplay.classList.add('animate-pulse');
+        setTimeout(() => {
+            otpCodeDisplay.classList.remove('animate-pulse');
+        }, 2000);
     }
     
     let timeLeft = 300;
@@ -141,12 +153,13 @@ export function setupVerifyOTP() {
         const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         
         if (timerDisplay) timerDisplay.textContent = timeString;
-        if (sideTimerDisplay) sideTimerDisplay.textContent = timeString;
+        if (boxTimerDisplay) boxTimerDisplay.textContent = timeString;
         
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
             if (verifyBtn) verifyBtn.disabled = true;
             showErrorMessage('OTP has expired. Please request a new one.');
+            if (otpCodeDisplay) otpCodeDisplay.textContent = 'EXPIRED';
         }
     }
     
@@ -265,10 +278,8 @@ export function setupVerifyOTP() {
             const result = await authAPI.verifyOTP(email, otp);
             
             if (result.success && result.token) {
-                // Get the saved user name
-                const userName = pendingUserName || result.user?.name || email.split('@')[0];
+                const userName = localStorage.getItem('pendingUserName') || result.user?.name || email.split('@')[0];
                 
-                // Save all user data
                 localStorage.setItem('token', result.token);
                 localStorage.setItem('isAuthenticated', 'true');
                 localStorage.setItem('userName', userName);
@@ -279,7 +290,6 @@ export function setupVerifyOTP() {
                     email: email
                 }));
                 
-                // Clear temporary data
                 localStorage.removeItem('pendingVerification');
                 localStorage.removeItem('pendingUserName');
                 localStorage.removeItem('devOTP');
@@ -319,11 +329,15 @@ export function setupVerifyOTP() {
             
             if (result.success) {
                 if (result.otp) {
+                    currentOTP = result.otp;
                     localStorage.setItem('devOTP', result.otp);
-                    const otpCodeDisplay = document.getElementById('otpCodeDisplay');
-                    if (otpCodeDisplay) otpCodeDisplay.textContent = result.otp;
-                    const otpSideBox = document.getElementById('otpSideBox');
-                    if (otpSideBox) otpSideBox.style.display = 'flex';
+                    if (otpCodeDisplay) {
+                        otpCodeDisplay.textContent = result.otp;
+                        otpCodeDisplay.classList.add('animate-pulse');
+                        setTimeout(() => {
+                            otpCodeDisplay.classList.remove('animate-pulse');
+                        }, 2000);
+                    }
                 }
                 
                 showSuccessMessage(result.message || 'New OTP sent to your email!');
@@ -367,8 +381,8 @@ export function setupVerifyOTP() {
     const copyBtn = document.getElementById('copyOtpBtn');
     if (copyBtn) {
         copyBtn.addEventListener('click', () => {
-            const otpCode = document.getElementById('otpCodeDisplay')?.textContent;
-            if (otpCode) {
+            const otpCode = document.getElementById('otpCodeValue')?.textContent;
+            if (otpCode && otpCode !== '------' && otpCode !== 'EXPIRED') {
                 navigator.clipboard.writeText(otpCode);
                 copyBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
                 setTimeout(() => {
