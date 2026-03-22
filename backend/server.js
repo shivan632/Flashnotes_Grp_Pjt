@@ -48,16 +48,12 @@ app.use(cors({
 }));
 
 // ============= RATE LIMITING - FIX (Increase limit) =============
+app.set('trust proxy', 1);  // Trust first proxy (Render's load balancer)
 const limiter = rateLimit({
-    windowMs: 1 * 60 * 1000, // 1 minute window
-    max: 50, // Increased from 100 to 50 per minute
-    message: { error: 'Too many requests from this IP, please try again later.' },
-    standardHeaders: true,
-    legacyHeaders: false,
-    skip: (req) => {
-        // Skip rate limiting for health checks
-        return req.path === '/api/health';
-    }
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: { error: 'Too many requests' },
+    validate: { xForwardedForHeader: false }  // Disable this validation
 });
 
 // Apply rate limiting to API routes

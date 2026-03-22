@@ -8,15 +8,23 @@ import nodemailer from 'nodemailer';
 // OTP Storage
 const otpStore = new Map();
 
-// Email transporter
+// Email transporter setup - FIXED
 const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.EMAIL_PORT) || 587,
-    secure: false,
+    secure: process.env.EMAIL_SECURE === 'true' || false,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
     },
+    // Timeout settings for Render
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 30000,
+    // TLS settings
+    tls: {
+        rejectUnauthorized: false
+    }
 });
 
 // Generate 6-digit OTP
@@ -26,23 +34,73 @@ const generateOTP = () => {
 
 // Send OTP email
 const sendOTPEmail = async (email, otp) => {
-    const mailOptions = {
-        from: `"Flashnotes" <${process.env.EMAIL_USER}>`,
-        to: email,
-        subject: 'Flashnotes - Email Verification Code',
-        html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #111827; color: #E5E7EB;">
-                <h2 style="color: #3B82F6;">Flashnotes Verification</h2>
-                <p>Your verification code is:</p>
-                <div style="font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #60A5FA; padding: 15px; background: #1F2937; border-radius: 8px; text-align: center;">
-                    ${otp}
+    try {
+        const mailOptions = {
+            from: `"Flashnotes" <${process.env.EMAIL_USER}>`,
+            to: email,
+            subject: 'Flashnotes - Email Verification Code',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #111827; color: #E5E7EB; border-radius: 12px;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <div style="background: linear-gradient(135deg, #3B82F6, #A78BFA); width: 60px; height: 60px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;">
+                            <svg style="width: 30px; height: 30px; color: white;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <h2 style="color: #3B82F6; margin-top: 15px;">Flashnotes Verification</h2>
+                    </div>
+                    
+                    <div style="background: #1F2937; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                        <p style="margin-bottom: 15px;">Hello,</p>
+                        <p style="margin-bottom: 15px;">Use the following verification code to complete your registration:</p>
+                        <div style="text-align: center; margin: 25px 0;">
+                            <div style="background: #111827; padding: 15px; border-radius: 10px; display: inline-block;">
+                                <span style="font-size: 36px; font-family: monospace; font-weight: bold; letter-spacing: 8px; color: #60A5FA;">${otp}</span>
+                            </div>
+                        </div>
+                        <p style="margin-bottom: 15px;">This code will expire in <strong style="color: #F59E0B;">5 minutes</strong>.</p>
+                        <p style="margin-bottom: 5px;">If you didn't request this code, please ignore this email.</p>
+                    </div>
+                    
+                    <div style="text-align: center; font-size: 12px; color: #6B7280;">
+                        <p>© 2026 Flashnotes. All rights reserved.</p>
+                    </div>
                 </div>
-                <p>This code will expire in 5 minutes.</p>
-            </div>
-        `,
-    };
-    await transporter.sendMail(mailOptions);
+            `,
+        };
+
+        // Send email with timeout
+        const result = await Promise.race([
+            transporter.sendMail(mailOptions),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Email timeout')), 15000))
+        ]);
+        
+        console.log('📧 OTP email sent to:', email);
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Email error:', error.message);
+        
+        // Log OTP in console for development (so you can still test)
+        if (process.env.NODE_ENV !== 'production') {
+            console.log('📝 [DEV] OTP for', email, ':', otp);
+        }
+        
+        return false;
+    }
 };
+
+// In register function - call with fallback
+// After creating user and generating OTP
+try {
+    const emailSent = await sendOTPEmail(email, otp);
+    if (!emailSent && process.env.NODE_ENV === 'production') {
+        console.log('⚠️ Email failed but continuing registration');
+    }
+} catch (emailError) {
+    console.error('Email sending error:', emailError.message);
+    // Don't fail registration if email fails
+}
 
 // ============= REGISTER =============
 export const register = async (req, res) => {
