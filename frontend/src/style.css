@@ -654,7 +654,7 @@ html {
     }
 }
 
-/* OTP Display Box - Right End, Large Size */
+/* OTP Display Box - Right End */
 .otp-display-box-final {
     position: fixed;
     top: 120px;
@@ -715,6 +715,7 @@ html {
 
 .otp-digits {
     letter-spacing: 12px;
+    cursor: pointer;
 }
 
 .otp-loading {
