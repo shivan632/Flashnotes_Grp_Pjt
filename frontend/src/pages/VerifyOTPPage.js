@@ -4,7 +4,6 @@ import { showError, showSuccess } from '../components/common/ErrorMessage.js';
 
 export function VerifyOTPPage() {
     const email = localStorage.getItem('pendingVerification') || '';
-    const devOTP = localStorage.getItem('devOTP') || '';
     
     return `
         <div class="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#111827] to-[#0F172A] py-12 px-4">
@@ -21,26 +20,28 @@ export function VerifyOTPPage() {
                     <p class="text-[#60A5FA] font-medium">${email}</p>
                 </div>
 
-                <!-- OTP DISPLAY BOX - Right Side, Larger Size -->
-                <div id="otpDisplayBox" class="otp-display-box-enhanced">
-                    <div class="otp-display-content-enhanced">
-                        <div class="otp-display-icon-enhanced">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- OTP DISPLAY BOX - Right End, Large Size -->
+                <div id="otpDisplayBox" class="otp-display-box-final">
+                    <div class="otp-display-content-final">
+                        <div class="otp-display-icon-final">
+                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
                         </div>
-                        <div class="otp-display-text-enhanced">
-                            <div class="otp-display-label-enhanced">Your Verification Code</div>
-                            <div class="otp-display-code-enhanced" id="otpCodeValue">${devOTP || '------'}</div>
-                            <div class="otp-display-timer-enhanced">
+                        <div class="otp-display-text-final">
+                            <div class="otp-display-label-final">YOUR VERIFICATION CODE</div>
+                            <div class="otp-display-code-final" id="otpCodeValue">
+                                <span class="otp-loading">••••••</span>
+                            </div>
+                            <div class="otp-display-timer-final">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 <span>Valid for <span id="boxTimer">05:00</span></span>
                             </div>
                         </div>
-                        <button class="otp-display-copy-enhanced" id="copyOtpBtn" title="Copy code">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button class="otp-display-copy-final" id="copyOtpBtn" title="Copy code">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
                         </button>
@@ -126,45 +127,59 @@ export function setupVerifyOTP() {
     if (!form) return;
     
     const email = localStorage.getItem('pendingVerification');
-    let currentOTP = localStorage.getItem('devOTP') || '';
+    let currentOTP = '';
     
     if (!email) {
         window.location.hash = '#/register';
         return;
     }
     
-    // Fetch OTP from backend if not available in localStorage
-    async function fetchOTP() {
-        if (!currentOTP) {
-            try {
-                const result = await authAPI.resendOTP(email);
-                if (result.success && result.otp) {
-                    currentOTP = result.otp;
-                    localStorage.setItem('devOTP', result.otp);
-                    if (otpCodeDisplay) {
-                        otpCodeDisplay.textContent = result.otp;
-                        otpCodeDisplay.classList.add('animate-pulse');
-                        setTimeout(() => {
-                            otpCodeDisplay.classList.remove('animate-pulse');
-                        }, 2000);
-                    }
-                }
-            } catch (error) {
-                console.error('Failed to fetch OTP:', error);
-            }
-        } else {
+    // Fetch OTP from backend using resend API
+    async function fetchOTPFromBackend() {
+        try {
+            console.log('📡 Fetching OTP from backend for:', email);
+            
+            // Show loading state
             if (otpCodeDisplay) {
-                otpCodeDisplay.textContent = currentOTP;
-                otpCodeDisplay.classList.add('animate-pulse');
-                setTimeout(() => {
-                    otpCodeDisplay.classList.remove('animate-pulse');
-                }, 2000);
+                otpCodeDisplay.innerHTML = '<span class="otp-loading">••••••</span>';
             }
+            
+            const result = await authAPI.resendOTP(email);
+            
+            if (result.success && result.otp) {
+                currentOTP = result.otp;
+                localStorage.setItem('devOTP', result.otp);
+                
+                if (otpCodeDisplay) {
+                    // Split OTP into individual digits with spacing
+                    const formattedOTP = result.otp.split('').join(' ');
+                    otpCodeDisplay.innerHTML = `<span class="otp-digits">${formattedOTP}</span>`;
+                    otpCodeDisplay.classList.add('animate-pop');
+                    setTimeout(() => {
+                        otpCodeDisplay.classList.remove('animate-pop');
+                    }, 500);
+                }
+                
+                console.log('✅ OTP fetched:', result.otp);
+                return true;
+            } else {
+                console.error('Failed to fetch OTP:', result.error);
+                if (otpCodeDisplay) {
+                    otpCodeDisplay.innerHTML = '<span class="otp-error">Failed to load</span>';
+                }
+                return false;
+            }
+        } catch (error) {
+            console.error('Error fetching OTP:', error);
+            if (otpCodeDisplay) {
+                otpCodeDisplay.innerHTML = '<span class="otp-error">Error loading</span>';
+            }
+            return false;
         }
     }
     
-    // Call fetchOTP on page load
-    fetchOTP();
+    // Call fetch OTP immediately
+    fetchOTPFromBackend();
     
     let timeLeft = 300;
     let timerInterval;
@@ -183,7 +198,7 @@ export function setupVerifyOTP() {
             clearInterval(timerInterval);
             if (verifyBtn) verifyBtn.disabled = true;
             showErrorMessage('OTP has expired. Please request a new one.');
-            if (otpCodeDisplay) otpCodeDisplay.textContent = 'EXPIRED';
+            if (otpCodeDisplay) otpCodeDisplay.innerHTML = '<span class="otp-expired">EXPIRED</span>';
         }
     }
     
@@ -356,11 +371,12 @@ export function setupVerifyOTP() {
                     currentOTP = result.otp;
                     localStorage.setItem('devOTP', result.otp);
                     if (otpCodeDisplay) {
-                        otpCodeDisplay.textContent = result.otp;
-                        otpCodeDisplay.classList.add('animate-pulse');
+                        const formattedOTP = result.otp.split('').join(' ');
+                        otpCodeDisplay.innerHTML = `<span class="otp-digits">${formattedOTP}</span>`;
+                        otpCodeDisplay.classList.add('animate-pop');
                         setTimeout(() => {
-                            otpCodeDisplay.classList.remove('animate-pulse');
-                        }, 2000);
+                            otpCodeDisplay.classList.remove('animate-pop');
+                        }, 500);
                     }
                 }
                 
@@ -405,12 +421,13 @@ export function setupVerifyOTP() {
     const copyBtn = document.getElementById('copyOtpBtn');
     if (copyBtn) {
         copyBtn.addEventListener('click', () => {
-            const otpCode = document.getElementById('otpCodeValue')?.textContent;
-            if (otpCode && otpCode !== '------' && otpCode !== 'EXPIRED') {
+            const otpCodeElement = document.querySelector('#otpCodeValue .otp-digits');
+            const otpCode = otpCodeElement?.textContent?.replace(/\s/g, '') || currentOTP;
+            if (otpCode && otpCode !== '••••••' && otpCode !== 'EXPIRED' && otpCode !== 'Failed to load' && otpCode !== 'Error loading') {
                 navigator.clipboard.writeText(otpCode);
-                copyBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+                copyBtn.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
                 setTimeout(() => {
-                    copyBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>';
+                    copyBtn.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>';
                 }, 2000);
             }
         });
