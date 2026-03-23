@@ -20,7 +20,7 @@ export function VerifyOTPPage() {
                     <p class="text-[#60A5FA] font-medium">${email}</p>
                 </div>
 
-                <!-- OTP DISPLAY BOX - Right End -->
+                <!-- OTP DISPLAY BOX -->
                 <div id="otpDisplayBox" class="otp-display-box-final">
                     <div class="otp-display-content-final">
                         <div class="otp-display-icon-final">
@@ -31,7 +31,7 @@ export function VerifyOTPPage() {
                         <div class="otp-display-text-final">
                             <div class="otp-display-label-final">YOUR VERIFICATION CODE</div>
                             <div class="otp-display-code-final" id="otpCodeValue">
-                                <span class="otp-loading">••••••</span>
+                                <span class="otp-loading">Loading...</span>
                             </div>
                             <div class="otp-display-timer-final">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -128,7 +128,9 @@ export function setupVerifyOTP() {
     
     const email = localStorage.getItem('pendingVerification');
     let currentOTP = localStorage.getItem('devOTP') || '';
+    let isFetching = false;
     let isResending = false;
+    let otpFetched = false;
     
     if (!email) {
         window.location.hash = '#/register';
@@ -139,24 +141,34 @@ export function setupVerifyOTP() {
     if (currentOTP && otpCodeDisplay) {
         const formattedOTP = currentOTP.split('').join(' ');
         otpCodeDisplay.innerHTML = `<span class="otp-digits" data-otp="${currentOTP}">${formattedOTP}</span>`;
+        otpFetched = true;
+        console.log('✅ OTP loaded from localStorage:', currentOTP);
     }
     
     // Fetch OTP from backend using resend API
     async function fetchOTPFromBackend() {
-        if (isResending) return false;
+        if (isFetching || otpFetched) {
+            console.log('⚠️ Already fetching or OTP already fetched');
+            return false;
+        }
+        
+        isFetching = true;
         
         try {
             console.log('📡 Fetching OTP from backend for:', email);
             
             if (otpCodeDisplay) {
-                otpCodeDisplay.innerHTML = '<span class="otp-loading">••••••</span>';
+                otpCodeDisplay.innerHTML = '<span class="otp-loading">Fetching...</span>';
             }
             
             const result = await authAPI.resendOTP(email);
             
+            console.log('📡 Fetch OTP result:', result);
+            
             if (result && result.success && result.otp) {
                 currentOTP = result.otp;
                 localStorage.setItem('devOTP', result.otp);
+                otpFetched = true;
                 
                 if (otpCodeDisplay) {
                     const formattedOTP = result.otp.split('').join(' ');
@@ -167,26 +179,28 @@ export function setupVerifyOTP() {
                     }, 500);
                 }
                 
-                console.log('✅ OTP fetched:', result.otp);
+                console.log('✅ OTP fetched successfully:', result.otp);
                 return true;
             } else {
                 console.error('Failed to fetch OTP:', result?.error);
                 if (otpCodeDisplay) {
-                    otpCodeDisplay.innerHTML = '<span class="otp-error">Retry</span>';
+                    otpCodeDisplay.innerHTML = '<span class="otp-error">Click "Resend Code"</span>';
                 }
                 return false;
             }
         } catch (error) {
             console.error('Error fetching OTP:', error);
             if (otpCodeDisplay) {
-                otpCodeDisplay.innerHTML = '<span class="otp-error">Retry</span>';
+                otpCodeDisplay.innerHTML = '<span class="otp-error">Click "Resend Code"</span>';
             }
             return false;
+        } finally {
+            isFetching = false;
         }
     }
     
     // Try to fetch OTP if not already available
-    if (!currentOTP) {
+    if (!currentOTP && !otpFetched) {
         fetchOTPFromBackend();
     }
     
@@ -365,6 +379,7 @@ export function setupVerifyOTP() {
     }
     
     async function resendOTP() {
+        // Prevent multiple resend requests
         if (resendCooldown > 0) {
             showErrorMessage(`Please wait ${resendCooldown} seconds before resending`);
             return;
@@ -381,10 +396,14 @@ export function setupVerifyOTP() {
         try {
             const result = await authAPI.resendOTP(email);
             
+            console.log('📡 Resend OTP result:', result);
+            
             if (result && result.success) {
                 if (result.otp) {
                     currentOTP = result.otp;
                     localStorage.setItem('devOTP', result.otp);
+                    otpFetched = true;
+                    
                     if (otpCodeDisplay) {
                         const formattedOTP = result.otp.split('').join(' ');
                         otpCodeDisplay.innerHTML = `<span class="otp-digits" data-otp="${result.otp}">${formattedOTP}</span>`;
@@ -441,25 +460,30 @@ export function setupVerifyOTP() {
     const copyBtn = document.getElementById('copyOtpBtn');
     if (copyBtn) {
         copyBtn.addEventListener('click', () => {
-            // Get OTP from data attribute or currentOTP variable
             let otpCode = currentOTP;
             
-            // Try to get from DOM if not in variable
+            // Try to get from data attribute
             if (!otpCode) {
                 const otpSpan = document.querySelector('.otp-digits');
                 if (otpSpan) {
                     otpCode = otpSpan.getAttribute('data-otp');
-                    if (!otpCode) {
-                        // Try to extract from text content (remove spaces)
-                        const text = otpSpan.textContent;
-                        otpCode = text.replace(/\s/g, '');
-                    }
                 }
             }
             
-            if (otpCode && otpCode !== '••••••' && otpCode !== 'EXPIRED' && otpCode !== 'Retry') {
+            // Try to get from text content
+            if (!otpCode) {
+                const otpSpan = document.querySelector('.otp-digits');
+                if (otpSpan) {
+                    const text = otpSpan.textContent;
+                    otpCode = text.replace(/\s/g, '');
+                }
+            }
+            
+            if (otpCode && otpCode !== 'Loading...' && otpCode !== 'Fetching...' && 
+                otpCode !== 'Click "Resend Code"' && otpCode !== 'EXPIRED' && 
+                otpCode !== 'Retry' && otpCode.match(/^\d{6}$/)) {
+                
                 navigator.clipboard.writeText(otpCode).then(() => {
-                    // Show success feedback
                     const originalHTML = copyBtn.innerHTML;
                     copyBtn.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
                     copyBtn.classList.add('text-green-400');
@@ -474,7 +498,7 @@ export function setupVerifyOTP() {
                     showErrorMessage('Failed to copy OTP');
                 });
             } else {
-                showErrorMessage('No OTP available to copy');
+                showErrorMessage('No OTP available to copy. Please click "Resend Code" first.');
             }
         });
     }

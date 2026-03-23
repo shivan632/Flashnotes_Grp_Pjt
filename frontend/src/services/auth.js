@@ -116,18 +116,37 @@ export async function verifyOTP(email, otp) {
 // In auth.js, update resendOTP function
 export async function resendOTP(email) {
     try {
+        console.log('📡 Calling resendOTP API for:', email);
+        
         const response = await apiAuth.resendOTP(email);
         
-        if (response.success) {
+        console.log('📡 Resend OTP response:', response);
+        
+        if (response && response.success) {
+            // Store OTP in localStorage if provided
             if (response.otp) {
                 localStorage.setItem('devOTP', response.otp);
+                console.log('✅ OTP stored in localStorage:', response.otp);
             }
-            return { success: true, otp: response.otp, message: response.message };
+            return { 
+                success: true, 
+                otp: response.otp, 
+                message: response.message || 'New OTP sent to your email!' 
+            };
         }
-        return { success: false, error: response.error };
+        
+        // If response has error
+        return { 
+            success: false, 
+            error: response?.error || 'Failed to resend OTP' 
+        };
+        
     } catch (error) {
-        console.error('Resend OTP error:', error);
-        return { success: false, error: error.message };
+        console.error('❌ Resend OTP error:', error);
+        return { 
+            success: false, 
+            error: error.message || 'Network error. Please try again.' 
+        };
     }
 }
 

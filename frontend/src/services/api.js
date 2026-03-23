@@ -69,11 +69,28 @@ export const authAPI = {
     },
 
     resendOTP: async (email) => {
-        return apiCall(`${API_URL}/auth/resend-otp`, {
+    try {
+        console.log('📡 API call: resendOTP for', email);
+        
+        const response = await fetch(`${API_URL}/auth/resend-otp`, {
             method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email }),
         });
-    },
+        
+        const data = await response.json();
+        console.log('📡 API response:', data);
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to resend OTP');
+        }
+        
+        return data;
+    } catch (error) {
+        console.error('❌ Resend OTP API error:', error);
+        throw error;
+    }
+},
 
     forgotPassword: async (email) => {
         return apiCall(`${API_URL}/auth/forgot-password`, {
