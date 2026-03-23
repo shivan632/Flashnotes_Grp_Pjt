@@ -8,6 +8,9 @@ import nodemailer from 'nodemailer';
 // OTP Storage
 const otpStore = new Map();
 
+// Track last resend time per email (prevent double resend)
+let lastResendTime = new Map();
+
 // Email transporter with higher timeouts for Render
 const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST || 'smtp.gmail.com',
@@ -17,8 +20,7 @@ const transporter = nodemailer.createTransport({
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
     },
-    // Timeout settings for Render
-    connectionTimeout: 60000,  // 60 seconds
+    connectionTimeout: 60000,
     greetingTimeout: 60000,
     socketTimeout: 60000,
     pool: true,
@@ -94,7 +96,6 @@ export const register = async (req, res) => {
 
         console.log('📝 Registration attempt:', { name, email });
 
-        // Validation
         if (!name || !email || !password) {
             return res.status(400).json({ error: 'All fields are required' });
         }
@@ -103,8 +104,7 @@ export const register = async (req, res) => {
             return res.status(400).json({ error: 'Password must be at least 6 characters' });
         }
 
-        // Check if user exists
-        const { data: existingUser, error: findError } = await supabase
+        const { data: existingUser } = await supabase
             .from('users')
             .select('*')
             .eq('email', email)
@@ -114,10 +114,8 @@ export const register = async (req, res) => {
             return res.status(400).json({ error: 'User already exists' });
         }
 
-        // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Create user
         const { data: newUser, error: createError } = await supabase
             .from('users')
             .insert({
@@ -138,11 +136,9 @@ export const register = async (req, res) => {
 
         console.log('✅ User created:', newUser.id);
 
-        // Generate OTP
         const otp = generateOTP();
         console.log('🔐 Generated OTP:', otp);
         
-        // Store OTP
         otpStore.set(email, {
             otp,
             expiresAt: Date.now() + 5 * 60 * 1000,
@@ -151,8 +147,6 @@ export const register = async (req, res) => {
         });
         console.log('📦 OTP stored for:', email);
 
-        // Send OTP email
-        console.log('📧 Attempting to send OTP to:', email);
         const emailSent = await sendOTPEmail(email, otp);
         console.log('📧 Email sent status:', emailSent);
 
@@ -161,7 +155,7 @@ export const register = async (req, res) => {
             message: 'Registration successful! Please verify your email with the OTP sent.',
             email: email,
             requiresVerification: true,
-            ...(process.env.NODE_ENV === 'development' && { otp }),
+            otp: otp
         });
 
     } catch (error) {
@@ -181,8 +175,7 @@ export const login = async (req, res) => {
             return res.status(400).json({ error: 'Email and password are required' });
         }
 
-        // Find user
-        const { data: user, error } = await supabase
+        const { data: user } = await supabase
             .from('users')
             .select('*')
             .eq('email', email)
@@ -195,18 +188,15 @@ export const login = async (req, res) => {
 
         console.log('✅ User found:', user.id);
 
-        // Check password
         const isValidPassword = await bcrypt.compare(password, user.password);
         if (!isValidPassword) {
             console.log('❌ Invalid password for:', email);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        // Check if email is verified
         if (!user.email_verified) {
             console.log('⚠️ Email not verified:', email);
             
-            // Resend OTP
             const otp = generateOTP();
             console.log('🔐 New OTP generated:', otp);
             
@@ -227,7 +217,6 @@ export const login = async (req, res) => {
             });
         }
 
-        // Generate JWT
         const token = jwt.sign(
             { id: user.id, email: user.email, name: user.name },
             process.env.JWT_SECRET,
@@ -298,7 +287,6 @@ export const verifyOTP = async (req, res) => {
 
         console.log('✅ OTP verified for:', email);
 
-        // Update user email_verified
         const { data: user, error: updateError } = await supabase
             .from('users')
             .update({ 
@@ -353,6 +341,17 @@ export const resendOTP = async (req, res) => {
             return res.status(400).json({ error: 'Email is required' });
         }
 
+        // Check if resend was made recently (within 5 seconds)
+        const lastTime = lastResendTime.get(email);
+        const now = Date.now();
+        if (lastTime && (now - lastTime) < 5000) {
+            console.log('⚠️ Resend blocked - too soon after previous request');
+            return res.status(429).json({ 
+                error: 'Please wait a few seconds before requesting again' 
+            });
+        }
+        lastResendTime.set(email, now);
+
         const { data: user } = await supabase
             .from('users')
             .select('*')
@@ -360,7 +359,6 @@ export const resendOTP = async (req, res) => {
             .maybeSingle();
 
         if (!user) {
-            console.log('❌ User not found for resend:', email);
             return res.status(404).json({ error: 'User not found' });
         }
 
@@ -374,18 +372,17 @@ export const resendOTP = async (req, res) => {
             userId: user.id,
         });
 
-        await sendOTPEmail(email, otp);
-
-        console.log('✅ OTP resent to:', email);
+        const emailSent = await sendOTPEmail(email, otp);
 
         res.json({
             success: true,
             message: 'New OTP sent to your email',
-            ...(process.env.NODE_ENV === 'development' && { otp }),
+            otp: otp,
+            emailSent: emailSent
         });
 
     } catch (error) {
-        console.error('❌ Resend OTP error:', error);
+        console.error('Resend OTP error:', error);
         res.status(500).json({ error: 'Failed to resend OTP' });
     }
 };
