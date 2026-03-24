@@ -2,6 +2,10 @@
 import { authAPI } from '../services/auth.js';
 import { showError, showSuccess } from '../components/common/ErrorMessage.js';
 
+// Global flags to prevent multiple auto-fetch calls across page loads
+let autoFetchAttempted = false;
+let isAutoFetching = false;
+
 export function VerifyOTPPage() {
     const email = localStorage.getItem('pendingVerification') || '';
     
@@ -10,60 +14,40 @@ export function VerifyOTPPage() {
             <div class="max-w-md w-full relative">
                 <!-- Header -->
                 <div class="text-center mb-8">
-                    <div class="mx-auto w-16 h-16 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-2xl flex items-center justify-center mb-4 animate-pulse-glow">
+                    <div class="mx-auto w-16 h-16 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-2xl flex items-center justify-center mb-4">
                         <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                     </div>
                     <h2 class="text-2xl font-bold text-white">Verify Your Email</h2>
                     <p class="text-gray-400 mt-2">We've sent a 6-digit verification code to</p>
-                    <p class="text-[#60A5FA] font-medium">${email}</p>
+                    <p class="text-[#60A5FA] font-medium">${escapeHtml(email)}</p>
                 </div>
 
-                <!-- OTP 3D BOX - Premium Design with Image -->
-                <div id="otpDisplayBox" class="otp-3d-box">
-                    <div class="otp-3d-inner">
-                        <!-- Custom Image Section -->
-                        <div class="otp-3d-image-container">
-                            <div class="otp-3d-image-wrapper">
-                                <img id="otpCustomImage" 
-                                     src="public/favicon.ico" 
-                                     alt="OTP Icon" 
-                                     class="otp-3d-image"
-                                     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%2386efac\'%3E%3Cpath d=\'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15h-2v-2h2v2zm0-4h-2V7h2v6z\'/%3E%3C/svg%3E'">
-                            </div>
-                            <div class="otp-3d-glow"></div>
+                <!-- OTP Premium Box -->
+                <div class="otp-premium-box" id="otpPremiumBox">
+                    <div class="otp-premium-content">
+                        <div class="otp-premium-image">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
                         </div>
-                        
-                        <div class="otp-3d-content">
-                            <div class="otp-3d-label">
-                                <span class="otp-3d-label-text">VERIFICATION CODE</span>
-                                <div class="otp-3d-label-line"></div>
-                            </div>
-                            <div class="otp-3d-code" id="otpCodeValue">
-                                <span class="otp-code-digit">•</span>
-                                <span class="otp-code-digit">•</span>
-                                <span class="otp-code-digit">•</span>
-                                <span class="otp-code-digit">•</span>
-                                <span class="otp-code-digit">•</span>
-                                <span class="otp-code-digit">•</span>
-                            </div>
-                            <div class="otp-3d-timer">
+                        <div class="otp-premium-text">
+                            <div class="otp-premium-label">VERIFICATION CODE</div>
+                            <div class="otp-premium-code" id="otpCodeValue">------</div>
+                            <div class="otp-premium-timer">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 <span>Valid for <span id="premiumTimer">05:00</span></span>
                             </div>
                         </div>
-                        
-                        <button class="otp-3d-copy-btn" id="copyOtpBtn" title="Copy code">
-                            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <button class="otp-premium-copy" id="copyOtpBtn" title="Copy code">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
-                            <span class="copy-tooltip">Copy</span>
                         </button>
                     </div>
-                    <div class="otp-3d-shine"></div>
                 </div>
 
                 <!-- Error Message -->
@@ -74,12 +58,12 @@ export function VerifyOTPPage() {
 
                 <!-- OTP Input Form -->
                 <form id="otpForm" onsubmit="return false;">
-                    <div class="flex justify-center gap-2 mb-6" id="otpInputsContainer">
+                    <div class="flex justify-center gap-2 mb-6">
                         ${Array(6).fill(0).map((_, i) => `
                             <input type="text" 
                                    maxlength="1" 
                                    id="otp-${i}"
-                                   class="otp-digit-input"
+                                   class="otp-digit-input w-12 h-12 sm:w-14 sm:h-14 text-center text-2xl font-bold bg-[#111827] border-2 border-[#3B82F6] rounded-xl focus:outline-none focus:border-[#A78BFA] focus:ring-2 focus:ring-[#A78BFA]/50 text-white transition-all"
                                    autocomplete="off"
                                    inputmode="numeric">
                         `).join('')}
@@ -87,7 +71,7 @@ export function VerifyOTPPage() {
 
                     <button type="submit" 
                             id="verifyBtn"
-                            class="w-full bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] hover:from-[#60A5FA] hover:to-[#8B5CF6] text-white py-3 rounded-xl font-medium transition-all transform hover:scale-105 hover:shadow-xl">
+                            class="w-full bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] hover:from-[#60A5FA] hover:to-[#8B5CF6] text-white py-3 rounded-xl font-medium transition-all">
                         Verify Email
                     </button>
                 </form>
@@ -96,11 +80,11 @@ export function VerifyOTPPage() {
                 <div class="text-center mt-6">
                     <p class="text-gray-400 text-sm">Didn't receive the code?</p>
                     <div class="flex justify-center gap-4 mt-2">
-                        <button id="resendBtn" class="text-[#60A5FA] hover:text-[#3B82F6] text-sm transition-all hover:scale-105">
+                        <button id="resendBtn" class="text-[#60A5FA] hover:text-[#3B82F6] text-sm">
                             Resend Code
                         </button>
                         <span class="text-gray-600">|</span>
-                        <a href="#/register" class="text-[#A78BFA] hover:text-[#3B82F6] text-sm transition-all hover:scale-105">
+                        <a href="#/register" class="text-[#A78BFA] hover:text-[#3B82F6] text-sm">
                             Change Email
                         </a>
                     </div>
@@ -145,7 +129,7 @@ export function setupVerifyOTP() {
     if (!form) return;
     
     const email = localStorage.getItem('pendingVerification');
-    let currentOTP = '';
+    let currentOTP = localStorage.getItem('devOTP') || '';
     let isResending = false;
     let resendCooldown = 0;
     let resendInterval;
@@ -154,6 +138,15 @@ export function setupVerifyOTP() {
     if (!email) {
         window.location.hash = '#/register';
         return;
+    }
+    
+    // Display OTP from localStorage if available
+    if (currentOTP && currentOTP !== '') {
+        otpFetched = true;
+        if (otpCodeDisplay) {
+            const formattedOTP = currentOTP.split('').join(' ');
+            otpCodeDisplay.innerHTML = `<span class="otp-digits" data-otp="${currentOTP}">${formattedOTP}</span>`;
+        }
     }
     
     let timeLeft = 300;
@@ -171,9 +164,7 @@ export function setupVerifyOTP() {
             clearInterval(timerInterval);
             if (verifyBtn) verifyBtn.disabled = true;
             showErrorMessage('OTP has expired. Please request a new one.');
-            if (otpCodeDisplay) {
-                otpCodeDisplay.innerHTML = '<span class="otp-expired-digit">EXPIRED</span>';
-            }
+            if (otpCodeDisplay) otpCodeDisplay.innerHTML = '<span class="otp-expired">EXPIRED</span>';
         }
     }
     
@@ -214,13 +205,6 @@ export function setupVerifyOTP() {
         showSuccess(message, 'success');
     }
     
-    function updateOTPDisplay(otp) {
-        if (!otpCodeDisplay) return;
-        
-        const digits = otp.toString().split('');
-        otpCodeDisplay.innerHTML = digits.map(d => `<span class="otp-code-digit animate-pop-digit">${d}</span>`).join('');
-    }
-    
     function setupOTPInputs() {
         const inputs = document.querySelectorAll('.otp-digit-input');
         if (inputs.length === 0) return;
@@ -230,12 +214,6 @@ export function setupVerifyOTP() {
         inputs.forEach((input, index) => {
             input.addEventListener('input', (e) => {
                 e.target.value = e.target.value.replace(/[^0-9]/g, '');
-                
-                // Add animation
-                e.target.classList.add('animate-pulse-border');
-                setTimeout(() => {
-                    e.target.classList.remove('animate-pulse-border');
-                }, 200);
                 
                 if (e.target.value.length === 1 && index < inputs.length - 1) {
                     inputs[index + 1].focus();
@@ -343,6 +321,7 @@ export function setupVerifyOTP() {
         }
     }
     
+    // ============= RESEND OTP WITH COOLDOWN =============
     async function resendOTP() {
         if (resendCooldown > 0) {
             showErrorMessage(`Please wait ${resendCooldown} seconds before resending`);
@@ -365,15 +344,21 @@ export function setupVerifyOTP() {
                     currentOTP = result.otp;
                     localStorage.setItem('devOTP', result.otp);
                     otpFetched = true;
-                    updateOTPDisplay(result.otp);
+                    
+                    if (otpCodeDisplay) {
+                        const formattedOTP = result.otp.split('').join(' ');
+                        otpCodeDisplay.innerHTML = `<span class="otp-digits" data-otp="${result.otp}">${formattedOTP}</span>`;
+                    }
                 }
                 
-                showSuccessMessage(result.message || 'New OTP sent to your email!');
+                showSuccessMessage(result.message || 'New OTP sent! Check email or use code below.');
                 
+                // Reset timer
                 timeLeft = 300;
                 startTimer();
                 updateTimer();
                 
+                // 60 second cooldown
                 resendCooldown = 60;
                 if (resendBtn) resendBtn.textContent = `Resend in ${resendCooldown}s`;
                 
@@ -408,30 +393,76 @@ export function setupVerifyOTP() {
         }
     }
     
+    // ============= AUTO FETCH OTP - SINGLE CALL ONLY =============
+    async function autoFetchOTP() {
+        // Prevent multiple calls
+        if (autoFetchAttempted || isAutoFetching || otpFetched) {
+            console.log('⚠️ Auto-fetch skipped:', { autoFetchAttempted, isAutoFetching, otpFetched });
+            return;
+        }
+        
+        autoFetchAttempted = true;
+        isAutoFetching = true;
+        
+        try {
+            console.log('📡 Auto-fetching OTP for:', email);
+            
+            const result = await authAPI.resendOTP(email);
+            
+            if (result && result.success && result.otp) {
+                currentOTP = result.otp;
+                localStorage.setItem('devOTP', result.otp);
+                otpFetched = true;
+                
+                if (otpCodeDisplay) {
+                    const formattedOTP = result.otp.split('').join(' ');
+                    otpCodeDisplay.innerHTML = `<span class="otp-digits" data-otp="${result.otp}">${formattedOTP}</span>`;
+                }
+                console.log('✅ OTP auto-fetched:', result.otp);
+            } else {
+                console.log('⚠️ Auto-fetch returned no OTP');
+                if (otpCodeDisplay) {
+                    otpCodeDisplay.innerHTML = '<span class="otp-loading">Click "Resend Code"</span>';
+                }
+            }
+        } catch (error) {
+            console.log('⚠️ Auto-fetch failed:', error.message);
+            if (otpCodeDisplay) {
+                otpCodeDisplay.innerHTML = '<span class="otp-loading">Click "Resend Code"</span>';
+            }
+        } finally {
+            isAutoFetching = false;
+        }
+    }
+    
+    // ============= COPY OTP BUTTON =============
     const copyBtn = document.getElementById('copyOtpBtn');
     if (copyBtn) {
         copyBtn.addEventListener('click', () => {
             let otpCode = currentOTP;
             
             if (!otpCode) {
-                const otpDigits = document.querySelectorAll('.otp-code-digit');
-                if (otpDigits.length === 6) {
-                    otpCode = Array.from(otpDigits).map(d => d.textContent).join('');
+                const otpSpan = document.querySelector('.otp-digits');
+                if (otpSpan) {
+                    otpCode = otpSpan.getAttribute('data-otp');
+                    if (!otpCode) {
+                        const text = otpSpan.textContent;
+                        otpCode = text.replace(/\s/g, '');
+                    }
                 }
             }
             
             if (otpCode && otpCode.match(/^\d{6}$/)) {
                 navigator.clipboard.writeText(otpCode).then(() => {
-                    const tooltip = copyBtn.querySelector('.copy-tooltip');
-                    const originalText = tooltip?.textContent;
-                    if (tooltip) {
-                        tooltip.textContent = 'Copied!';
-                        tooltip.classList.add('copy-success');
-                        setTimeout(() => {
-                            tooltip.textContent = originalText;
-                            tooltip.classList.remove('copy-success');
-                        }, 1500);
-                    }
+                    const originalHTML = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+                    copyBtn.classList.add('text-green-400');
+                    
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalHTML;
+                        copyBtn.classList.remove('text-green-400');
+                    }, 2000);
+                    
                     showSuccessMessage('OTP copied to clipboard!');
                 }).catch(() => {
                     showErrorMessage('Failed to copy OTP');
@@ -442,24 +473,10 @@ export function setupVerifyOTP() {
         });
     }
     
-    async function autoFetchOTP() {
-        if (otpFetched) return;
-        
-        try {
-            const result = await authAPI.resendOTP(email);
-            
-            if (result && result.success && result.otp) {
-                currentOTP = result.otp;
-                localStorage.setItem('devOTP', result.otp);
-                otpFetched = true;
-                updateOTPDisplay(result.otp);
-            }
-        } catch (error) {
-            console.log('Auto-fetch failed');
-        }
-    }
-    
-    autoFetchOTP();
+    // Delay auto-fetch to avoid race conditions
+    setTimeout(() => {
+        autoFetchOTP();
+    }, 1000);
     
     form.addEventListener('submit', (e) => {
         e.preventDefault();
@@ -473,4 +490,12 @@ export function setupVerifyOTP() {
     }
     
     setupOTPInputs();
+}
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }

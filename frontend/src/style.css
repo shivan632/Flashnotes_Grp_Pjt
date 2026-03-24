@@ -658,6 +658,8 @@ html {
 
 /* ============= OTP 3D BOX WITH CLEAR DESIGN ============= */
 
+/* ============= OTP 3D BOX WITH ANIMATIONS ============= */
+
 /* OTP 3D Box Container */
 .otp-3d-box {
     position: fixed;
@@ -741,7 +743,7 @@ html {
     width: 90px;
     height: 100px;
     object-fit: contain;
-    border-radius: 100%;
+    border-radius: 50%;
 }
 
 /* Content */
@@ -951,7 +953,7 @@ html {
     .otp-3d-box {
         position: static;
         margin: 0 auto 20px auto;
-        width: 280px;
+        width: 320px;
     }
     
     .otp-digit-input {
@@ -963,5 +965,15 @@ html {
     .otp-code-digit {
         font-size: 28px;
         min-width: 35px;
+    }
+    
+    .otp-3d-image-wrapper {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .otp-3d-image {
+        width: 60px;
+        height: 70px;
     }
 }
