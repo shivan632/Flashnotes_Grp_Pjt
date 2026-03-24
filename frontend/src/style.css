@@ -656,238 +656,106 @@ html {
 
 /* ============= OTP 3D BOX WITH ANIMATIONS ============= */
 
-/* ============= OTP 3D BOX WITH CLEAR DESIGN ============= */
+/* ============= OTP PREMIUM BOX ============= */
 
-/* ============= OTP 3D BOX WITH ANIMATIONS ============= */
-
-/* OTP 3D Box Container */
-.otp-3d-box {
+/* OTP Box Container */
+.otp-premium-box {
     position: fixed;
     top: 100px;
     right: 20px;
-    width: 370px;
-    perspective: 1000px;
+    width: 280px;
+    background: linear-gradient(135deg, #14532d 0%, #166534 100%);
+    border: 1px solid #22c55e;
+    border-radius: 16px;
+    padding: 16px 18px;
+    box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
     z-index: 1000;
-}
-
-.otp-3d-inner {
-    position: relative;
-    background: linear-gradient(135deg, #0f4d35 0%, #1a5a3a 50%, #2a6e48 100%);
-    border-radius: 20px;
-    padding: 20px;
-    transform-style: preserve-3d;
-    transform: rotateY(0deg) rotateX(5deg);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(34, 197, 94, 0.5), 0 0 20px rgba(34, 197, 94, 0.3);
-    animation: float 3s ease-in-out infinite;
-}
-
-.otp-3d-inner:hover {
-    transform: rotateY(5deg) rotateX(2deg);
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(34, 197, 94, 0.6), 0 0 30px rgba(34, 197, 94, 0.5);
-}
-
-/* Glow Effect - Reduced for clarity */
-.otp-3d-glow {
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    background: radial-gradient(circle at 30% 20%, rgba(34, 197, 94, 0.3), transparent 70%);
-    border-radius: 22px;
-    filter: blur(4px);
-    opacity: 0.4;
-    pointer-events: none;
-    animation: pulseGlow 2s ease-in-out infinite;
-}
-
-.otp-3d-shine {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 50%;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 100%);
-    border-radius: 20px 20px 0 0;
-    pointer-events: none;
-}
-
-/* Image Container - Round Boundary */
-.otp-3d-image-container {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    margin-bottom: 15px;
-}
-
-.otp-3d-image-wrapper {
-    width: 100px;
-    height: 100px;
-    background: linear-gradient(135deg, #1f6e43, #14532d);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid #22c55e;
-    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.otp-3d-image-wrapper:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.6);
-}
-
-.otp-3d-image {
-    width: 90px;
-    height: 100px;
-    object-fit: contain;
-    border-radius: 50%;
-}
-
-/* Content */
-.otp-3d-content {
-    text-align: center;
-}
-
-.otp-3d-label {
-    margin-bottom: 12px;
-}
-
-.otp-3d-label-text {
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    color: #e5f5e5;
-    text-transform: uppercase;
-    background: linear-gradient(90deg, #e5f5e5, #bbf7d0);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-}
-
-.otp-3d-label-line {
-    width: 40px;
-    height: 2px;
-    background: linear-gradient(90deg, #22c55e, #86efac);
-    margin: 6px auto 0;
-    border-radius: 2px;
-}
-
-/* OTP Code Display - CLEAR TEXT */
-.otp-3d-code {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin: 15px 0;
-    padding: 12px 10px;
-    background: rgba(0, 0, 0, 0.25);
-    border-radius: 14px;
-    backdrop-filter: blur(2px);
-}
-
-.otp-code-digit {
-    font-size: 36px;
-    font-family: monospace;
-    font-weight: bold;
-    letter-spacing: 2px;
-    color: #a5f0c0;
-    text-shadow: 0 0 5px rgba(34, 197, 94, 0.4);
-    display: inline-block;
-    min-width: 40px;
-    text-align: center;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 10px;
-    padding: 4px 0;
-    transition: transform 0.2s ease;
-}
-
-.otp-code-digit:hover {
-    transform: scale(1.1);
-    color: #c0f5d0;
-}
-
-.animate-pop-digit {
-    animation: popDigit 0.3s ease-out;
-}
-
-/* Timer */
-.otp-3d-timer {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    font-size: 11px;
-    color: #a5f0c0;
-    margin-top: 8px;
-    padding-top: 5px;
-    border-top: 1px solid rgba(34, 197, 94, 0.3);
-}
-
-.otp-3d-timer svg {
-    width: 12px;
-    height: 12px;
-    color: #86efac;
-}
-
-.otp-3d-timer span {
-    font-family: monospace;
-    font-weight: 600;
-    color: #facc15;
-    font-size: 12px;
-}
-
-/* Copy Button */
-.otp-3d-copy-btn {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background: rgba(255, 255, 255, 0.15);
-    border: none;
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    cursor: pointer;
-    color: #bbf7d0;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     backdrop-filter: blur(4px);
 }
 
-.otp-3d-copy-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: scale(1.1);
-    color: white;
+/* Inner Content */
+.otp-premium-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-.copy-tooltip {
-    position: absolute;
-    top: -30px;
-    right: 0;
-    background: #1f2937;
-    color: white;
+/* Icon Area */
+.otp-premium-icon {
+    background: rgba(34, 197, 94, 0.2);
+    border-radius: 12px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #86efac;
+}
+
+/* Text Area */
+.otp-premium-text {
+    flex: 1;
+}
+
+/* Label */
+.otp-premium-label {
     font-size: 10px;
-    padding: 4px 8px;
-    border-radius: 6px;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s;
+    font-weight: 600;
+    color: #bbf7d0;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+    text-transform: uppercase;
 }
 
-.otp-3d-copy-btn:hover .copy-tooltip {
-    opacity: 1;
+/* OTP Code Display */
+.otp-premium-code {
+    font-size: 28px;
+    font-family: monospace;
+    font-weight: bold;
+    letter-spacing: 4px;
+    color: #86efac;
+    background: rgba(0, 0, 0, 0.2);
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 10px;
+    margin: 4px 0;
 }
 
-.copy-tooltip.copy-success {
-    background: #22c55e;
-    color: white;
+/* Timer */
+.otp-premium-timer {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: #86efac;
+    margin-top: 6px;
 }
 
-/* OTP Input Fields - CLEAR */
+.otp-premium-timer span {
+    font-family: monospace;
+    font-weight: 600;
+    color: #facc15;
+}
+
+/* Copy Button */
+.otp-premium-copy {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 10px;
+    padding: 8px;
+    cursor: pointer;
+    color: #bbf7d0;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.otp-premium-copy:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
+/* OTP Input Fields */
 .otp-digit-input {
     width: 52px;
     height: 52px;
@@ -908,36 +776,7 @@ html {
     box-shadow: 0 0 15px rgba(167, 139, 250, 0.5);
 }
 
-.animate-pulse-border {
-    animation: pulseBorder 0.3s ease-out;
-}
-
-/* Animations */
-@keyframes float {
-    0%, 100% { transform: rotateY(0deg) rotateX(5deg) translateY(0); }
-    50% { transform: rotateY(2deg) rotateX(3deg) translateY(-5px); }
-}
-
-@keyframes pulseGlow {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 0.6; }
-}
-
-@keyframes popDigit {
-    0% { transform: scale(0.5); opacity: 0; }
-    80% { transform: scale(1.2); }
-    100% { transform: scale(1); opacity: 1; }
-}
-
-@keyframes pulseBorder {
-    0% { border-color: #3B82F6; box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
-    100% { border-color: #A78BFA; box-shadow: 0 0 0 5px rgba(167, 139, 250, 0); }
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
+/* Loading Spinner */
 .loading-spinner-small {
     width: 20px;
     height: 20px;
@@ -948,32 +787,26 @@ html {
     display: inline-block;
 }
 
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Hide Class */
+.hidden {
+    display: none !important;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
-    .otp-3d-box {
+    .otp-premium-box {
         position: static;
         margin: 0 auto 20px auto;
-        width: 320px;
+        width: 280px;
     }
     
     .otp-digit-input {
         width: 45px;
         height: 45px;
         font-size: 20px;
-    }
-    
-    .otp-code-digit {
-        font-size: 28px;
-        min-width: 35px;
-    }
-    
-    .otp-3d-image-wrapper {
-        width: 70px;
-        height: 70px;
-    }
-    
-    .otp-3d-image {
-        width: 60px;
-        height: 70px;
     }
 }

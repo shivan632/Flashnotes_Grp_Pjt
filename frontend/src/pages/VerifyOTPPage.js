@@ -25,30 +25,31 @@ export function VerifyOTPPage() {
                 </div>
 
                 <!-- OTP Premium Box -->
-                <div class="otp-premium-box" id="otpPremiumBox">
-                    <div class="otp-premium-content">
-                        <div class="otp-premium-image">
-                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                            </svg>
-                        </div>
-                        <div class="otp-premium-text">
-                            <div class="otp-premium-label">VERIFICATION CODE</div>
-                            <div class="otp-premium-code" id="otpCodeValue">------</div>
-                            <div class="otp-premium-timer">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <span>Valid for <span id="premiumTimer">05:00</span></span>
-                            </div>
-                        </div>
-                        <button class="otp-premium-copy" id="copyOtpBtn" title="Copy code">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
+                <!-- OTP Premium Box -->
+<div class="otp-premium-box" id="otpPremiumBox">
+    <div class="otp-premium-content">
+        <div class="otp-premium-icon">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+        </div>
+        <div class="otp-premium-text">
+            <div class="otp-premium-label">VERIFICATION CODE</div>
+            <div class="otp-premium-code" id="otpCodeValue">------</div>
+            <div class="otp-premium-timer">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Valid for <span id="premiumTimer">05:00</span></span>
+            </div>
+        </div>
+        <button class="otp-premium-copy" id="copyOtpBtn" title="Copy code">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+        </button>
+    </div>
+</div>
 
                 <!-- Error Message -->
                 <div id="errorMessage" class="mb-4 p-3 bg-red-500/20 border border-red-500 rounded-lg text-red-400 text-sm text-center hidden"></div>
