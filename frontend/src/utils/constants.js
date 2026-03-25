@@ -48,6 +48,7 @@ export const ROUTES = {
     PROFILE: '/profile',
     SETTINGS: '/settings',
     NOTIFICATIONS: '/notifications',
+    PDF_READER: '/pdf-reader',
     
     // Admin Routes
     ADMIN: '/admin',

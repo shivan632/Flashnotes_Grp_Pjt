@@ -66,6 +66,7 @@ import { NotificationsPage, setupNotificationsPage } from './pages/Notifications
 import { QuizAttemptPage, initQuizAttempt, cleanupQuiz } from './pages/QuizAttemptPage.js';
 import { VerifyOTPPage, setupVerifyOTP } from './pages/VerifyOTPPage.js';
 import { WelcomePage, setupWelcomePage } from './pages/WelcomePage.js';  // ← IMPORT from pages
+import { PDFReaderPage, setupPDFReaderPage } from './pages/PDFReaderPage.js';
 
 // ============= API URL CONFIGURATION =============
 if (typeof window !== 'undefined' && !window.API_URL) {
@@ -236,6 +237,7 @@ const routes = {
     [ROUTES.SCORE]: ScorePage,
     [ROUTES.PROFILE]: ProfilePage,
     [ROUTES.SETTINGS]: SettingsPage,
+    [ROUTES.PDF_READER]: PDFReaderPage,
     [ROUTES.NOTIFICATIONS]: NotificationsPage
 };
 
@@ -460,6 +462,8 @@ async function router() {
                 setupNotificationsPage();
             } else if (path.match(/^\/quiz\/\d+\/attempt$/)) {
                 initQuizAttempt();
+            }else if (path === ROUTES.PDF_READER) {
+                setupPDFReaderPage();
             }
         }, 100);
         
