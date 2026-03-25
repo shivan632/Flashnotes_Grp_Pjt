@@ -13,6 +13,7 @@ import historyRoutes from './src/routes/history.js';
 import aiRoutes from './src/routes/ai.js';
 import quizRoutes from './src/routes/quiz.js';
 import scoreRoutes from './src/routes/score.js';
+import feedbackRoutes from './src/routes/feedback.js';
 
 dotenv.config();
 
@@ -83,6 +84,7 @@ app.use('/api/history', historyRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/quiz', quizRoutes);
 app.use('/api/score', scoreRoutes);
+app.use('/api/feedback', feedbackRoutes);
 
 // Health check route (no rate limit)
 app.get('/api/health', (req, res) => {

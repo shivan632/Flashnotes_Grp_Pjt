@@ -1,4 +1,4 @@
-// frontend/src/main.js - COMPLETE UPDATED VERSION WITH ALL NEW FEATURES
+// frontend/src/main.js - UPDATED
 
 // ============= UTILITIES =============
 import { setupNavigation, getCurrentPath, redirectIfNotAuthenticated, redirectIfAuthenticated } from './utils/navigation.js';
@@ -32,6 +32,7 @@ import { Footer } from './components/common/Footer.js';
 import { Navbar, setupNavbar } from './components/layout/Navbar.js';
 import { Sidebar, setupSidebar } from './components/layout/Sidebar.js';
 import { AIChatSidebar, setupAIChat } from './components/layout/AIChatSidebar.js';
+import { setupFeedbackModal } from './components/feedback/FeedbackModal.js';
 
 // ============= AUTH COMPONENTS =============
 import { LoginForm, setupLoginForm } from './components/auth/LoginForm.js';
@@ -51,6 +52,10 @@ import { FeaturesSection } from './components/welcome/FeaturesSection.js';
 import { Introduction } from './components/welcome/Introduction.js';
 import { FutureVision } from './components/welcome/FutureVision.js';
 
+// ============= FEEDBACK COMPONENTS =============
+import { FeedbackForm, setupFeedbackForm } from './components/feedback/FeedbackForm.js';
+import { FeedbackList, setupFeedbackList } from './components/feedback/FeedbackList.js';
+
 // ============= PAGE IMPORTS =============
 import { SavedPage, setupSavedPage } from './pages/SavedPage.js';
 import { QuizPage, setupQuizPage } from './pages/QuizPage.js';
@@ -60,31 +65,19 @@ import { SettingsPage, setupSettingsPage } from './pages/SettingsPage.js';
 import { NotificationsPage, setupNotificationsPage } from './pages/NotificationsPage.js';
 import { QuizAttemptPage, initQuizAttempt, cleanupQuiz } from './pages/QuizAttemptPage.js';
 import { VerifyOTPPage, setupVerifyOTP } from './pages/VerifyOTPPage.js';
+import { WelcomePage, setupWelcomePage } from './pages/WelcomePage.js';  // ← IMPORT from pages
 
-
-// frontend/src/main.js - Add at the very top
-// Check API URL configuration
+// ============= API URL CONFIGURATION =============
 if (typeof window !== 'undefined' && !window.API_URL) {
     console.warn('⚠️ API_URL not configured, using default');
     window.API_URL = window.location.hostname === 'localhost' 
         ? 'http://localhost:10000/api'
-        : 'https://your-backend.onrender.com/api';
+        : 'https://flashnotes-api.onrender.com/api';
 }
 console.log('✅ API_URL:', window.API_URL);
-// ============= PAGE COMPONENTS =============
 
-function WelcomePage() {
-    return `
-        <div class="min-h-screen flex flex-col">
-            ${Navbar()}
-            ${WelcomeHero()}
-            ${FeaturesSection()}
-            ${Introduction()}
-            ${FutureVision()}
-            ${Footer()}
-        </div>
-    `;
-}
+// ============= PAGE COMPONENTS =============
+// REMOVE the local WelcomePage function - it's already imported!
 
 function RegisterPage() {
     return `
@@ -255,7 +248,6 @@ let notificationUnsubscribe = null;
 
 // ============= NOTIFICATION HANDLER =============
 function setupNotificationListener() {
-    // Update notification badge in navbar
     const updateNotificationBadge = () => {
         const unreadCount = getUnreadCount();
         const notificationBtn = document.getElementById('notificationBtn');
@@ -289,7 +281,6 @@ async function handleGenerate() {
     
     const topic = input.value.trim();
     
-    // Validate topic
     const validation = validateTopic(topic);
     if (!validation.isValid) {
         showError(validation.errors.topic, 'warning');
@@ -302,13 +293,11 @@ async function handleGenerate() {
     
     isGenerating = true;
     
-    // Show loading state
     if (generateBtn) {
         generateBtn.disabled = true;
         generateBtn.innerHTML = '<span>Generating...</span> <div class="loading-spinner-small"></div>';
     }
     
-    // Show loading in display
     if (qaDisplay) {
         qaDisplay.innerHTML = `
             <div class="text-center py-12 bg-[#1F2937] rounded-xl">
@@ -320,22 +309,15 @@ async function handleGenerate() {
     }
     
     try {
-        // Add to history
         await addToHistory(topic);
-        
-        // Generate Q&A
         const qaList = await generateQA(topic);
         
-        // Display results
         if (qaDisplay) {
             if (qaList.length > 0) {
                 qaDisplay.innerHTML = qaList.map((qa, index) => 
                     QACard(qa.question, qa.answer, topic, index)
                 ).join('');
-                
-                // Setup card events
                 setupQACardEvents();
-                
                 showSuccess(SUCCESS_MESSAGES.NOTE_SAVED.replace('Note', 'Questions'), 'success');
             } else {
                 qaDisplay.innerHTML = `
@@ -346,7 +328,6 @@ async function handleGenerate() {
             }
         }
         
-        // Refresh sections
         await refreshSections();
         
     } catch (error) {
@@ -360,7 +341,6 @@ async function handleGenerate() {
         }
         showError(error.message || ERROR_MESSAGES.GENERIC, 'error');
     } finally {
-        // Reset button
         if (generateBtn) {
             generateBtn.disabled = false;
             generateBtn.innerHTML = '<span>Generate</span> <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>';
@@ -369,9 +349,7 @@ async function handleGenerate() {
     }
 }
 
-// Refresh dashboard sections
 async function refreshSections() {
-    // Refresh storage section
     const storageSection = document.querySelector('.storage-section');
     if (storageSection) {
         const newStorage = await StorageArea();
@@ -379,7 +357,6 @@ async function refreshSections() {
         setupStorageEvents();
     }
     
-    // Refresh history section
     const historySection = document.querySelector('.history-section');
     if (historySection) {
         const newHistory = await HistoryList();
@@ -388,9 +365,7 @@ async function refreshSections() {
     }
 }
 
-// ============= SETUP DASHBOARD =============
 function setupDashboardEvents() {
-    // Generate button
     const generateBtn = document.getElementById('generateBtn');
     if (generateBtn) {
         const newBtn = generateBtn.cloneNode(true);
@@ -398,7 +373,6 @@ function setupDashboardEvents() {
         newBtn.addEventListener('click', handleGenerate);
     }
     
-    // Enter key in input
     const topicInput = document.getElementById('topicInput');
     if (topicInput) {
         topicInput.addEventListener('keypress', (e) => {
@@ -408,30 +382,23 @@ function setupDashboardEvents() {
         });
     }
     
-    // Quick topics
     setupQuickTopics();
-    
-    // Storage and history events
     setupStorageEvents();
     setupHistoryEvents();
 }
 
 // ============= HASH-BASED ROUTER =============
 async function router() {
-    // Get the hash or default to '/'
     let path = window.location.hash.slice(1) || '/';
     
-    // Remove trailing slash
     if (path.endsWith('/') && path.length > 1) {
         path = path.slice(0, -1);
     }
     
     console.log('Current hash path:', path);
     
-    // Check for dynamic routes
     let pageFunction = routes[path];
     
-    // Check for quiz attempt pattern
     if (!pageFunction && path.match(/^\/quiz\/\d+\/attempt$/)) {
         pageFunction = QuizAttemptPage;
     }
@@ -439,7 +406,6 @@ async function router() {
     const app = document.getElementById('app');
     if (!app) return;
     
-    // Show loading state
     app.innerHTML = `
         <div class="min-h-screen flex items-center justify-center">
             <div class="loading-spinner">
@@ -451,26 +417,25 @@ async function router() {
     `;
     
     try {
-        // Clean up previous quiz timer if any
         cleanupQuiz();
         
-        // Execute page function (might be async)
         const pageContent = await (typeof pageFunction === 'function' ? pageFunction() : pageFunction);
         app.innerHTML = pageContent;
         
-        // Setup navigation
         setupNavigation();
         
-        // Setup component events after a short delay
         setTimeout(() => {
             // Global components
             setupNavbar();
             setupSidebar();
             setupHeader();
             setupAIChat();
+            setupFeedbackModal();
             
             // Page-specific components
-            if (path === ROUTES.REGISTER) {
+            if (path === ROUTES.HOME || path === ROUTES.WELCOME) {
+                setupWelcomePage();  // ← Now this works!
+            } else if (path === ROUTES.REGISTER) {
                 setupRegistrationForm();
             } else if (path === ROUTES.LOGIN) {
                 setupLoginForm();
@@ -494,7 +459,6 @@ async function router() {
             } else if (path === ROUTES.NOTIFICATIONS) {
                 setupNotificationsPage();
             } else if (path.match(/^\/quiz\/\d+\/attempt$/)) {
-                // Initialize quiz attempt
                 initQuizAttempt();
             }
         }, 100);
@@ -512,7 +476,6 @@ async function router() {
     }
 }
 
-// ============= SYNC DATA WHEN ONLINE =============
 function setupOnlineSync() {
     window.addEventListener('online', async () => {
         console.log('Back online, syncing data...');
@@ -520,7 +483,6 @@ function setupOnlineSync() {
         const result = await syncPendingData();
         if (result && result.notes.success + result.history.success > 0) {
             showSuccess(`Synced ${result.notes.success + result.history.success} items`, 'success');
-            // Refresh dashboard if on dashboard
             if (getCurrentPath() === ROUTES.DASHBOARD) {
                 await refreshSections();
             }
@@ -532,14 +494,10 @@ function setupOnlineSync() {
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Flashnotes App Initializing...');
     
-    // Initialize notifications
     initNotifications();
     setupNotificationListener();
-    
-    // Setup online sync
     setupOnlineSync();
     
-    // Check authentication and redirect
     const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
     const currentPath = getCurrentPath();
     
@@ -549,21 +507,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
     
-    // If no hash, set to home
     if (!window.location.hash) {
         window.location.hash = '#/';
     } else {
         router();
     }
     
-    // Sync data in background if online
     if (navigator.onLine && isAuthenticated) {
         setTimeout(async () => {
             await syncPendingData();
         }, 3000);
     }
     
-    // Preload user profile if authenticated
     if (isAuthenticated) {
         try {
             await getCurrentUserProfile();
@@ -573,9 +528,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-// Listen for hash changes
 window.addEventListener('hashchange', router);
 window.addEventListener('popstate', router);
 
-// Export for use in other files
 export { router, handleGenerate };

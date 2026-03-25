@@ -4,6 +4,7 @@ import { StorageArea } from './StorageArea.js';
 import { HistoryList } from './HistoryList.js';
 import { TopicInput } from './TopicInput.js';
 import { QACard } from './QACard.js';
+import { UserFeedbackCard, setupUserFeedback } from '../feedback/UserFeedbackCard.js';
 import { getSavedNotes, getSearchHistory } from '../../services/storage.js';
 import { showError } from '../common/ErrorMessage.js';
 
@@ -127,13 +128,18 @@ export async function Dashboard() {
                 </div>
                 
                 <!-- Storage and History Section -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                     <div class="storage-section transform transition-all duration-300 hover:-translate-y-1">
                         ${await StorageArea()}
                     </div>
                     <div class="history-section transform transition-all duration-300 hover:-translate-y-1">
                         ${await HistoryList()}
                     </div>
+                </div>
+                
+                <!-- User Feedback Section -->
+                <div class="mt-8">
+                    ${UserFeedbackCard()}
                 </div>
             </main>
         </div>
@@ -164,6 +170,9 @@ export function setupDashboard() {
             toggleAIChat();
         });
     }
+    
+    // Setup User Feedback
+    setupUserFeedback();
     
     // Add floating animation to stats cards
     const statsCards = document.querySelectorAll('.group');
