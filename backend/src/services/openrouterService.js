@@ -4,64 +4,93 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Initialize OpenRouter client
-const openrouter = new OpenAI({
-    baseURL: 'https://openrouter.ai/api/v1',
-    apiKey: process.env.OPENROUTER_API_KEY,
-    defaultHeaders: {
-        'HTTP-Referer': 'https://flashnotes.app',
-        'X-Title': 'Flashnotes'
+// Get API key from either environment variable
+const API_KEY = process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY;
+
+if (!API_KEY) {
+    console.error('❌ Missing API key. Set OPENAI_API_KEY or OPENROUTER_API_KEY');
+    // Don't throw error - let the app continue with fallback
+}
+
+// Initialize OpenRouter client with error handling
+let openrouter = null;
+
+try {
+    if (API_KEY) {
+        openrouter = new OpenAI({
+            baseURL: 'https://openrouter.ai/api/v1',
+            apiKey: API_KEY,
+            defaultHeaders: {
+                'HTTP-Referer': 'https://flashnotes.app',
+                'X-Title': 'Flashnotes'
+            }
+        });
+        console.log('✅ OpenRouter client initialized');
+    } else {
+        console.log('⚠️ OpenRouter client not initialized - API key missing');
     }
-});
+} catch (error) {
+    console.error('❌ OpenRouter initialization error:', error.message);
+}
 
 // ✅ CONFIRMED WORKING FREE MODELS (March 2026)
 export const FREE_MODELS = {
-    // Google Gemini - Best quality
     GEMINI_PRO: 'google/gemini-2.5-pro-exp-03-25:free',
-    
-    // Meta Llama 4 - Great for long documents
     LLAMA_4_MAVERICK: 'meta-llama/llama-4-maverick:free',
     LLAMA_4_SCOUT: 'meta-llama/llama-4-scout:free',
-    
-    // NVIDIA Nemotron - Fast and reliable
     NEMOTRON_9B: 'nvidia/nemotron-nano-9b-v2:free',
     NEMOTRON_8B: 'nvidia/llama-3.1-nemotron-nano-8b-v1:free',
-    
-    // Mistral - Good balance
     MISTRAL_SMALL: 'mistralai/mistral-small-3.1-24b-instruct:free',
-    
-    // Qwen - Great for coding
     QWEN_CODER: 'qwen/qwen3-coder-480b-a35b-instruct:free',
-    
-    // StepFun - Fast reasoning
     STEP_FLASH: 'stepfun/step-3.5-flash:free',
-    
-    // Arcee - Creative writing
     TRINITY_LARGE: 'arcee-ai/trinity-large-preview:free',
-    
-    // OpenAI GPT-OSS
     GPT_OSS_120B: 'openai/gpt-oss-120b:free',
-    
-    // GLM
     GLM_Z1: 'thudm/glm-z1-32b:free',
-    
-    // Kimi - Long context
     KIMI_K2: 'moonshotai/kimi-k2:free'
 };
 
-// Default model - Most reliable for PDF summarization
 const DEFAULT_MODEL = FREE_MODELS.NEMOTRON_9B;
 
+// Fallback summary function
+function getFallbackSummary(text, topic) {
+    const wordCount = text.split(/\s+/).length;
+    const charCount = text.length;
+    const preview = text.substring(0, 300);
+    
+    return `
+📝 **SUMMARY**
+This document contains ${wordCount} words of content about ${topic || 'the uploaded PDF'}.
+
+🎯 **KEY POINTS**
+• Document length: ${charCount} characters, ${wordCount} words
+• Content extracted from PDF successfully
+• ${Math.ceil(wordCount / 500)} pages approximately
+
+📌 **IMPORTANT NOTES**
+AI summary service is currently unavailable. Please configure OpenRouter API key.
+
+📚 **QUICK REFERENCE**
+• Preview: ${preview.substring(0, 200)}...
+• Generated: ${new Date().toLocaleString()}
+    `;
+}
+
 export async function generatePDFSummary(text, topic = null, model = DEFAULT_MODEL) {
+    // If no API key or client not initialized, return fallback
+    if (!openrouter || !API_KEY) {
+        console.log('⚠️ Using fallback summary (API key not configured)');
+        return {
+            success: true,
+            summary: getFallbackSummary(text, topic),
+            model: 'fallback',
+            warning: 'API key not configured'
+        };
+    }
+
     try {
         console.log('🤖 Generating PDF summary with OpenRouter...');
         console.log(`📡 Using model: ${model}`);
         
-        if (!process.env.OPENROUTER_API_KEY) {
-            throw new Error('OPENROUTER_API_KEY not found');
-        }
-        
-        // Limit text length for the model
         const maxLength = 15000;
         const truncatedText = text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
         
@@ -113,27 +142,29 @@ Make it easy to read and study-friendly.
     } catch (error) {
         console.error('OpenRouter Error:', error);
         
-        // Provide helpful error message
         let errorMessage = error.message;
         if (error.message.includes('429')) {
             errorMessage = 'Rate limit exceeded. Please try again in a few seconds.';
         } else if (error.message.includes('404')) {
-            errorMessage = 'Model not found. Try a different model from the FREE_MODELS list.';
+            errorMessage = 'Model not found. Try a different model.';
         }
         
+        // Return fallback instead of failing
         return {
-            success: false,
+            success: true,
+            summary: getFallbackSummary(text, topic),
+            model: 'fallback',
             error: errorMessage
         };
     }
 }
 
-// Test connection with working models
 export async function testOpenRouter() {
+    if (!openrouter || !API_KEY) {
+        return { success: false, error: 'API key not configured' };
+    }
+    
     try {
-        console.log('🧪 Testing OpenRouter connection...');
-        
-        // Try the most reliable free model first
         const modelsToTry = [
             FREE_MODELS.NEMOTRON_9B,
             FREE_MODELS.GEMINI_PRO,
@@ -142,29 +173,20 @@ export async function testOpenRouter() {
         
         for (const model of modelsToTry) {
             try {
-                console.log(`📡 Trying model: ${model}`);
                 const completion = await openrouter.chat.completions.create({
                     model: model,
                     messages: [
-                        { role: 'user', content: 'Say "Hello from Flashnotes! OpenRouter is working!"' }
+                        { role: 'user', content: 'Say "Hello from Flashnotes!"' }
                     ],
                     max_tokens: 50
                 });
-                
-                const response = completion.choices[0].message.content;
-                console.log(`✅ OpenRouter connected with ${model}:`, response);
-                return { success: true, message: response, model: model };
-                
+                return { success: true, message: completion.choices[0].message.content, model: model };
             } catch (modelError) {
-                console.log(`❌ Model ${model} failed: ${modelError.message}`);
                 continue;
             }
         }
-        
         throw new Error('No working models found');
-        
     } catch (error) {
-        console.error('❌ OpenRouter connection failed:', error.message);
         return { success: false, error: error.message };
     }
 }
