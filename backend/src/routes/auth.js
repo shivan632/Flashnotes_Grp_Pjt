@@ -10,7 +10,7 @@ import {
     logout
 } from '../controllers/authController.js';
 import { authenticateToken } from '../middleware/auth.js';
-
+import { deleteAccount } from '../controllers/authController.js';
 const router = express.Router();
 
 // Public routes
@@ -20,6 +20,7 @@ router.post('/verify-otp', verifyOTP);
 router.post('/resend-otp', resendOTP);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
+router.delete('/delete-account', authenticateToken, deleteAccount);
 
 // Protected routes
 router.post('/logout', authenticateToken, logout);

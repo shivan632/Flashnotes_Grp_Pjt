@@ -495,6 +495,55 @@ export const resetPassword = async (req, res) => {
     }
 };
 
+// Delete account
+export const deleteAccount = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { email, password } = req.body;
+        
+        if (!email || !password) {
+            return res.status(400).json({ error: 'Email and password are required' });
+        }
+        
+        // Verify user exists
+        const { data: user, error: userError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', userId)
+            .single();
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        // Verify password
+        const isValidPassword = await bcrypt.compare(password, user.password);
+        if (!isValidPassword) {
+            return res.status(401).json({ error: 'Invalid password' });
+        }
+        
+        // Delete all user data (cascade will handle related tables)
+        const { error: deleteError } = await supabase
+            .from('users')
+            .delete()
+            .eq('id', userId);
+        
+        if (deleteError) {
+            console.error('Delete error:', deleteError);
+            return res.status(500).json({ error: 'Failed to delete account' });
+        }
+        
+        res.json({
+            success: true,
+            message: 'Account deleted successfully'
+        });
+        
+    } catch (error) {
+        console.error('Delete account error:', error);
+        res.status(500).json({ error: 'Failed to delete account' });
+    }
+};
+
 // ============= LOGOUT =============
 export const logout = async (req, res) => {
     try {

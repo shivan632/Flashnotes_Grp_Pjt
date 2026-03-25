@@ -15,6 +15,8 @@ import quizRoutes from './src/routes/quiz.js';
 import scoreRoutes from './src/routes/score.js';
 import feedbackRoutes from './src/routes/feedback.js';
 import pdfRoutes from './src/routes/pdf.js';
+import profileRoutes from './src/routes/profile.js';
+
 
 dotenv.config();
 
@@ -87,6 +89,7 @@ app.use('/api/quiz', quizRoutes);
 app.use('/api/score', scoreRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/pdf', pdfRoutes);
+app.use('/api/user', profileRoutes);
 
 // Health check route (no rate limit)
 app.get('/api/health', (req, res) => {
