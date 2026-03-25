@@ -95,16 +95,18 @@ export function Sidebar() {
             </div>
             
             <!-- Feedback Button -->
-            <div class="p-3 border-t border-[#374151] bg-gradient-to-r from-[#1F2937] to-[#111827] flex-shrink-0">
-                <button id="feedbackSidebarBtn" 
-                        class="flex items-center space-x-3 px-3 py-2 text-sm transition-all duration-300 rounded-lg w-full text-left group text-[#60A5FA] hover:text-[#3B82F6] hover:bg-[#3B82F6]/10">
-                    <div class="w-8 h-8 bg-gradient-to-r from-[#F59E0B] to-[#F59E0B]/50 rounded-lg flex items-center justify-center">
-                        <img src="public/assets/icons/logo.jpg" alt="Feedback" class="w-5 h-5" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'white\'%3E%3Cpath d=\'M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14h-4.8L12 18.8 8.8 16H4V4h16v12z\'/%3E%3C/svg%3E'">
-                    </div>
-                    <span class="text-sm">Give Feedback</span>
-                    <span class="ml-auto text-xs text-gray-500 group-hover:text-[#3B82F6]">❤️</span>
-                </button>
-            </div>
+<div class="p-3 border-t border-[#374151] bg-gradient-to-r from-[#1F2937] to-[#111827] flex-shrink-0">
+    <button id="feedbackSidebarBtn" 
+            class="flex items-center space-x-3 px-3 py-2 text-sm transition-all duration-300 rounded-lg w-full text-left group text-[#60A5FA] hover:text-[#3B82F6] hover:bg-[#3B82F6]/10">
+        <div class="w-8 h-8 bg-gradient-to-r from-[#F59E0B] to-[#F59E0B]/50 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+            </svg>
+        </div>
+        <span class="text-sm">Give Feedback</span>
+        <span class="ml-auto text-xs text-gray-500 group-hover:text-[#3B82F6]">❤️</span>
+    </button>
+</div>
             
             <!-- Logout Button -->
             <div class="p-4 border-t border-[#374151] bg-gradient-to-r from-[#1F2937] to-[#111827] flex-shrink-0">
