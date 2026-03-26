@@ -4,7 +4,13 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { testConnection } from './src/config/supabase.js';
+
+// Get __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Import routes
 import authRoutes from './src/routes/auth.js';
@@ -17,31 +23,28 @@ import feedbackRoutes from './src/routes/feedback.js';
 import pdfRoutes from './src/routes/pdf.js';
 import profileRoutes from './src/routes/profile.js';
 
-
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// ============= CORS CONFIGURATION - FIX =============
+// ============= CORS CONFIGURATION =============
 const allowedOrigins = [
     'https://flashnotes-grp-pjt-1t3z.vercel.app',
     'https://flashnotes-grp-pjt.onrender.com',
     'http://localhost:3000',
     'http://localhost:10000',
-    'http://127.0.0.1:3000'
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:10000'
 ];
 
 app.use(cors({
     origin: function(origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl)
         if (!origin) return callback(null, true);
-        
         if (allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
         } else {
             console.log('⚠️ Blocked origin:', origin);
-            // For development, allow all origins
             callback(null, true);
         }
     },
@@ -51,22 +54,35 @@ app.use(cors({
     optionsSuccessStatus: 200
 }));
 
-// ============= RATE LIMITING - FIX (Increase limit) =============
-app.set('trust proxy', 1);  // Trust first proxy (Render's load balancer)
+// ============= RATE LIMITING =============
+app.set('trust proxy', 1);
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-    message: { error: 'Too many requests' },
-    validate: { xForwardedForHeader: false }  // Disable this validation
+    windowMs: 15 * 60 * 1000,  // 15 minutes
+    max: 500,  // Increased from 100 to 500
+    message: { error: 'Too many requests. Please try again later.' },
+    validate: { xForwardedForHeader: false },
+    skip: (req) => {
+        // Skip rate limiting for health check
+        return req.path === '/api/health';
+    }
 });
 
-// Apply rate limiting to API routes
 app.use('/api', limiter);
 
 // Security middleware
 app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
-    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.tailwindcss.com", "https://cdn.jsdelivr.net", "https://www.gstatic.com"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
+            fontSrc: ["'self'", "https:", "data:", "https://fonts.gstatic.com"],
+            imgSrc: ["'self'", "data:", "https:"],
+            connectSrc: ["'self'", "https://sgrprgcsvyyhqluwtszz.supabase.co", "https://openrouter.ai", "https://*.googleapis.com", "https://*.firebaseio.com"],
+        }
+    }
 }));
 
 // Body parsing middleware
@@ -76,11 +92,17 @@ app.use(express.urlencoded({ extended: true }));
 // Request logging middleware
 app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-    console.log('  Origin:', req.headers.origin || 'none');
     next();
 });
 
-// Routes
+// ============= SERVE STATIC FILES (FRONTEND) =============
+const frontendPath = path.join(__dirname, '../frontend');
+console.log(`📁 Frontend path: ${frontendPath}`);
+
+// Serve static files from frontend directory
+app.use(express.static(frontendPath));
+
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/notes', notesRoutes);
 app.use('/api/history', historyRoutes);
@@ -91,7 +113,7 @@ app.use('/api/feedback', feedbackRoutes);
 app.use('/api/pdf', pdfRoutes);
 app.use('/api/user', profileRoutes);
 
-// Health check route (no rate limit)
+// Health check route
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
@@ -101,13 +123,17 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// 404 handler
-app.use((req, res) => {
-    console.log(`⚠️ 404 Not Found: ${req.method} ${req.path}`);
-    res.status(404).json({
-        success: false,
-        message: `Route not found: ${req.method} ${req.path}`
-    });
+// ============= SPA ROUTING - Serve index.html for all non-API routes =============
+app.get('*', (req, res) => {
+    // Skip API routes
+    if (req.path.startsWith('/api')) {
+        return res.status(404).json({
+            success: false,
+            message: `Route not found: ${req.method} ${req.path}`
+        });
+    }
+    // Serve index.html for all other routes
+    res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
 // Error handling middleware
@@ -121,11 +147,11 @@ app.use((err, req, res, next) => {
 
 // Start server
 app.listen(PORT, async () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`\n🚀 Server running on http://localhost:${PORT}`);
     console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🔗 Allowed origins: ${allowedOrigins.join(', ')}`);
+    console.log(`📁 Frontend path: ${frontendPath}`);
+    console.log(`🌐 Open: http://localhost:${PORT} to view the app\n`);
     
-    // Test database connection
     await testConnection();
 });
 

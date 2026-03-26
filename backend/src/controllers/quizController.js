@@ -87,23 +87,23 @@ export const getQuizById = async (req, res) => {
 // Get questions for a specific quiz
 export const getQuizQuestions = async (req, res) => {
     try {
-        const quizId = req.params.id;
-
+        const { id } = req.params;
+        
         const { data: questions, error } = await supabase
             .from('quiz_questions')
-            .select('id, question, options, points')
-            .eq('quiz_id', quizId)
-            .order('id');
-
+            .select('id, question, options, correct_option, points, explanation')  // ← Add correct_option here
+            .eq('quiz_id', id)
+            .order('id', { ascending: true });
+        
         if (error) throw error;
-
+        
         res.json({
             success: true,
-            questions
+            questions: questions
         });
-
+        
     } catch (error) {
-        console.error('Get questions error:', error);
+        console.error('Get quiz questions error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to fetch questions'

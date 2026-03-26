@@ -63,9 +63,10 @@ import { ScorePage, setupScorePage } from './pages/ScorePage.js';
 import { ProfilePage, setupProfilePage } from './pages/ProfilePage.js';
 import { SettingsPage, setupSettingsPage } from './pages/SettingsPage.js';
 import { NotificationsPage, setupNotificationsPage } from './pages/NotificationsPage.js';
-import { QuizAttemptPage, initQuizAttempt, cleanupQuiz } from './pages/QuizAttemptPage.js';
+// FIXED: Correct import path and function names
+import { QuizAttemptPage, setupQuizAttempt, cleanupQuiz } from './pages/QuizAttempt.js';
 import { VerifyOTPPage, setupVerifyOTP } from './pages/VerifyOTPPage.js';
-import { WelcomePage, setupWelcomePage } from './pages/WelcomePage.js';  // ← IMPORT from pages
+import { WelcomePage, setupWelcomePage } from './pages/WelcomePage.js';
 import { PDFReaderPage, setupPDFReaderPage } from './pages/PDFReaderPage.js';
 
 // ============= API URL CONFIGURATION =============
@@ -78,7 +79,6 @@ if (typeof window !== 'undefined' && !window.API_URL) {
 console.log('✅ API_URL:', window.API_URL);
 
 // ============= PAGE COMPONENTS =============
-// REMOVE the local WelcomePage function - it's already imported!
 
 function RegisterPage() {
     return `
@@ -241,9 +241,6 @@ const routes = {
     [ROUTES.NOTIFICATIONS]: NotificationsPage
 };
 
-// Dynamic route for quiz attempt
-routes[/^\/quiz\/\d+\/attempt$/] = QuizAttemptPage;
-
 // ============= GLOBAL STATE =============
 let isGenerating = false;
 let notificationUnsubscribe = null;
@@ -401,7 +398,9 @@ async function router() {
     
     let pageFunction = routes[path];
     
-    if (!pageFunction && path.match(/^\/quiz\/\d+\/attempt$/)) {
+    // FIXED: Check for quiz attempt route with correct pattern
+    const quizAttemptMatch = path.match(/^\/quiz\/attempt\/(\d+)$/);
+    if (!pageFunction && quizAttemptMatch) {
         pageFunction = QuizAttemptPage;
     }
     
@@ -436,7 +435,7 @@ async function router() {
             
             // Page-specific components
             if (path === ROUTES.HOME || path === ROUTES.WELCOME) {
-                setupWelcomePage();  // ← Now this works!
+                setupWelcomePage();
             } else if (path === ROUTES.REGISTER) {
                 setupRegistrationForm();
             } else if (path === ROUTES.LOGIN) {
@@ -460,10 +459,11 @@ async function router() {
                 setupSettingsPage();
             } else if (path === ROUTES.NOTIFICATIONS) {
                 setupNotificationsPage();
-            } else if (path.match(/^\/quiz\/\d+\/attempt$/)) {
-                initQuizAttempt();
-            }else if (path === ROUTES.PDF_READER) {
+            } else if (path === ROUTES.PDF_READER) {
                 setupPDFReaderPage();
+            } else if (quizAttemptMatch) {
+                // FIXED: Call setupQuizAttempt instead of initQuizAttempt
+                setupQuizAttempt();
             }
         }, 100);
         
@@ -535,4 +535,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 window.addEventListener('hashchange', router);
 window.addEventListener('popstate', router);
 
-export { router, handleGenerate };
+export { router, handleGenerate, cleanupQuiz };
