@@ -57,14 +57,40 @@ async function fetchAPI(endpoint, options = {}) {
 
 // ============= USER SCORES =============
 
-// Get user's scores
+// Get user's scores and stats
 export async function getUserScores() {
     try {
         const data = await fetchAPI('/score');
-        return data.scores || [];
+        return {
+            stats: data.stats || {
+                totalQuizzes: 0,
+                averageScore: 0,
+                perfectScores: 0,
+                totalQuestionsAnswered: 0,
+                correctAnswers: 0,
+                totalPoints: 0,
+                currentStreak: 0,
+                accuracy: 0
+            },
+            scores: data.scores || [],
+            recentAttempts: data.recentAttempts || []
+        };
     } catch (error) {
         console.error('Error fetching scores:', error);
-        return [];
+        return {
+            stats: {
+                totalQuizzes: 0,
+                averageScore: 0,
+                perfectScores: 0,
+                totalQuestionsAnswered: 0,
+                correctAnswers: 0,
+                totalPoints: 0,
+                currentStreak: 0,
+                accuracy: 0
+            },
+            scores: [],
+            recentAttempts: []
+        };
     }
 }
 
@@ -73,20 +99,49 @@ export async function getUserStats() {
     try {
         const data = await fetchAPI('/score/stats');
         return data.stats || {
-            totalScore: 0,
+            totalQuizzes: 0,
             averageScore: 0,
-            quizzesTaken: 0,
-            highestScore: 0,
-            rank: 0
+            bestScore: 0,
+            perfectScores: 0,
+            totalQuestions: 0,
+            correctAnswers: 0,
+            accuracy: 0,
+            totalPoints: 0,
+            currentStreak: 0,
+            longestStreak: 0
         };
     } catch (error) {
         console.error('Error fetching stats:', error);
         return {
-            totalScore: 0,
+            totalQuizzes: 0,
             averageScore: 0,
-            quizzesTaken: 0,
-            highestScore: 0,
-            rank: 0
+            bestScore: 0,
+            perfectScores: 0,
+            totalQuestions: 0,
+            correctAnswers: 0,
+            accuracy: 0,
+            totalPoints: 0,
+            currentStreak: 0,
+            longestStreak: 0
+        };
+    }
+}
+
+// Get score progression for graph
+export async function getScoreProgression() {
+    try {
+        const data = await fetchAPI('/score/progression');
+        return data.progression || {
+            weeks: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+            scores: [0, 0, 0, 0],
+            data: []
+        };
+    } catch (error) {
+        console.error('Error fetching progression:', error);
+        return {
+            weeks: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+            scores: [0, 0, 0, 0],
+            data: []
         };
     }
 }
@@ -107,8 +162,8 @@ export async function getLeaderboard(period = 'all', limit = 10) {
 // Get global rankings
 export async function getGlobalRankings() {
     try {
-        const data = await fetchAPI('/score/ranking');
-        return data.rankings || [];
+        const data = await fetchAPI('/score/leaderboard?limit=50');
+        return data.leaderboard || [];
     } catch (error) {
         console.error('Error fetching rankings:', error);
         return [];
@@ -178,37 +233,28 @@ export async function getQuizAttempts() {
 
 // ============= USER PROFILE STATS =============
 
-// Get complete user profile stats
+// Get complete user profile stats (updated to use new backend)
 export async function getUserProfileStats() {
     try {
-        const [scores, attempts, achievements] = await Promise.all([
-            getUserScores(),
-            getQuizAttempts(),
-            getUserAchievements()
-        ]);
-        
-        const completedAttempts = attempts.filter(a => a.status === 'completed');
-        const totalScore = scores.reduce((sum, s) => sum + (s.score || 0), 0);
-        const totalQuizzes = completedAttempts.length;
-        const averageScore = totalQuizzes > 0 
-            ? completedAttempts.reduce((sum, a) => sum + (a.percentage || 0), 0) / totalQuizzes 
-            : 0;
-        const highestScore = Math.max(...completedAttempts.map(a => a.percentage || 0), 0);
-        const perfectScores = completedAttempts.filter(a => a.percentage === 100).length;
-        const totalQuestions = completedAttempts.reduce((sum, a) => sum + (a.total_questions || 0), 0);
-        const correctAnswers = completedAttempts.reduce((sum, a) => sum + (a.correct_count || 0), 0);
+        // Use the new stats endpoint which already has all aggregated data
+        const stats = await getUserStats();
+        const achievements = await getUserAchievements();
+        const progression = await getScoreProgression();
         
         return {
-            totalScore,
-            totalQuizzes,
-            averageScore: Math.round(averageScore),
-            highestScore,
-            perfectScores,
-            totalQuestions,
-            correctAnswers,
-            accuracy: totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0,
+            totalScore: stats.totalPoints || 0,
+            totalQuizzes: stats.totalQuizzes || 0,
+            averageScore: stats.averageScore || 0,
+            highestScore: stats.bestScore || 0,
+            perfectScores: stats.perfectScores || 0,
+            totalQuestions: stats.totalQuestions || 0,
+            correctAnswers: stats.correctAnswers || 0,
+            accuracy: stats.accuracy || 0,
+            currentStreak: stats.currentStreak || 0,
+            longestStreak: stats.longestStreak || 0,
             achievements: achievements.length,
-            achievementsList: achievements
+            achievementsList: achievements,
+            progression: progression
         };
     } catch (error) {
         console.error('Error fetching profile stats:', error);
@@ -221,9 +267,29 @@ export async function getUserProfileStats() {
             totalQuestions: 0,
             correctAnswers: 0,
             accuracy: 0,
+            currentStreak: 0,
+            longestStreak: 0,
             achievements: 0,
-            achievementsList: []
+            achievementsList: [],
+            progression: {
+                weeks: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                scores: [0, 0, 0, 0],
+                data: []
+            }
         };
+    }
+}
+
+// ============= DEBUG =============
+
+// Debug endpoint to check data
+export async function debugUserScores() {
+    try {
+        const data = await fetchAPI('/score/debug');
+        return data.debug || {};
+    } catch (error) {
+        console.error('Error debugging scores:', error);
+        return null;
     }
 }
 
@@ -276,12 +342,14 @@ export function setupScoreOfflineSync() {
 export default {
     getUserScores,
     getUserStats,
+    getScoreProgression,
     getLeaderboard,
     getGlobalRankings,
     getUserAchievements,
     claimAchievement,
     getQuizAttempts,
     getUserProfileStats,
+    debugUserScores,
     saveScoreLocally,
     syncPendingScores,
     setupScoreOfflineSync

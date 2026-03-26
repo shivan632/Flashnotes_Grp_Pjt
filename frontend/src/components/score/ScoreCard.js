@@ -101,7 +101,7 @@ export function ScoreCard({ title, value, change, icon, color = 'blue', subtitle
                 </div>
                 
                 <!-- Progress Bar (optional) -->
-                ${typeof value === 'number' && value <= 100 ? `
+                ${typeof value === 'number' && value <= 100 && value >= 0 ? `
                     <div class="mt-4">
                         <div class="w-full bg-[#374151] rounded-full h-1.5 overflow-hidden">
                             <div class="bg-gradient-to-r ${selectedColor.gradient} h-1.5 rounded-full transition-all duration-500 group-hover:scale-x-100" style="width: ${value}%"></div>
@@ -125,6 +125,45 @@ export function ScoreCard({ title, value, change, icon, color = 'blue', subtitle
 
 // Mini Score Card (compact version for dashboards)
 export function MiniScoreCard({ title, value, icon, color = 'blue' }) {
+    const colorClasses = {
+        blue: {
+            text: 'text-[#3B82F6]',
+            bg: 'bg-[#3B82F6]',
+            gradient: 'from-[#3B82F6] to-[#60A5FA]',
+            light: 'bg-[#3B82F6]/10'
+        },
+        green: {
+            text: 'text-green-500',
+            bg: 'bg-green-500',
+            gradient: 'from-green-500 to-green-400',
+            light: 'bg-green-500/10'
+        },
+        yellow: {
+            text: 'text-yellow-500',
+            bg: 'bg-yellow-500',
+            gradient: 'from-yellow-500 to-yellow-400',
+            light: 'bg-yellow-500/10'
+        },
+        red: {
+            text: 'text-red-500',
+            bg: 'bg-red-500',
+            gradient: 'from-red-500 to-red-400',
+            light: 'bg-red-500/10'
+        },
+        purple: {
+            text: 'text-purple-500',
+            bg: 'bg-purple-500',
+            gradient: 'from-purple-500 to-purple-400',
+            light: 'bg-purple-500/10'
+        },
+        orange: {
+            text: 'text-orange-500',
+            bg: 'bg-orange-500',
+            gradient: 'from-orange-500 to-orange-400',
+            light: 'bg-orange-500/10'
+        }
+    };
+    
     const selectedColor = colorClasses[color] || colorClasses.blue;
     
     return `
@@ -148,6 +187,46 @@ export function CircularProgressCard({ title, value, max = 100, icon, color = 'b
     const radius = 40;
     const circumference = 2 * Math.PI * radius;
     const offset = circumference - (percentage / 100) * circumference;
+    
+    const colorClasses = {
+        blue: {
+            text: 'text-[#3B82F6]',
+            bg: 'bg-[#3B82F6]',
+            gradient: 'from-[#3B82F6] to-[#60A5FA]',
+            light: 'bg-[#3B82F6]/10'
+        },
+        green: {
+            text: 'text-green-500',
+            bg: 'bg-green-500',
+            gradient: 'from-green-500 to-green-400',
+            light: 'bg-green-500/10'
+        },
+        yellow: {
+            text: 'text-yellow-500',
+            bg: 'bg-yellow-500',
+            gradient: 'from-yellow-500 to-yellow-400',
+            light: 'bg-yellow-500/10'
+        },
+        red: {
+            text: 'text-red-500',
+            bg: 'bg-red-500',
+            gradient: 'from-red-500 to-red-400',
+            light: 'bg-red-500/10'
+        },
+        purple: {
+            text: 'text-purple-500',
+            bg: 'bg-purple-500',
+            gradient: 'from-purple-500 to-purple-400',
+            light: 'bg-purple-500/10'
+        },
+        orange: {
+            text: 'text-orange-500',
+            bg: 'bg-orange-500',
+            gradient: 'from-orange-500 to-orange-400',
+            light: 'bg-orange-500/10'
+        }
+    };
+    
     const selectedColor = colorClasses[color] || colorClasses.blue;
     
     return `
@@ -186,45 +265,208 @@ export function CircularProgressCard({ title, value, max = 100, icon, color = 'b
     `;
 }
 
-// Helper function for color classes
-const colorClasses = {
-    blue: {
-        text: 'text-[#3B82F6]',
-        bg: 'bg-[#3B82F6]',
-        gradient: 'from-[#3B82F6] to-[#60A5FA]',
-        light: 'bg-[#3B82F6]/10'
-    },
-    green: {
-        text: 'text-green-500',
-        bg: 'bg-green-500',
-        gradient: 'from-green-500 to-green-400',
-        light: 'bg-green-500/10'
-    },
-    yellow: {
-        text: 'text-yellow-500',
-        bg: 'bg-yellow-500',
-        gradient: 'from-yellow-500 to-yellow-400',
-        light: 'bg-yellow-500/10'
-    },
-    red: {
-        text: 'text-red-500',
-        bg: 'bg-red-500',
-        gradient: 'from-red-500 to-red-400',
-        light: 'bg-red-500/10'
-    },
-    purple: {
-        text: 'text-purple-500',
-        bg: 'bg-purple-500',
-        gradient: 'from-purple-500 to-purple-400',
-        light: 'bg-purple-500/10'
-    },
-    orange: {
-        text: 'text-orange-500',
-        bg: 'bg-orange-500',
-        gradient: 'from-orange-500 to-orange-400',
-        light: 'bg-orange-500/10'
-    }
-};
+// Score Progression Graph Component
+// Score Progression Graph Component - Fixed Version
+export function ScoreProgressionGraph({ progression }) {
+    const weeks = progression?.weeks || ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+    const scores = progression?.scores || [0, 0, 0, 0];
+    const maxScore = Math.max(...scores, 100);
+    
+    return `
+        <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-6 border border-[#374151]">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-white">Score Progressions</h3>
+                    <p class="text-sm text-[#9CA3AF]">Your learning journey</p>
+                </div>
+                <div class="flex gap-2">
+                    <div class="px-3 py-1 bg-[#3B82F6]/20 rounded-lg">
+                        <span class="text-xs text-[#3B82F6]">Last 4 Weeks</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="relative h-64">
+                <canvas id="scoreProgressionCanvas" class="w-full h-full" style="width: 100%; height: 100%;"></canvas>
+            </div>
+            
+            <div class="flex justify-between mt-4">
+                ${weeks.map(week => `
+                    <div class="text-center">
+                        <div class="text-xs text-[#9CA3AF]">${week}</div>
+                    </div>
+                `).join('')}
+            </div>
+            
+            <div class="mt-4 pt-4 border-t border-[#374151]">
+                <div class="flex justify-between text-xs text-[#6B7280]">
+                    <span>⬤ Current: ${scores[0] || 0}%</span>
+                    <span>Best: ${Math.max(...scores)}%</span>
+                    <span>Average: ${Math.round(scores.reduce((a,b) => a + b, 0) / scores.length)}%</span>
+                </div>
+            </div>
+        </div>
+        
+        <script>
+            (function() {
+                // Wait for DOM to be ready
+                setTimeout(() => {
+                    const canvas = document.getElementById('scoreProgressionCanvas');
+                    if (!canvas) {
+                        console.error('Canvas element not found');
+                        return;
+                    }
+                    
+                    // Get the container and set canvas dimensions
+                    const container = canvas.parentElement;
+                    const width = container.clientWidth;
+                    const height = 250;
+                    
+                    // Set canvas dimensions properly
+                    canvas.width = width;
+                    canvas.height = height;
+                    canvas.style.width = width + 'px';
+                    canvas.style.height = height + 'px';
+                    
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) {
+                        console.error('Could not get canvas context');
+                        return;
+                    }
+                    
+                    const weeks = ${JSON.stringify(weeks)};
+                    const scores = ${JSON.stringify(scores)};
+                    
+                    // Clear canvas
+                    ctx.clearRect(0, 0, width, height);
+                    
+                    // Set background
+                    ctx.fillStyle = '#111827';
+                    ctx.fillRect(0, 0, width, height);
+                    
+                    // Draw grid lines
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#374151';
+                    ctx.lineWidth = 1;
+                    
+                    // Horizontal grid lines and labels
+                    for (let i = 0; i <= 4; i++) {
+                        const y = height - (i * height / 4);
+                        ctx.beginPath();
+                        ctx.moveTo(40, y);
+                        ctx.lineTo(width - 20, y);
+                        ctx.stroke();
+                        
+                        // Labels
+                        ctx.fillStyle = '#9CA3AF';
+                        ctx.font = '10px system-ui, -apple-system, sans-serif';
+                        ctx.textAlign = 'right';
+                        ctx.fillText((i * 25).toString(), 35, y + 3);
+                    }
+                    
+                    // Draw vertical lines
+                    const stepX = (width - 60) / (weeks.length - 1);
+                    for (let i = 0; i < weeks.length; i++) {
+                        const x = 40 + (i * stepX);
+                        ctx.beginPath();
+                        ctx.moveTo(x, 10);
+                        ctx.lineTo(x, height - 10);
+                        ctx.strokeStyle = '#374151';
+                        ctx.stroke();
+                    }
+                    
+                    // Draw the line and area if there's data
+                    if (scores.some(s => s > 0)) {
+                        // Draw gradient area
+                        ctx.beginPath();
+                        ctx.moveTo(40, height - (scores[0] / 100) * height);
+                        
+                        for (let i = 1; i < scores.length; i++) {
+                            const x = 40 + (i * stepX);
+                            const y = height - (scores[i] / 100) * height;
+                            ctx.lineTo(x, y);
+                        }
+                        
+                        ctx.lineTo(40 + ((scores.length - 1) * stepX), height);
+                        ctx.lineTo(40, height);
+                        ctx.closePath();
+                        
+                        const gradient = ctx.createLinearGradient(0, 0, 0, height);
+                        gradient.addColorStop(0, 'rgba(59, 130, 246, 0.3)');
+                        gradient.addColorStop(1, 'rgba(59, 130, 246, 0.05)');
+                        ctx.fillStyle = gradient;
+                        ctx.fill();
+                        
+                        // Draw line
+                        ctx.beginPath();
+                        ctx.moveTo(40, height - (scores[0] / 100) * height);
+                        
+                        for (let i = 1; i < scores.length; i++) {
+                            const x = 40 + (i * stepX);
+                            const y = height - (scores[i] / 100) * height;
+                            ctx.lineTo(x, y);
+                        }
+                        
+                        ctx.strokeStyle = '#3B82F6';
+                        ctx.lineWidth = 3;
+                        ctx.stroke();
+                        
+                        // Draw points and labels
+                        for (let i = 0; i < scores.length; i++) {
+                            const x = 40 + (i * stepX);
+                            const y = height - (scores[i] / 100) * height;
+                            
+                            // Draw outer circle
+                            ctx.beginPath();
+                            ctx.arc(x, y, 6, 0, 2 * Math.PI);
+                            ctx.fillStyle = '#3B82F6';
+                            ctx.fill();
+                            
+                            // Draw inner circle
+                            ctx.beginPath();
+                            ctx.arc(x, y, 4, 0, 2 * Math.PI);
+                            ctx.fillStyle = '#FFFFFF';
+                            ctx.fill();
+                            
+                            // Draw value label
+                            if (scores[i] > 0) {
+                                ctx.fillStyle = '#E5E7EB';
+                                ctx.font = 'bold 10px system-ui, -apple-system, sans-serif';
+                                ctx.textAlign = 'center';
+                                ctx.shadowBlur = 0;
+                                let labelX = x;
+                                let labelY = y - 12;
+                                
+                                // Adjust label position if near top
+                                if (labelY < 20) {
+                                    labelY = y + 20;
+                                }
+                                
+                                ctx.fillText(scores[i] + '%', labelX, labelY);
+                            }
+                        }
+                    } else {
+                        // No data message
+                        ctx.fillStyle = '#9CA3AF';
+                        ctx.font = '14px system-ui, -apple-system, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('Complete quizzes to see your progress', width / 2, height / 2);
+                    }
+                    
+                    // Draw axis lines
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#6B7280';
+                    ctx.lineWidth = 2;
+                    ctx.moveTo(40, 10);
+                    ctx.lineTo(40, height - 10);
+                    ctx.lineTo(width - 20, height - 10);
+                    ctx.stroke();
+                    
+                }, 100);
+            })();
+        </script>
+    `;
+}
 
 // Add CSS animations
 const scoreCardStyles = `

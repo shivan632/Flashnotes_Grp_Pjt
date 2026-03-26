@@ -302,8 +302,6 @@ async function updateUserScores(userId, correctCount, totalQuestions, percentage
 }
 
 // Submit quiz answers
-// backend/src/controllers/quizController.js
-// Replace the entire submitQuiz function
 
 // Submit quiz answers - COMPLETE FIX
 export const submitQuiz = async (req, res) => {
@@ -355,13 +353,15 @@ export const submitQuiz = async (req, res) => {
 
         // ============= STEP 3: Calculate score =============
         let correctCount = 0;
+        let totalPoints = 0;
         const questionMap = new Map(questions.map(q => [q.id, q]));
 
         Object.entries(answers).forEach(([questionId, selectedOption]) => {
             const question = questionMap.get(parseInt(questionId));
             if (question && question.correct_option === parseInt(selectedOption)) {
                 correctCount++;
-                console.log(`  ✅ Question ${questionId}: Correct`);
+                totalPoints += question.points || 10; // Add points if available
+                console.log(`  ✅ Question ${questionId}: Correct (+${question.points || 10} points)`);
             } else {
                 console.log(`  ❌ Question ${questionId}: Wrong (selected: ${selectedOption}, correct: ${question?.correct_option})`);
             }
@@ -374,12 +374,13 @@ export const submitQuiz = async (req, res) => {
         console.log('  - Correct:', correctCount);
         console.log('  - Total:', totalQuestions);
         console.log('  - Percentage:', percentage);
+        console.log('  - Points Earned:', totalPoints);
 
         // ============= STEP 4: Update attempt =============
         const { data: updatedAttempt, error: updateError } = await supabase
             .from('quiz_attempts')
             .update({
-                score: correctCount,
+                score: totalPoints, // Store total points
                 percentage: percentage,
                 correct_count: correctCount,
                 answers: answers,
@@ -403,7 +404,15 @@ export const submitQuiz = async (req, res) => {
 
         // ============= STEP 5: Update user scores =============
         try {
-            await updateUserScores(userId, correctCount, totalQuestions, percentage);
+            // Call updateUserScores with correct parameters
+            await updateUserScores(
+                userId,           // user ID
+                correctCount,     // correct answers count
+                totalQuestions,   // total questions
+                percentage,       // percentage score
+                totalPoints       // points earned (optional)
+            );
+            console.log('✅ User scores updated successfully');
         } catch (scoreError) {
             console.error('⚠️ Score update error (non-critical):', scoreError);
             // Don't fail the whole request if score update fails
@@ -412,10 +421,10 @@ export const submitQuiz = async (req, res) => {
         res.json({
             success: true,
             result: {
-                score: correctCount,
+                score: totalPoints,
+                correctCount: correctCount,
                 totalQuestions: totalQuestions,
                 percentage: Math.round(percentage * 100) / 100,
-                correctCount,
                 passed: percentage >= 70
             }
         });
