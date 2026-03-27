@@ -2,6 +2,17 @@
 // Leaderboard Component - Enhanced UI with modern design
 
 export function Leaderboard({ entries, period = 'all', onPeriodChange, currentUserId }) {
+    // Safe data extraction with defaults
+    const safeEntries = (entries || []).map(entry => ({
+        ...entry,
+        name: entry.name || entry.full_name || entry.user_name || 'Anonymous',
+        points: entry.total_points || entry.points || 0,
+        averageScore: entry.average_score || entry.avg_score || 0,
+        quizzesTaken: entry.total_quizzes || entry.total_quizzes_taken || entry.quizzes_taken || 0,
+        perfectScores: entry.perfect_scores || 0,
+        userId: entry.user_id || entry.userId || entry.id
+    }));
+    
     const getRankIcon = (rank) => {
         if (rank === 1) return '🥇';
         if (rank === 2) return '🥈';
@@ -16,8 +27,8 @@ export function Leaderboard({ entries, period = 'all', onPeriodChange, currentUs
         return 'text-[#9CA3AF] bg-[#374151]';
     };
     
-    const topThree = entries.slice(0, 3);
-    const restEntries = entries.slice(3);
+    const topThree = safeEntries.slice(0, 3);
+    const restEntries = safeEntries.slice(3);
     
     return `
         <div class="leaderboard bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl shadow-xl border border-[#374151] overflow-hidden">
@@ -44,7 +55,7 @@ export function Leaderboard({ entries, period = 'all', onPeriodChange, currentUs
                 </div>
             </div>
             
-            ${entries.length > 0 ? `
+            ${safeEntries.length > 0 ? `
                 <!-- Top 3 Podium -->
                 <div class="p-6 pb-0">
                     <div class="flex justify-center items-end gap-4 mb-8">
@@ -95,30 +106,34 @@ export function Leaderboard({ entries, period = 'all', onPeriodChange, currentUs
                 <!-- Rest of Leaderboard -->
                 <div class="p-6 pt-0">
                     <div class="space-y-2 max-h-96 overflow-y-auto custom-scrollbar">
-                        ${restEntries.map((entry, index) => `
-                            <div class="leaderboard-item group flex items-center gap-3 p-3 bg-[#111827] rounded-xl hover:bg-[#1F2937] transition-all duration-300 hover:translate-x-1 ${currentUserId === entry.userId ? 'ring-2 ring-[#3B82F6] bg-[#1F2937]' : ''}" data-user-id="${entry.userId}">
-                                <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold ${getRankClass(index + 4)}">
-                                    <span class="text-sm">${index + 4}</span>
-                                </div>
-                                <div class="flex-1">
-                                    <div class="flex items-center gap-2">
-                                        <p class="font-medium text-[#E5E7EB] group-hover:text-[#3B82F6] transition-colors">
-                                            ${escapeHtml(entry.name)}
-                                        </p>
-                                        ${currentUserId === entry.userId ? `
-                                            <span class="text-xs px-2 py-0.5 bg-[#3B82F6] text-white rounded-full">You</span>
-                                        ` : ''}
+                        ${restEntries.map((entry, index) => {
+                            const rank = index + 4;
+                            const isCurrentUser = currentUserId && entry.userId === currentUserId;
+                            return `
+                                <div class="leaderboard-item group flex items-center gap-3 p-3 bg-[#111827] rounded-xl hover:bg-[#1F2937] transition-all duration-300 hover:translate-x-1 ${isCurrentUser ? 'ring-2 ring-[#3B82F6] bg-[#1F2937]' : ''}" data-user-id="${entry.userId}">
+                                    <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold ${getRankClass(rank)}">
+                                        <span class="text-sm">${rank}</span>
                                     </div>
-                                    <p class="text-xs text-[#9CA3AF] mt-0.5">
-                                        ${entry.quizzesTaken} quizzes • ${entry.perfectScores} perfect
-                                    </p>
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-2">
+                                            <p class="font-medium text-[#E5E7EB] group-hover:text-[#3B82F6] transition-colors">
+                                                ${escapeHtml(entry.name)}
+                                            </p>
+                                            ${isCurrentUser ? `
+                                                <span class="text-xs px-2 py-0.5 bg-[#3B82F6] text-white rounded-full">You</span>
+                                            ` : ''}
+                                        </div>
+                                        <p class="text-xs text-[#9CA3AF] mt-0.5">
+                                            ${entry.quizzesTaken} quizzes • ${entry.perfectScores} perfect
+                                        </p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-lg font-bold text-[#3B82F6]">${entry.points} pts</p>
+                                        <p class="text-xs text-[#9CA3AF]">${Math.round(entry.averageScore)}% avg</p>
+                                    </div>
                                 </div>
-                                <div class="text-right">
-                                    <p class="text-lg font-bold text-[#3B82F6]">${entry.points}</p>
-                                    <p class="text-xs text-[#9CA3AF]">${entry.averageScore}% avg</p>
-                                </div>
-                            </div>
-                        `).join('')}
+                            `;
+                        }).join('')}
                     </div>
                 </div>
                 
@@ -139,7 +154,7 @@ export function Leaderboard({ entries, period = 'all', onPeriodChange, currentUs
                         </div>
                     </div>
                     <div>
-                        <span class="text-[#6B7280">Total Players: ${entries.length}</span>
+                        <span class="text-[#6B7280]">Total Players: ${safeEntries.length}</span>
                     </div>
                 </div>
             ` : `
@@ -170,9 +185,15 @@ export function Leaderboard({ entries, period = 'all', onPeriodChange, currentUs
 
 // Mini leaderboard for dashboard (compact version)
 export function MiniLeaderboard({ entries, limit = 5 }) {
-    const topEntries = entries.slice(0, limit);
+    // Safe data extraction with defaults
+    const safeEntries = (entries || []).map(entry => ({
+        ...entry,
+        name: entry.name || entry.full_name || entry.user_name || 'Anonymous',
+        points: entry.total_points || entry.points || 0,
+        userId: entry.user_id || entry.userId || entry.id
+    })).slice(0, limit);
     
-    if (!entries || entries.length === 0) {
+    if (!safeEntries || safeEntries.length === 0) {
         return `
             <div class="text-center py-6">
                 <p class="text-[#9CA3AF] text-sm">No leaderboard data yet</p>
@@ -183,7 +204,7 @@ export function MiniLeaderboard({ entries, limit = 5 }) {
     
     return `
         <div class="space-y-2">
-            ${topEntries.map((entry, index) => `
+            ${safeEntries.map((entry, index) => `
                 <div class="flex items-center gap-3 p-2 bg-[#111827] rounded-lg hover:bg-[#1F2937] transition-all duration-300">
                     <div class="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold ${index === 0 ? 'bg-yellow-500/20 text-yellow-500' : index === 1 ? 'bg-gray-400/20 text-gray-400' : index === 2 ? 'bg-amber-600/20 text-amber-600' : 'bg-[#374151] text-[#9CA3AF]'}">
                         ${index + 1}
@@ -192,7 +213,7 @@ export function MiniLeaderboard({ entries, limit = 5 }) {
                         <p class="text-sm font-medium text-[#E5E7EB] truncate">${escapeHtml(entry.name)}</p>
                     </div>
                     <div class="text-right">
-                        <p class="text-sm font-bold text-[#3B82F6]">${entry.points}</p>
+                        <p class="text-sm font-bold text-[#3B82F6]">${entry.points} pts</p>
                     </div>
                 </div>
             `).join('')}
