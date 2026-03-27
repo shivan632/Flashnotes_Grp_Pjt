@@ -48,8 +48,20 @@ export async function QuizAttemptPage() {
 
 export async function setupQuizAttempt() {
     const hash = window.location.hash;
-    const attemptId = hash.split('/').pop();
-    if (!attemptId || attemptId === 'attempt') return;
+    console.log('🔍 Full hash:', hash);
+    
+    // Extract attempt ID from hash like #/quiz/1/attempt
+    const match = hash.match(/\/quiz\/(\d+)\/attempt/);
+    const attemptId = match ? match[1] : null;
+    
+    console.log('📝 Extracted attemptId:', attemptId);
+    
+    if (!attemptId || attemptId === 'attempt') {
+        console.error('❌ No attempt ID found in hash');
+        window.location.hash = '#/dashboard';
+        return;
+    }
+    
     await loadQuizAttempt(attemptId);
 }
 

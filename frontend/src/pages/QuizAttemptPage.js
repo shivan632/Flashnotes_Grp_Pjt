@@ -217,7 +217,6 @@ async function submitQuizAuto(form) {
     const timeTakenSeconds = Math.floor((Date.now() - startTime) / 1000);
     
     try {
-        // CORRECT: Use submitQuiz with quizId, attemptId, answers, timeTakenSeconds
         const result = await submitQuiz(currentQuizId, currentAttemptId, answers, timeTakenSeconds);
         
         showSuccess(`Time's up! You scored ${result.score}/${result.totalQuestions} (${Math.round(result.percentage)}%)`);
@@ -274,7 +273,6 @@ async function submitQuizManual(form) {
     const timeTakenSeconds = Math.floor((Date.now() - startTime) / 1000);
     
     try {
-        // CORRECT: Use submitQuiz with quizId, attemptId, answers, timeTakenSeconds
         const result = await submitQuiz(currentQuizId, currentAttemptId, answers, timeTakenSeconds);
         
         showSuccess(`Quiz submitted! You scored ${result.score}/${result.totalQuestions} (${Math.round(result.percentage)}%)`);

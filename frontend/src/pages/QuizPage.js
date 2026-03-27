@@ -5,6 +5,7 @@ import { Sidebar } from '../components/layout/Sidebar.js';
 import { AIChatSidebar } from '../components/layout/AIChatSidebar.js';
 import { Header } from '../components/common/Header.js';
 import { QuizCard } from '../components/quiz/QuizCard.js';
+import { QuizQuestion } from '../components/quiz/QuizQuestion.js';  // ← ONLY ONE IMPORT AT TOP
 import { LoadingSpinner } from '../components/common/LoadingSpinner.js';
 import { getQuizzes } from '../services/quizService.js';
 import { showError } from '../components/common/ErrorMessage.js';
@@ -242,3 +243,6 @@ if (!document.querySelector('#quiz-page-styles')) {
     style.textContent = quizPageStyles;
     document.head.appendChild(style);
 }
+
+// ❌ DELETE THIS LINE FROM THE END OF FILE:
+// import { QuizQuestion } from '../components/quiz/QuizQuestion.js';

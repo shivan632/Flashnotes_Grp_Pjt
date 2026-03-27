@@ -63,8 +63,8 @@ import { ScorePage, setupScorePage } from './pages/ScorePage.js';
 import { ProfilePage, setupProfilePage } from './pages/ProfilePage.js';
 import { SettingsPage, setupSettingsPage } from './pages/SettingsPage.js';
 import { NotificationsPage, setupNotificationsPage } from './pages/NotificationsPage.js';
-// FIXED: Correct import path and function names
-import { QuizAttemptPage, setupQuizAttempt, cleanupQuiz } from './pages/QuizAttempt.js';
+// FIXED: Only ONE import for QuizAttempt
+import { QuizAttemptPage, initQuizAttempt, cleanupQuiz } from './pages/QuizAttemptPage.js';
 import { VerifyOTPPage, setupVerifyOTP } from './pages/VerifyOTPPage.js';
 import { WelcomePage, setupWelcomePage } from './pages/WelcomePage.js';
 import { PDFReaderPage, setupPDFReaderPage } from './pages/PDFReaderPage.js';
@@ -399,7 +399,7 @@ async function router() {
     let pageFunction = routes[path];
     
     // FIXED: Check for quiz attempt route with correct pattern
-    const quizAttemptMatch = path.match(/^\/quiz\/attempt\/(\d+)$/);
+    const quizAttemptMatch = path.match(/^\/quiz\/(\d+)\/attempt$/);  // ← CHANGED HERE
     if (!pageFunction && quizAttemptMatch) {
         pageFunction = QuizAttemptPage;
     }
@@ -463,7 +463,7 @@ async function router() {
                 setupPDFReaderPage();
             } else if (quizAttemptMatch) {
                 // FIXED: Call setupQuizAttempt instead of initQuizAttempt
-                setupQuizAttempt();
+                initQuizAttempt();
             }
         }, 100);
         
