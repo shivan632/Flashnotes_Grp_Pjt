@@ -23,10 +23,16 @@ export function Sidebar() {
             section: 'LEARNING',
             items: [
                 { path: '/saved', label: 'Saved Notes', icon: 'M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z' },
-                // In the LEARNING section, add PDF Reader item
-{ path: '/pdf-reader', label: 'PDF Reader', icon: 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z' },
+                { path: '/pdf-reader', label: 'PDF Reader', icon: 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z' },
                 { path: '/quiz', label: 'Quiz', icon: 'M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
                 { path: '/score', label: 'Score', icon: 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z' }
+            ]
+        },
+        {
+            section: 'ROADMAP',  // ✅ NEW SECTION
+            items: [
+                { path: '/roadmap', label: 'Generate Roadmap', icon: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7', badge: 'NEW' },
+                { path: '/my-roadmaps', label: 'My Roadmaps', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' }
             ]
         },
         {
@@ -86,6 +92,7 @@ export function Sidebar() {
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${item.icon}"></path>
                                         </svg>
                                         <span class="text-sm">${item.label}</span>
+                                        ${item.badge ? `<span class="ml-auto text-xs px-1.5 py-0.5 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full">${item.badge}</span>` : ''}
                                         ${isActive ? '<span class="ml-auto w-1.5 h-1.5 bg-white rounded-full"></span>' : ''}
                                     </a>
                                 `;
@@ -96,18 +103,18 @@ export function Sidebar() {
             </div>
             
             <!-- Feedback Button -->
-<div class="p-3 border-t border-[#374151] bg-gradient-to-r from-[#1F2937] to-[#111827] flex-shrink-0">
-    <button id="feedbackSidebarBtn" 
-            class="flex items-center space-x-3 px-3 py-2 text-sm transition-all duration-300 rounded-lg w-full text-left group text-[#60A5FA] hover:text-[#3B82F6] hover:bg-[#3B82F6]/10">
-        <div class="w-8 h-8 bg-gradient-to-r from-[#F59E0B] to-[#F59E0B]/50 rounded-lg flex items-center justify-center">
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
-            </svg>
-        </div>
-        <span class="text-sm">Give Feedback</span>
-        <span class="ml-auto text-xs text-gray-500 group-hover:text-[#3B82F6]">❤️</span>
-    </button>
-</div>
+            <div class="p-3 border-t border-[#374151] bg-gradient-to-r from-[#1F2937] to-[#111827] flex-shrink-0">
+                <button id="feedbackSidebarBtn" 
+                        class="flex items-center space-x-3 px-3 py-2 text-sm transition-all duration-300 rounded-lg w-full text-left group text-[#60A5FA] hover:text-[#3B82F6] hover:bg-[#3B82F6]/10">
+                    <div class="w-8 h-8 bg-gradient-to-r from-[#F59E0B] to-[#F59E0B]/50 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                        </svg>
+                    </div>
+                    <span class="text-sm">Give Feedback</span>
+                    <span class="ml-auto text-xs text-gray-500 group-hover:text-[#3B82F6]">❤️</span>
+                </button>
+            </div>
             
             <!-- Logout Button -->
             <div class="p-4 border-t border-[#374151] bg-gradient-to-r from-[#1F2937] to-[#111827] flex-shrink-0">

@@ -1,4 +1,4 @@
-// frontend/src/main.js - UPDATED
+// frontend/src/main.js - UPDATED WITH ROADMAP ROUTES
 
 // ============= UTILITIES =============
 import { setupNavigation, getCurrentPath, redirectIfNotAuthenticated, redirectIfAuthenticated } from './utils/navigation.js';
@@ -63,11 +63,15 @@ import { ScorePage, setupScorePage } from './pages/ScorePage.js';
 import { ProfilePage, setupProfilePage } from './pages/ProfilePage.js';
 import { SettingsPage, setupSettingsPage } from './pages/SettingsPage.js';
 import { NotificationsPage, setupNotificationsPage } from './pages/NotificationsPage.js';
-// FIXED: Only ONE import for QuizAttempt
 import { QuizAttemptPage, initQuizAttempt, cleanupQuiz } from './pages/QuizAttemptPage.js';
 import { VerifyOTPPage, setupVerifyOTP } from './pages/VerifyOTPPage.js';
 import { WelcomePage, setupWelcomePage } from './pages/WelcomePage.js';
 import { PDFReaderPage, setupPDFReaderPage } from './pages/PDFReaderPage.js';
+
+// ============= ROADMAP PAGE IMPORTS =============
+import { RoadmapPage, setupRoadmapPage } from './pages/RoadmapPage.js';
+import { MyRoadmapsPage, setupMyRoadmapsPage } from './pages/MyRoadmapsPage.js';
+import { RoadmapDetailPage, setupRoadmapDetailPage } from './pages/RoadmapDetailPage.js';
 
 // ============= API URL CONFIGURATION =============
 if (typeof window !== 'undefined' && !window.API_URL) {
@@ -238,7 +242,10 @@ const routes = {
     [ROUTES.PROFILE]: ProfilePage,
     [ROUTES.SETTINGS]: SettingsPage,
     [ROUTES.PDF_READER]: PDFReaderPage,
-    [ROUTES.NOTIFICATIONS]: NotificationsPage
+    [ROUTES.NOTIFICATIONS]: NotificationsPage,
+    // Roadmap Routes
+    '/roadmap': RoadmapPage,
+    '/my-roadmaps': MyRoadmapsPage,
 };
 
 // ============= GLOBAL STATE =============
@@ -398,10 +405,16 @@ async function router() {
     
     let pageFunction = routes[path];
     
-    // FIXED: Check for quiz attempt route with correct pattern
-    const quizAttemptMatch = path.match(/^\/quiz\/(\d+)\/attempt$/);  // ← CHANGED HERE
+    // Check for quiz attempt route
+    const quizAttemptMatch = path.match(/^\/quiz\/(\d+)\/attempt$/);
     if (!pageFunction && quizAttemptMatch) {
         pageFunction = QuizAttemptPage;
+    }
+    
+    // Check for roadmap detail route (e.g., /roadmap/123)
+    const roadmapDetailMatch = path.match(/^\/roadmap\/(\d+)$/);
+    if (!pageFunction && roadmapDetailMatch) {
+        pageFunction = RoadmapDetailPage;
     }
     
     const app = document.getElementById('app');
@@ -461,8 +474,14 @@ async function router() {
                 setupNotificationsPage();
             } else if (path === ROUTES.PDF_READER) {
                 setupPDFReaderPage();
+            } else if (path === '/roadmap') {
+                setupRoadmapPage();
+            } else if (path === '/my-roadmaps') {
+                setupMyRoadmapsPage();
+            } else if (roadmapDetailMatch) {
+                const roadmapId = roadmapDetailMatch[1];
+                setupRoadmapDetailPage(roadmapId);
             } else if (quizAttemptMatch) {
-                // FIXED: Call setupQuizAttempt instead of initQuizAttempt
                 initQuizAttempt();
             }
         }, 100);
