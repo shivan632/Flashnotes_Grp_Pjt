@@ -21,10 +21,10 @@ export function Leaderboard({ entries, period = 'all', onPeriodChange, currentUs
     };
     
     const getRankClass = (rank) => {
-        if (rank === 1) return 'text-yellow-500 bg-yellow-500/20';
-        if (rank === 2) return 'text-gray-400 bg-gray-400/20';
-        if (rank === 3) return 'text-amber-600 bg-amber-600/20';
-        return 'text-[#9CA3AF] bg-[#374151]';
+        if (rank === 1) return 'bg-yellow-500/20 text-yellow-500';
+        if (rank === 2) return 'bg-gray-400/20 text-gray-400';
+        if (rank === 3) return 'bg-amber-600/20 text-amber-600';
+        return 'bg-[#374151] text-[#9CA3AF]';
     };
     
     const topThree = safeEntries.slice(0, 3);
@@ -35,14 +35,14 @@ export function Leaderboard({ entries, period = 'all', onPeriodChange, currentUs
             <!-- Header -->
             <div class="flex justify-between items-center p-6 border-b border-[#374151] bg-gradient-to-r from-[#1F2937] to-[#111827]">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-xl flex items-center justify-center">
+                    <div class="w-10 h-10 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-xl flex items-center justify-center shadow-lg">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
                         </svg>
                     </div>
                     <div>
                         <h3 class="text-xl font-bold bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] bg-clip-text text-transparent">Leaderboard</h3>
-                        <p class="text-xs text-[#6B7280]">Top learners this ${period === 'weekly' ? 'week' : 'all time'}</p>
+                        <p class="text-xs text-[#6B7280]">🏆 Top learners ${period === 'weekly' ? 'this week' : 'all time'}</p>
                     </div>
                 </div>
                 <div class="flex gap-2 bg-[#111827] rounded-xl p-1">
@@ -61,7 +61,7 @@ export function Leaderboard({ entries, period = 'all', onPeriodChange, currentUs
                     <div class="flex justify-center items-end gap-4 mb-8">
                         ${topThree[1] ? `
                             <div class="text-center order-1 animate-slideUp" style="animation-delay: 0.1s">
-                                <div class="w-20 h-20 mx-auto bg-gradient-to-br from-gray-400 to-gray-500 rounded-2xl flex items-center justify-center mb-2 shadow-lg">
+                                <div class="w-20 h-20 mx-auto bg-gradient-to-br from-gray-400 to-gray-500 rounded-2xl flex items-center justify-center mb-2 shadow-lg transform hover:scale-105 transition-transform">
                                     <span class="text-4xl">🥈</span>
                                 </div>
                                 <div class="bg-[#111827] rounded-xl p-2 mt-1">
@@ -76,7 +76,7 @@ export function Leaderboard({ entries, period = 'all', onPeriodChange, currentUs
                             <div class="text-center order-2 animate-slideUp" style="animation-delay: 0s">
                                 <div class="relative">
                                     <div class="absolute inset-0 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl blur-xl opacity-50"></div>
-                                    <div class="relative w-24 h-24 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center mb-2 shadow-2xl transform scale-110">
+                                    <div class="relative w-24 h-24 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center mb-2 shadow-2xl transform scale-110 hover:scale-125 transition-transform">
                                         <span class="text-5xl">👑</span>
                                     </div>
                                 </div>
@@ -90,7 +90,7 @@ export function Leaderboard({ entries, period = 'all', onPeriodChange, currentUs
                         
                         ${topThree[2] ? `
                             <div class="text-center order-3 animate-slideUp" style="animation-delay: 0.2s">
-                                <div class="w-20 h-20 mx-auto bg-gradient-to-br from-amber-600 to-amber-700 rounded-2xl flex items-center justify-center mb-2 shadow-lg">
+                                <div class="w-20 h-20 mx-auto bg-gradient-to-br from-amber-600 to-amber-700 rounded-2xl flex items-center justify-center mb-2 shadow-lg transform hover:scale-105 transition-transform">
                                     <span class="text-4xl">🥉</span>
                                 </div>
                                 <div class="bg-[#111827] rounded-xl p-2 mt-1">
@@ -120,11 +120,11 @@ export function Leaderboard({ entries, period = 'all', onPeriodChange, currentUs
                                                 ${escapeHtml(entry.name)}
                                             </p>
                                             ${isCurrentUser ? `
-                                                <span class="text-xs px-2 py-0.5 bg-[#3B82F6] text-white rounded-full">You</span>
+                                                <span class="text-xs px-2 py-0.5 bg-[#3B82F6] text-white rounded-full animate-pulse">You</span>
                                             ` : ''}
                                         </div>
                                         <p class="text-xs text-[#9CA3AF] mt-0.5">
-                                            ${entry.quizzesTaken} quizzes • ${entry.perfectScores} perfect
+                                            📊 ${entry.quizzesTaken} quizzes • ⭐ ${entry.perfectScores} perfect
                                         </p>
                                     </div>
                                     <div class="text-right">
@@ -141,20 +141,20 @@ export function Leaderboard({ entries, period = 'all', onPeriodChange, currentUs
                 <div class="p-4 border-t border-[#374151] bg-[#111827]/50 flex justify-between items-center text-xs">
                     <div class="flex items-center gap-4">
                         <div class="flex items-center gap-1">
-                            <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                            <span class="text-[#9CA3AF]">Gold Medal</span>
+                            <div class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                            <span class="text-[#9CA3AF]">🥇 Gold</span>
                         </div>
                         <div class="flex items-center gap-1">
                             <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
-                            <span class="text-[#9CA3AF]">Silver Medal</span>
+                            <span class="text-[#9CA3AF]">🥈 Silver</span>
                         </div>
                         <div class="flex items-center gap-1">
                             <div class="w-2 h-2 bg-amber-600 rounded-full"></div>
-                            <span class="text-[#9CA3AF]">Bronze Medal</span>
+                            <span class="text-[#9CA3AF]">🥉 Bronze</span>
                         </div>
                     </div>
                     <div>
-                        <span class="text-[#6B7280]">Total Players: ${safeEntries.length}</span>
+                        <span class="text-[#6B7280]">👥 Total Players: ${safeEntries.length}</span>
                     </div>
                 </div>
             ` : `
@@ -174,7 +174,7 @@ export function Leaderboard({ entries, period = 'all', onPeriodChange, currentUs
                             <div class="w-1.5 h-1.5 bg-[#A78BFA] rounded-full animate-pulse delay-200"></div>
                         </div>
                         <a href="#/quiz" class="inline-block mt-6 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] text-white px-6 py-2.5 rounded-xl hover:from-[#60A5FA] hover:to-[#8B5CF6] transition-all duration-300 transform hover:scale-105 shadow-lg">
-                            Take a Quiz
+                            🎯 Take a Quiz
                         </a>
                     </div>
                 </div>
@@ -196,7 +196,7 @@ export function MiniLeaderboard({ entries, limit = 5 }) {
     if (!safeEntries || safeEntries.length === 0) {
         return `
             <div class="text-center py-6">
-                <p class="text-[#9CA3AF] text-sm">No leaderboard data yet</p>
+                <p class="text-[#9CA3AF] text-sm">📊 No leaderboard data yet</p>
                 <p class="text-xs text-[#6B7280] mt-1">Take a quiz to get started!</p>
             </div>
         `;
@@ -205,7 +205,7 @@ export function MiniLeaderboard({ entries, limit = 5 }) {
     return `
         <div class="space-y-2">
             ${safeEntries.map((entry, index) => `
-                <div class="flex items-center gap-3 p-2 bg-[#111827] rounded-lg hover:bg-[#1F2937] transition-all duration-300">
+                <div class="flex items-center gap-3 p-2 bg-[#111827] rounded-lg hover:bg-[#1F2937] transition-all duration-300 hover:translate-x-1">
                     <div class="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold ${index === 0 ? 'bg-yellow-500/20 text-yellow-500' : index === 1 ? 'bg-gray-400/20 text-gray-400' : index === 2 ? 'bg-amber-600/20 text-amber-600' : 'bg-[#374151] text-[#9CA3AF]'}">
                         ${index + 1}
                     </div>
@@ -250,7 +250,7 @@ const leaderboardStyles = `
     }
     
     .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
+        width: 5px;
     }
     
     .custom-scrollbar::-webkit-scrollbar-track {
@@ -259,12 +259,8 @@ const leaderboardStyles = `
     }
     
     .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #3B82F6;
+        background: linear-gradient(135deg, #3B82F6, #A78BFA);
         border-radius: 10px;
-    }
-    
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: #60A5FA;
     }
 `;
 

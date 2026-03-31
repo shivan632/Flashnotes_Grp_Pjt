@@ -12,16 +12,24 @@ export function AchievementCard({ achievement }) {
     
     const rarityColors = {
         common: 'from-gray-500 to-gray-400',
-        rare: 'from-blue-500 to-blue-400',
-        epic: 'from-purple-500 to-purple-400',
-        legendary: 'from-yellow-500 to-orange-500'
+        rare: 'from-[#3B82F6] to-[#60A5FA]',
+        epic: 'from-[#A78BFA] to-[#8B5CF6]',
+        legendary: 'from-amber-500 to-yellow-500'
+    };
+    
+    const rarityBg = {
+        common: 'bg-gray-500/20 text-gray-400',
+        rare: 'bg-[#3B82F6]/20 text-[#3B82F6]',
+        epic: 'bg-[#A78BFA]/20 text-[#A78BFA]',
+        legendary: 'bg-amber-500/20 text-amber-500'
     };
     
     const rarity = achievement.rarity || 'common';
     const gradientColor = rarityColors[rarity] || rarityColors.common;
+    const badgeColor = rarityBg[rarity] || rarityBg.common;
     
     return `
-        <div class="achievement-card group relative bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl overflow-hidden transition-all duration-300 ${earned ? 'hover:scale-105 hover:shadow-2xl hover:shadow-[#3B82F6]/20' : 'opacity-60 grayscale'} border ${earned ? 'border-[#3B82F6] shadow-lg' : 'border-[#374151]'}">
+        <div class="achievement-card group relative bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl overflow-hidden transition-all duration-300 ${earned ? 'hover:scale-105 hover:shadow-2xl hover:shadow-[#3B82F6]/20' : 'opacity-60'} border ${earned ? 'border-[#3B82F6] shadow-lg' : 'border-[#374151]'}">
             <!-- Glow Effect on Hover -->
             ${earned ? `
                 <div class="absolute inset-0 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
@@ -52,7 +60,7 @@ export function AchievementCard({ achievement }) {
                                 ${escapeHtml(achievement.name)}
                             </h4>
                             ${earned ? `
-                                <span class="px-2 py-0.5 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] text-white text-xs rounded-full">EARNED</span>
+                                <span class="px-2 py-0.5 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] text-white text-xs rounded-full animate-pulse">EARNED</span>
                             ` : `
                                 <span class="px-2 py-0.5 bg-[#374151] text-[#9CA3AF] text-xs rounded-full">LOCKED</span>
                             `}
@@ -95,9 +103,9 @@ export function AchievementCard({ achievement }) {
                             ` : ''}
                             
                             <!-- Rarity Badge -->
-                            <div class="flex items-center gap-1 px-2 py-1 bg-[#111827] rounded-full">
+                            <div class="flex items-center gap-1 px-2 py-1 ${badgeColor} rounded-full">
                                 <span class="w-2 h-2 rounded-full bg-gradient-to-r ${gradientColor}"></span>
-                                <span class="text-xs text-[#9CA3AF] capitalize">${rarity}</span>
+                                <span class="text-xs capitalize">${rarity}</span>
                             </div>
                         </div>
                     </div>
@@ -105,7 +113,7 @@ export function AchievementCard({ achievement }) {
                     <!-- Status Icon -->
                     <div class="flex-shrink-0">
                         ${earned ? `
-                            <div class="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center">
+                            <div class="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center animate-pulse">
                                 <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                 </svg>
@@ -158,14 +166,14 @@ export function AchievementGrid({ achievements, onAchievementClick }) {
             <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-5 border border-[#374151]">
                 <div class="flex items-center justify-between mb-3">
                     <h3 class="text-lg font-bold bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] bg-clip-text text-transparent">
-                        Achievement Progress
+                        🏆 Achievement Progress
                     </h3>
                     <span class="text-sm text-[#E5E7EB]">${earnedCount}/${totalCount}</span>
                 </div>
                 <div class="w-full bg-[#374151] rounded-full h-3 overflow-hidden">
                     <div class="bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] h-3 rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
                 </div>
-                <p class="text-xs text-[#9CA3AF] mt-2">Keep going! ${totalCount - earnedCount} more achievements to unlock</p>
+                <p class="text-xs text-[#9CA3AF] mt-2">✨ ${totalCount - earnedCount} more achievements to unlock</p>
             </div>
             
             <!-- Achievements Grid -->
@@ -217,15 +225,6 @@ const achievementStyles = `
         }
     }
     
-    .achievement-card {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    .achievement-item {
-        opacity: 0;
-        animation: fadeInUp 0.5s ease-out forwards;
-    }
-    
     @keyframes fadeInUp {
         from {
             opacity: 0;
@@ -237,19 +236,18 @@ const achievementStyles = `
         }
     }
     
-    @keyframes shimmer {
-        0% {
-            background-position: -1000px 0;
-        }
-        100% {
-            background-position: 1000px 0;
-        }
+    .achievement-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .achievement-item {
+        opacity: 0;
+        animation: fadeInUp 0.5s ease-out forwards;
     }
     
     .achievement-card.earned {
         background: linear-gradient(90deg, #1F2937, #2D3748, #1F2937);
         background-size: 200% 100%;
-        animation: shimmer 3s infinite;
     }
 `;
 

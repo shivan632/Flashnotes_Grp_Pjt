@@ -29,7 +29,7 @@ export function Sidebar() {
             ]
         },
         {
-            section: 'ROADMAP',  // ✅ NEW SECTION
+            section: 'ROADMAP',
             items: [
                 { path: '/roadmap', label: 'Generate Roadmap', icon: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7', badge: 'NEW' },
                 { path: '/my-roadmaps', label: 'My Roadmaps', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' }
@@ -46,54 +46,59 @@ export function Sidebar() {
     ];
     
     return `
-        <aside class="fixed left-0 top-0 h-full w-64 bg-gradient-to-b from-[#1F2937] to-[#111827] shadow-xl z-50 overflow-y-auto border-r border-[#374151]/50 flex flex-col">
-            <!-- Logo Section -->
-            <div class="flex items-center justify-center h-14 border-b border-[#374151] sticky top-0 bg-gradient-to-r from-[#1F2937] to-[#111827] z-10 flex-shrink-0">
+        <aside class="fixed left-0 top-0 h-full w-64 bg-gradient-to-br from-[#1F2937] via-[#1A2436] to-[#111827] shadow-2xl z-50 overflow-y-auto border-r border-[#374151]/50 flex flex-col backdrop-blur-sm">
+            <!-- Logo Section with 3D effect -->
+            <div class="relative flex items-center justify-center h-14 border-b border-[#374151] sticky top-0 bg-gradient-to-r from-[#1F2937] to-[#111827] z-10 flex-shrink-0 overflow-hidden group">
+                <div class="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/10 to-purple-500/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                 <a href="#/" class="flex items-center space-x-2 group">
-                    <div class="w-8 h-8 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-lg flex items-center justify-center shadow-md transform group-hover:rotate-3 transition-all duration-300">
+                    <div class="w-8 h-8 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-lg flex items-center justify-center shadow-lg transform group-hover:rotate-6 group-hover:scale-110 transition-all duration-300">
                         <span class="text-white font-bold text-base">F</span>
                     </div>
-                    <span class="text-base font-bold bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] bg-clip-text text-transparent">
+                    <span class="text-base font-bold bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] bg-clip-text text-transparent group-hover:scale-105 transition-transform">
                         Flashnotes
                     </span>
                 </a>
             </div>
             
-            <!-- User Info -->
-            <div class="p-4 border-b border-[#374151] bg-gradient-to-r from-[#1F2937] to-[#111827] flex-shrink-0">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-xl flex items-center justify-center shadow-md">
+            <!-- User Info with 3D hover -->
+            <div class="p-4 border-b border-[#374151] bg-gradient-to-r from-[#1F2937] to-[#111827] flex-shrink-0 group">
+                <div class="flex items-center space-x-3 transform group-hover:scale-[1.02] transition-all duration-300">
+                    <div class="w-10 h-10 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-xl flex items-center justify-center shadow-lg transform group-hover:rotate-6 group-hover:scale-110 transition-all duration-300">
                         <span class="text-white font-bold text-base">${userName.charAt(0).toUpperCase()}</span>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-[#E5E7EB] text-sm font-medium truncate">${userName}</p>
+                        <p class="text-[#E5E7EB] text-sm font-medium truncate group-hover:text-[#3B82F6] transition-colors">${userName}</p>
                         <p class="text-[#9CA3AF] text-xs truncate">${userEmail}</p>
                     </div>
                 </div>
             </div>
             
-            <!-- Navigation Menu -->
+            <!-- Navigation Menu with 3D animations -->
             <div class="flex-1 overflow-y-auto py-4 px-3">
                 ${menuItems.map(section => `
                     <div class="mb-6">
-                        <h3 class="px-2 mb-2 text-xs font-bold text-[#9CA3AF] uppercase tracking-wider">
+                        <h3 class="px-2 mb-2 text-xs font-bold text-[#9CA3AF] uppercase tracking-wider flex items-center gap-2">
+                            <span class="w-1 h-1 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-full"></span>
                             ${section.section}
+                            <span class="w-1 h-1 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-full"></span>
                         </h3>
                         <div class="space-y-1">
                             ${section.items.map(item => {
                                 const isActive = currentPath === item.path;
                                 return `
                                     <a href="#${item.path}" 
-                                       class="flex items-center space-x-3 px-3 py-2 text-sm transition-all duration-300 rounded-lg sidebar-link group
+                                       class="relative flex items-center space-x-3 px-3 py-2 text-sm transition-all duration-300 rounded-lg sidebar-link group overflow-hidden
                                               ${isActive 
-                                                ? 'bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] text-white shadow-md' 
-                                                : 'text-[#E5E7EB] hover:bg-[#374151] hover:text-[#3B82F6]'}">
-                                        <svg class="w-4 h-4 transition-transform duration-300 group-hover:scale-110 ${isActive ? 'text-white' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                ? 'bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] text-white shadow-lg' 
+                                                : 'text-[#E5E7EB] hover:bg-[#374151] hover:text-[#3B82F6] hover:translate-x-1'}"
+                                       style="transform-style: preserve-3d;">
+                                        <div class="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ${isActive ? 'hidden' : ''}"></div>
+                                        <svg class="w-4 h-4 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 ${isActive ? 'text-white' : 'group-hover:text-[#3B82F6]'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${item.icon}"></path>
                                         </svg>
                                         <span class="text-sm">${item.label}</span>
-                                        ${item.badge ? `<span class="ml-auto text-xs px-1.5 py-0.5 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full">${item.badge}</span>` : ''}
-                                        ${isActive ? '<span class="ml-auto w-1.5 h-1.5 bg-white rounded-full"></span>' : ''}
+                                        ${item.badge ? `<span class="ml-auto text-xs px-1.5 py-0.5 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full animate-pulse shadow-md">${item.badge}</span>` : ''}
+                                        ${isActive ? '<span class="ml-auto w-1.5 h-1.5 bg-white rounded-full animate-ping"></span>' : ''}
                                     </a>
                                 `;
                             }).join('')}
@@ -102,28 +107,31 @@ export function Sidebar() {
                 `).join('')}
             </div>
             
-            <!-- Feedback Button -->
-            <div class="p-3 border-t border-[#374151] bg-gradient-to-r from-[#1F2937] to-[#111827] flex-shrink-0">
+            <!-- Feedback Button with 3D effect -->
+            <div class="p-3 border-t border-[#374151] bg-gradient-to-r from-[#1F2937] to-[#111827] flex-shrink-0 group">
                 <button id="feedbackSidebarBtn" 
-                        class="flex items-center space-x-3 px-3 py-2 text-sm transition-all duration-300 rounded-lg w-full text-left group text-[#60A5FA] hover:text-[#3B82F6] hover:bg-[#3B82F6]/10">
-                    <div class="w-8 h-8 bg-gradient-to-r from-[#F59E0B] to-[#F59E0B]/50 rounded-lg flex items-center justify-center">
+                        class="relative flex items-center space-x-3 px-3 py-2 text-sm transition-all duration-300 rounded-lg w-full text-left group/btn text-[#60A5FA] hover:text-[#3B82F6] hover:bg-[#3B82F6]/10 overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-r from-yellow-500/0 via-yellow-500/10 to-yellow-500/0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700"></div>
+                    <div class="w-8 h-8 bg-gradient-to-r from-[#F59E0B] to-[#F59E0B]/50 rounded-lg flex items-center justify-center shadow-md transform group-hover/btn:scale-110 group-hover/btn:rotate-6 transition-all duration-300">
                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
                         </svg>
                     </div>
                     <span class="text-sm">Give Feedback</span>
-                    <span class="ml-auto text-xs text-gray-500 group-hover:text-[#3B82F6]">❤️</span>
+                    <span class="ml-auto text-xs text-gray-500 group-hover/btn:text-[#3B82F6] group-hover/btn:scale-125 transition-all">❤️</span>
                 </button>
             </div>
             
-            <!-- Logout Button -->
-            <div class="p-4 border-t border-[#374151] bg-gradient-to-r from-[#1F2937] to-[#111827] flex-shrink-0">
+            <!-- Logout Button with 3D effect -->
+            <div class="p-4 border-t border-[#374151] bg-gradient-to-r from-[#1F2937] to-[#111827] flex-shrink-0 group">
                 <button id="sidebarLogoutBtn" 
-                        class="flex items-center space-x-3 px-3 py-2 text-sm transition-all duration-300 rounded-lg w-full text-left group text-red-400 hover:text-red-500 hover:bg-red-500/10">
-                    <svg class="w-4 h-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="relative flex items-center space-x-3 px-3 py-2 text-sm transition-all duration-300 rounded-lg w-full text-left group/btn text-red-400 hover:text-red-500 hover:bg-red-500/10 overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-r from-red-500/0 via-red-500/10 to-red-500/0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700"></div>
+                    <svg class="w-4 h-4 transition-all duration-300 group-hover/btn:scale-110 group-hover/btn:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                     </svg>
                     <span class="text-sm">Logout</span>
+                    <span class="ml-auto text-xs opacity-0 group-hover/btn:opacity-100 transition-all group-hover/btn:translate-x-1">→</span>
                 </button>
             </div>
             
@@ -140,35 +148,35 @@ export function Sidebar() {
 }
 
 export function setupSidebar() {
-    // Highlight current page
+    // Highlight current page with animation
     document.querySelectorAll('.sidebar-link').forEach(link => {
         const href = link.getAttribute('href');
         if (href === `#${window.location.hash}`) {
-            link.classList.add('bg-gradient-to-r', 'from-[#3B82F6]', 'to-[#A78BFA]', 'text-white', 'shadow-md');
+            link.classList.add('bg-gradient-to-r', 'from-[#3B82F6]', 'to-[#A78BFA]', 'text-white', 'shadow-lg');
             const svg = link.querySelector('svg');
             if (svg) svg.classList.add('text-white');
         }
     });
     
-    // Handle logout
+    // Handle logout with animation
     const sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn');
     if (sidebarLogoutBtn) {
         sidebarLogoutBtn.addEventListener('click', handleLogout);
     }
     
-    // Hover effects
+    // Enhanced 3D hover effects
     const menuItems = document.querySelectorAll('.sidebar-link, #sidebarLogoutBtn, #feedbackSidebarBtn');
     menuItems.forEach(item => {
         item.addEventListener('mouseenter', () => {
             const icon = item.querySelector('svg');
             if (icon) {
-                icon.style.transform = 'scale(1.1) translateX(2px)';
+                icon.style.transform = 'scale(1.15) translateX(3px) rotate(6deg)';
             }
         });
         item.addEventListener('mouseleave', () => {
             const icon = item.querySelector('svg');
             if (icon) {
-                icon.style.transform = 'scale(1) translateX(0)';
+                icon.style.transform = 'scale(1) translateX(0) rotate(0deg)';
             }
         });
     });
@@ -191,6 +199,7 @@ function handleLogout() {
     if (logoutBtn) {
         logoutBtn.style.transform = 'scale(0.95)';
         logoutBtn.style.opacity = '0.5';
+        logoutBtn.style.transition = 'all 0.3s ease';
     }
     
     localStorage.removeItem('isAuthenticated');
@@ -210,21 +219,67 @@ function handleLogout() {
     }, 200);
 }
 
+// Enhanced CSS with 3D animations
 const sidebarStyles = `
-    @keyframes slideIn {
+    @keyframes slideIn3D {
         from {
             opacity: 0;
-            transform: translateX(-10px);
+            transform: translateX(-20px) rotateY(30deg);
         }
         to {
             opacity: 1;
-            transform: translateX(0);
+            transform: translateX(0) rotateY(0deg);
+        }
+    }
+    
+    @keyframes glowPulse {
+        0%, 100% {
+            box-shadow: 0 0 5px rgba(59, 130, 246, 0.3);
+        }
+        50% {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+        }
+    }
+    
+    @keyframes shine {
+        0% {
+            transform: translateX(-100%);
+        }
+        100% {
+            transform: translateX(100%);
         }
     }
     
     .sidebar-link, #sidebarLogoutBtn, #feedbackSidebarBtn {
-        animation: slideIn 0.2s ease-out;
-        animation-fill-mode: both;
+        animation: slideIn3D 0.3s ease-out forwards;
+        transform-style: preserve-3d;
+        backface-visibility: hidden;
+    }
+    
+    .sidebar-link:nth-child(1) { animation-delay: 0.05s; }
+    .sidebar-link:nth-child(2) { animation-delay: 0.1s; }
+    .sidebar-link:nth-child(3) { animation-delay: 0.15s; }
+    .sidebar-link:nth-child(4) { animation-delay: 0.2s; }
+    .sidebar-link:nth-child(5) { animation-delay: 0.25s; }
+    .sidebar-link:nth-child(6) { animation-delay: 0.3s; }
+    
+    .sidebar-link:hover {
+        transform: translateX(4px) translateZ(8px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    }
+    
+    /* Custom scrollbar */
+    .sidebar-scroll::-webkit-scrollbar {
+        width: 4px;
+    }
+    
+    .sidebar-scroll::-webkit-scrollbar-track {
+        background: #1F2937;
+    }
+    
+    .sidebar-scroll::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #3B82F6, #A78BFA);
+        border-radius: 10px;
     }
 `;
 

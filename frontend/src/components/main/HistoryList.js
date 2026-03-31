@@ -1,5 +1,6 @@
 // frontend/src/components/main/HistoryList.js - Enhanced UI
-import { getSearchHistory } from '../../services/storage.js';
+import { getSearchHistory, clearHistory } from '../../services/storage.js';
+import { showError, showSuccess } from '../common/ErrorMessage.js';
 
 export async function HistoryList() {
     let history = [];
@@ -42,7 +43,7 @@ export async function HistoryList() {
                     
                     return `
                         <div class="history-item group bg-gradient-to-r from-[#111827] to-[#1F2937] p-3.5 rounded-xl flex justify-between items-center hover:bg-gradient-to-r hover:from-[#1F2937] hover:to-[#2D3748] transition-all duration-300 cursor-pointer border border-[#374151] hover:border-[#3B82F6] hover:shadow-lg hover:shadow-[#3B82F6]/10 transform hover:-translate-y-0.5"
-                             data-topic="${entry.topic || ''}"
+                             data-topic="${escapeHtml(entry.topic || '')}"
                              style="animation: slideInRight 0.3s ease-out ${index * 0.05}s forwards">
                             <div class="flex items-center gap-3 flex-1 min-w-0">
                                 <div class="w-8 h-8 bg-gradient-to-r from-[#3B82F6] to-[#60A5FA] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
@@ -107,13 +108,15 @@ export async function HistoryList() {
 export function setupHistoryEvents() {
     const historyItems = document.querySelectorAll('.history-item');
     historyItems.forEach(item => {
-        item.addEventListener('click', () => {
-            const topic = item.dataset.topic;
+        const newItem = item.cloneNode(true);
+        item.parentNode.replaceChild(newItem, item);
+        
+        newItem.addEventListener('click', () => {
+            const topic = newItem.dataset.topic;
             if (!topic) return;
             
             const topicInput = document.getElementById('topicInput');
             if (topicInput) {
-                // Animate the input
                 topicInput.value = topic;
                 topicInput.classList.add('border-[#A78BFA]', 'scale-[1.02]');
                 setTimeout(() => {
@@ -122,7 +125,6 @@ export function setupHistoryEvents() {
                 
                 const generateBtn = document.getElementById('generateBtn');
                 if (generateBtn) {
-                    // Add click animation
                     generateBtn.classList.add('scale-105');
                     setTimeout(() => {
                         generateBtn.classList.remove('scale-105');
@@ -136,19 +138,20 @@ export function setupHistoryEvents() {
     // Clear history button
     const clearBtn = document.getElementById('clearHistoryBtn');
     if (clearBtn) {
-        clearBtn.addEventListener('click', async (e) => {
+        const newClearBtn = clearBtn.cloneNode(true);
+        clearBtn.parentNode.replaceChild(newClearBtn, clearBtn);
+        
+        newClearBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             e.stopPropagation();
             
-            if (confirm('Are you sure you want to clear all search history? This action cannot be undone.')) {
-                clearBtn.disabled = true;
-                clearBtn.innerHTML = '<div class="loading-spinner-small"></div> Clearing...';
+            if (confirm('⚠️ Are you sure you want to clear all search history? This action cannot be undone.')) {
+                newClearBtn.disabled = true;
+                newClearBtn.innerHTML = '<div class="loading-spinner-small"></div> Clearing...';
                 
                 try {
-                    const { historyAPI } = await import('../../services/api.js');
-                    await historyAPI.clear();
+                    await clearHistory();
                     
-                    // Refresh the history section
                     const historySection = document.querySelector('.history-section');
                     if (historySection) {
                         const { HistoryList } = await import('./HistoryList.js');
@@ -156,31 +159,24 @@ export function setupHistoryEvents() {
                         setupHistoryEvents();
                     }
                     
-                    showError('History cleared successfully!', 'success');
+                    showSuccess('History cleared successfully!', 'success');
                 } catch (error) {
                     console.error('Error clearing history:', error);
                     showError('Failed to clear history', 'error');
                 } finally {
-                    clearBtn.disabled = false;
-                    clearBtn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg><span>Clear All History</span>';
+                    newClearBtn.disabled = false;
+                    newClearBtn.innerHTML = '<svg class="w-4 h-4 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg><span>Clear All History</span>';
                 }
             }
         });
     }
 }
 
-// Helper function to escape HTML
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
-}
-
-// Helper function to show error (import if not available)
-async function showError(message, type) {
-    const { showError: showErrorToast } = await import('../common/ErrorMessage.js');
-    showErrorToast(message, type);
 }
 
 // Add CSS animations
@@ -216,6 +212,20 @@ const historyListStyles = `
     
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
         background: #60A5FA;
+    }
+    
+    .loading-spinner-small {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        display: inline-block;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
     }
 `;
 

@@ -1,4 +1,4 @@
-// frontend/src/components/main/Dashboard.js - Enhanced UI with modern design
+// frontend/src/components/main/Dashboard.js - Complete Redesign
 
 import { StorageArea } from './StorageArea.js';
 import { HistoryList } from './HistoryList.js';
@@ -6,38 +6,119 @@ import { TopicInput } from './TopicInput.js';
 import { QACard } from './QACard.js';
 import { UserFeedbackCard, setupUserFeedback } from '../feedback/UserFeedbackCard.js';
 import { getSavedNotes, getSearchHistory } from '../../services/storage.js';
-import { showError } from '../common/ErrorMessage.js';
+import { getUserStats, getUserScores, getLeaderboard } from '../../services/scoreService.js';
+import { getUserRoadmaps } from '../../services/roadmapService.js';
+import { showError, showSuccess } from '../common/ErrorMessage.js';
 
 export async function Dashboard() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const userName = user.name || localStorage.getItem('userName') || 'Learner';
+    const userId = localStorage.getItem('userId') || user.id;
     
     let notes = [];
     let history = [];
+    let stats = {};
+    let recentAttempts = [];
+    let recentRoadmaps = [];
+    let leaderboardData = [];
     
     try {
+        // Fetch all data in parallel
         notes = await getSavedNotes() || [];
         history = await getSearchHistory() || [];
+        
+        // Fetch user stats from backend
+        const statsData = await getUserStats();
+        stats = statsData || {};
+        
+        // Fetch recent quiz attempts
+        const scoresData = await getUserScores();
+        recentAttempts = scoresData?.recentAttempts || [];
+        
+        // Fetch user roadmaps
+        const roadmapsData = await getUserRoadmaps(5, 0);
+        recentRoadmaps = roadmapsData?.roadmaps || [];
+        
+        // Fetch leaderboard for motivation
+        const leaderboard = await getLeaderboard('all', 5);
+        leaderboardData = leaderboard || [];
+        
     } catch (error) {
         console.error('Error loading dashboard data:', error);
     }
     
-    const notesCount = Array.isArray(notes) ? notes.length : 0;
-    const historyCount = Array.isArray(history) ? history.length : 0;
+    const notesCount = notes.length;
+    const historyCount = history.length;
+    const quizzesTaken = stats.totalQuizzes || 0;
+    const averageScore = Math.round(stats.averageScore || 0);
+    const perfectScores = stats.perfectScores || 0;
+    const currentStreak = stats.currentStreak || 0;
+    const roadmapsCount = recentRoadmaps.length;
+    
+    // Calculate progress percentages
+    const quizProgress = quizzesTaken > 0 ? Math.min(averageScore, 100) : 0;
+    const roadmapProgress = roadmapsCount > 0 ? Math.min((roadmapsCount / 10) * 100, 100) : 0;
+    
+    // Get recent activities (combine quizzes, roadmaps, notes)
+    const recentActivities = [];
+    
+    // Add recent quiz attempts
+    recentAttempts.slice(0, 3).forEach(attempt => {
+        recentActivities.push({
+            type: 'quiz',
+            title: attempt.quizzes?.title || 'Quiz',
+            score: Math.round(attempt.percentage || 0),
+            date: attempt.completed_at,
+            icon: '🧪',
+            color: 'from-blue-500 to-cyan-500'
+        });
+    });
+    
+    // Add recent roadmaps
+    recentRoadmaps.slice(0, 2).forEach(roadmap => {
+        recentActivities.push({
+            type: 'roadmap',
+            title: roadmap.topic,
+            date: roadmap.created_at,
+            icon: '🗺️',
+            color: 'from-purple-500 to-pink-500'
+        });
+    });
+    
+    // Add recent notes
+    notes.slice(0, 2).forEach(note => {
+        recentActivities.push({
+            type: 'note',
+            title: note.topic,
+            date: note.savedAt,
+            icon: '📝',
+            color: 'from-green-500 to-emerald-500'
+        });
+    });
+    
+    // Sort by date (most recent first)
+    recentActivities.sort((a, b) => new Date(b.date) - new Date(a.date));
+    const topActivities = recentActivities.slice(0, 5);
+    
+    // Get top learners for motivation
+    const topLearners = leaderboardData.slice(0, 3);
     
     return `
-        <div class="min-h-screen bg-gradient-to-b from-[#111827] to-[#0F172A]">
+        <div class="min-h-screen">
             <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
-                <!-- Welcome Message with Gradient -->
-                <div class="mb-10 animate-fadeIn">
+                
+                <!-- ========== WELCOME SECTION ========== -->
+                <div class="mb-8 animate-fadeIn">
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <h1 class="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-[#E5E7EB] to-[#9CA3AF] bg-clip-text text-transparent">
-                                Welcome back, <span class="bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] bg-clip-text text-transparent">${userName}</span>
+                            <h1 class="text-3xl sm:text-4xl font-bold">
+                                <span class="text-white">Welcome back, </span>
+                                <span class="bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] bg-clip-text text-transparent">${userName}</span>
+                                <span class="text-white">! 👋</span>
                             </h1>
                             <p class="text-[#9CA3AF] mt-2 flex items-center gap-2">
                                 <span class="w-1.5 h-1.5 bg-[#3B82F6] rounded-full animate-pulse"></span>
-                                Ready to learn something new today?
+                                Ready to continue your learning journey today?
                             </p>
                         </div>
                         
@@ -52,65 +133,201 @@ export async function Dashboard() {
                     </div>
                 </div>
                 
-                <!-- Quick Stats Cards with Gradient Hover -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-5 mb-10">
-                    <div class="group bg-gradient-to-br from-[#1F2937] to-[#111827] p-5 rounded-2xl hover:shadow-2xl hover:shadow-[#3B82F6]/10 transition-all duration-300 hover:-translate-y-1 border border-[#374151]">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="w-10 h-10 bg-gradient-to-r from-[#3B82F6] to-[#60A5FA] rounded-xl flex items-center justify-center">
+                <!-- ========== STATS CARDS ========== -->
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+                    <!-- Notes Card -->
+                    <div class="group bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-4 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-300 hover:-translate-y-1 border border-[#374151] hover:border-blue-500/50">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
                                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
                                 </svg>
                             </div>
-                            <div class="text-3xl font-bold text-[#3B82F6] group-hover:scale-110 transition-transform">${notesCount}</div>
+                            <div class="text-2xl font-bold text-blue-400 group-hover:scale-110 transition-transform">${notesCount}</div>
                         </div>
                         <div class="text-sm text-[#9CA3AF]">Saved Notes</div>
-                        <div class="text-xs text-[#6B7280] mt-1">Your collection</div>
+                        <div class="text-xs text-[#6B7280] mt-1">📚 Your collection</div>
                     </div>
                     
-                    <div class="group bg-gradient-to-br from-[#1F2937] to-[#111827] p-5 rounded-2xl hover:shadow-2xl hover:shadow-[#3B82F6]/10 transition-all duration-300 hover:-translate-y-1 border border-[#374151]">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="w-10 h-10 bg-gradient-to-r from-[#3B82F6] to-[#60A5FA] rounded-xl flex items-center justify-center">
+                    <!-- Quizzes Card -->
+                    <div class="group bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-4 hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-300 hover:-translate-y-1 border border-[#374151] hover:border-purple-500/50">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
                                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>
                             </div>
-                            <div class="text-3xl font-bold text-[#3B82F6] group-hover:scale-110 transition-transform">${historyCount}</div>
+                            <div class="text-2xl font-bold text-purple-400 group-hover:scale-110 transition-transform">${quizzesTaken}</div>
                         </div>
-                        <div class="text-sm text-[#9CA3AF]">Topics Searched</div>
-                        <div class="text-xs text-[#6B7280] mt-1">Learning journey</div>
+                        <div class="text-sm text-[#9CA3AF]">Quizzes Taken</div>
+                        <div class="text-xs text-[#6B7280] mt-1">🎯 ${perfectScores} perfect scores</div>
                     </div>
                     
-                    <div class="group bg-gradient-to-br from-[#1F2937] to-[#111827] p-5 rounded-2xl hover:shadow-2xl hover:shadow-[#3B82F6]/10 transition-all duration-300 hover:-translate-y-1 border border-[#374151]">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="w-10 h-10 bg-gradient-to-r from-[#3B82F6] to-[#60A5FA] rounded-xl flex items-center justify-center">
+                    <!-- Roadmaps Card -->
+                    <div class="group bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-4 hover:shadow-2xl hover:shadow-emerald-500/10 transition-all duration-300 hover:-translate-y-1 border border-[#374151] hover:border-emerald-500/50">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="w-10 h-10 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg">
                                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
                                 </svg>
                             </div>
-                            <div class="text-3xl font-bold text-[#3B82F6] group-hover:scale-110 transition-transform">${Math.floor(Math.random() * 10) + 1}</div>
+                            <div class="text-2xl font-bold text-emerald-400 group-hover:scale-110 transition-transform">${roadmapsCount}</div>
                         </div>
-                        <div class="text-sm text-[#9CA3AF]">Study Streak</div>
-                        <div class="text-xs text-[#6B7280] mt-1">🔥 Keep going!</div>
+                        <div class="text-sm text-[#9CA3AF]">Roadmaps</div>
+                        <div class="text-xs text-[#6B7280] mt-1">🗺️ Learning paths</div>
                     </div>
                     
-                    <div class="group bg-gradient-to-br from-[#1F2937] to-[#111827] p-5 rounded-2xl hover:shadow-2xl hover:shadow-[#3B82F6]/10 transition-all duration-300 hover:-translate-y-1 border border-[#374151]">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="w-10 h-10 bg-gradient-to-r from-[#3B82F6] to-[#60A5FA] rounded-xl flex items-center justify-center">
+                    <!-- Avg Score Card -->
+                    <div class="group bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-4 hover:shadow-2xl hover:shadow-yellow-500/10 transition-all duration-300 hover:-translate-y-1 border border-[#374151] hover:border-yellow-500/50">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="w-10 h-10 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
                                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
                                 </svg>
                             </div>
-                            <div class="text-3xl font-bold text-[#3B82F6] group-hover:scale-110 transition-transform">${new Date().toLocaleDateString()}</div>
+                            <div class="text-2xl font-bold text-yellow-400 group-hover:scale-110 transition-transform">${averageScore}%</div>
                         </div>
-                        <div class="text-sm text-[#9CA3AF]">Last Active</div>
-                        <div class="text-xs text-[#6B7280] mt-1">Today's date</div>
+                        <div class="text-sm text-[#9CA3AF]">Avg Score</div>
+                        <div class="text-xs text-[#6B7280] mt-1">⭐ Overall performance</div>
+                    </div>
+                    
+                    <!-- Streak Card -->
+                    <div class="group bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-4 hover:shadow-2xl hover:shadow-red-500/10 transition-all duration-300 hover:-translate-y-1 border border-[#374151] hover:border-red-500/50">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="w-10 h-10 bg-gradient-to-r from-red-500 to-rose-500 rounded-xl flex items-center justify-center shadow-lg">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path>
+                                </svg>
+                            </div>
+                            <div class="text-2xl font-bold text-red-400 group-hover:scale-110 transition-transform">${currentStreak}</div>
+                        </div>
+                        <div class="text-sm text-[#9CA3AF]">Day Streak</div>
+                        <div class="text-xs text-[#6B7280] mt-1">🔥 Keep it up!</div>
                     </div>
                 </div>
                 
-                <!-- Topic Input Section -->
-                ${TopicInput()}
+                <!-- ========== QUICK ACTIONS ========== -->
+                <div class="mb-8">
+                    <h2 class="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                        <span class="w-1 h-5 bg-gradient-to-b from-[#3B82F6] to-[#A78BFA] rounded-full"></span>
+                        🚀 Quick Actions
+                    </h2>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <a href="#/dashboard" class="group flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-blue-600/20 to-blue-600/5 border border-blue-500/30 rounded-xl hover:bg-blue-600/30 transition-all duration-300 hover:scale-105">
+                            <span class="text-xl">✨</span>
+                            <span class="text-sm text-blue-300">Generate Notes</span>
+                        </a>
+                        <a href="#/quiz" class="group flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-purple-600/20 to-purple-600/5 border border-purple-500/30 rounded-xl hover:bg-purple-600/30 transition-all duration-300 hover:scale-105">
+                            <span class="text-xl">🎯</span>
+                            <span class="text-sm text-purple-300">Start Quiz</span>
+                        </a>
+                        <a href="#/roadmap" class="group flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-emerald-600/20 to-emerald-600/5 border border-emerald-500/30 rounded-xl hover:bg-emerald-600/30 transition-all duration-300 hover:scale-105">
+                            <span class="text-xl">🗺️</span>
+                            <span class="text-sm text-emerald-300">Create Roadmap</span>
+                        </a>
+                        <a href="#/pdf-reader" class="group flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-amber-600/20 to-amber-600/5 border border-amber-500/30 rounded-xl hover:bg-amber-600/30 transition-all duration-300 hover:scale-105">
+                            <span class="text-xl">📄</span>
+                            <span class="text-sm text-amber-300">Upload PDF</span>
+                        </a>
+                    </div>
+                </div>
                 
-                <!-- Q&A Display Section -->
+                <!-- ========== PROGRESS SECTION ========== -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-5 border border-[#374151]">
+                        <h3 class="text-md font-semibold text-white mb-3 flex items-center gap-2">
+                            <span>📊</span> Quiz Performance
+                        </h3>
+                        <div class="mb-3">
+                            <div class="flex justify-between text-sm text-[#9CA3AF] mb-1">
+                                <span>Average Score</span>
+                                <span class="text-blue-400 font-semibold">${quizProgress}%</span>
+                            </div>
+                            <div class="w-full bg-[#374151] rounded-full h-2">
+                                <div class="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full transition-all duration-500" style="width: ${quizProgress}%"></div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between text-xs text-[#6B7280]">
+                            <span>📝 ${quizzesTaken} quizzes taken</span>
+                            <span>⭐ ${perfectScores} perfect scores</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-5 border border-[#374151]">
+                        <h3 class="text-md font-semibold text-white mb-3 flex items-center gap-2">
+                            <span>🗺️</span> Roadmap Progress
+                        </h3>
+                        <div class="mb-3">
+                            <div class="flex justify-between text-sm text-[#9CA3AF] mb-1">
+                                <span>Roadmaps Created</span>
+                                <span class="text-emerald-400 font-semibold">${roadmapsCount} / 10</span>
+                            </div>
+                            <div class="w-full bg-[#374151] rounded-full h-2">
+                                <div class="bg-gradient-to-r from-emerald-500 to-teal-500 h-2 rounded-full transition-all duration-500" style="width: ${roadmapProgress}%"></div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between text-xs text-[#6B7280]">
+                            <span>🎯 Keep creating!</span>
+                            <span>🏆 ${10 - roadmapsCount} more to goal</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ========== RECENT ACTIVITY ========== -->
+                <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-5 mb-8 border border-[#374151]">
+                    <h3 class="text-md font-semibold text-white mb-3 flex items-center gap-2">
+                        <span>📋</span> Recent Activity
+                    </h3>
+                    ${topActivities.length > 0 ? `
+                        <div class="space-y-3">
+                            ${topActivities.map(activity => `
+                                <div class="flex items-center gap-3 p-3 bg-[#111827] rounded-xl hover:bg-[#1F2937] transition-all duration-300">
+                                    <div class="w-8 h-8 bg-gradient-to-r ${activity.color} rounded-lg flex items-center justify-center">
+                                        <span class="text-sm">${activity.icon}</span>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm text-white">${activity.type === 'quiz' ? `Took quiz: ${activity.title}` : activity.type === 'roadmap' ? `Created roadmap: ${activity.title}` : `Saved note: ${activity.title}`}</p>
+                                        <p class="text-xs text-[#6B7280]">${formatDate(activity.date)}</p>
+                                    </div>
+                                    ${activity.score ? `<div class="text-sm font-bold text-blue-400">${activity.score}%</div>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : `
+                        <div class="text-center py-8 text-[#6B7280]">
+                            <p>No recent activity yet</p>
+                            <p class="text-xs mt-1">Start learning to see your progress!</p>
+                        </div>
+                    `}
+                </div>
+                
+                <!-- ========== TOP LEARNERS (Motivation) ========== -->
+                ${topLearners.length > 0 ? `
+                <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-5 mb-8 border border-[#374151]">
+                    <h3 class="text-md font-semibold text-white mb-3 flex items-center gap-2">
+                        <span>🏆</span> Top Learners This Week
+                    </h3>
+                    <div class="space-y-2">
+                        ${topLearners.map((learner, idx) => `
+                            <div class="flex items-center gap-3 p-2">
+                                <div class="w-8 text-center">
+                                    ${idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm text-white">${learner.name || 'Anonymous'}</p>
+                                </div>
+                                <div class="text-sm font-bold text-yellow-400">${learner.total_points || 0} pts</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+                
+                <!-- ========== TOPIC INPUT & Q&A (EXISTING) ========== -->
+                <div class="mb-8">
+                    ${TopicInput()}
+                </div>
+                
                 <div id="qaDisplay" class="space-y-5 mb-10">
                     <!-- Welcome message with gradient -->
                     <div class="text-center py-16 bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl border border-[#374151]">
@@ -127,7 +344,7 @@ export async function Dashboard() {
                     </div>
                 </div>
                 
-                <!-- Storage and History Section -->
+                <!-- ========== STORAGE & HISTORY (EXISTING) ========== -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                     <div class="storage-section transform transition-all duration-300 hover:-translate-y-1">
                         ${await StorageArea()}
@@ -137,13 +354,30 @@ export async function Dashboard() {
                     </div>
                 </div>
                 
-                <!-- User Feedback Section -->
+                <!-- ========== USER FEEDBACK (EXISTING) ========== */
                 <div class="mt-8">
                     ${UserFeedbackCard()}
                 </div>
             </main>
         </div>
     `;
+}
+
+// Helper function to format date
+function formatDate(dateString) {
+    if (!dateString) return 'Recently';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} minutes ago`;
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    if (diffDays === 1) return 'Yesterday';
+    return `${diffDays} days ago`;
 }
 
 // Setup dashboard event listeners
@@ -173,13 +407,6 @@ export function setupDashboard() {
     
     // Setup User Feedback
     setupUserFeedback();
-    
-    // Add floating animation to stats cards
-    const statsCards = document.querySelectorAll('.group');
-    statsCards.forEach((card, index) => {
-        card.style.animation = `fadeInUp 0.5s ease-out ${index * 0.1}s forwards`;
-        card.style.opacity = '0';
-    });
 }
 
 function handleKeyPress(e) {

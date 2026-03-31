@@ -9,10 +9,9 @@ const API_KEY = process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY;
 
 if (!API_KEY) {
     console.error('❌ Missing API key. Set OPENAI_API_KEY or OPENROUTER_API_KEY');
-    // Don't throw error - let the app continue with fallback
 }
 
-// Initialize OpenRouter client with error handling
+// Initialize OpenRouter client
 let openrouter = null;
 
 try {
@@ -128,15 +127,42 @@ Make it easy to read and study-friendly.
             max_tokens: 2000
         });
         
-        const summary = completion.choices[0].message.content;
+        // ============= FIX: Safe response parsing =============
+        let summary = null;
+        
+        // Log response structure for debugging
+        console.log('📡 Response keys:', Object.keys(completion));
+        
+        // Try different response formats
+        if (completion.choices && Array.isArray(completion.choices) && completion.choices.length > 0) {
+            summary = completion.choices[0]?.message?.content;
+            console.log('✅ Got summary from choices array');
+        } else if (completion.message?.content) {
+            summary = completion.message.content;
+            console.log('✅ Got summary from message.content');
+        } else if (completion.content) {
+            summary = completion.content;
+            console.log('✅ Got summary from content');
+        } else if (completion.response) {
+            summary = completion.response;
+            console.log('✅ Got summary from response');
+        } else {
+            console.error('❌ Unknown response format:', JSON.stringify(completion, null, 2));
+            throw new Error('Unable to parse OpenRouter response');
+        }
+        
+        if (!summary) {
+            throw new Error('No summary content in response');
+        }
         
         console.log('✅ Summary generated successfully');
+        console.log(`📝 Summary length: ${summary.length} characters`);
         
         return {
             success: true,
-            summary,
+            summary: summary,
             model: model,
-            usage: completion.usage
+            usage: completion.usage || null
         };
         
     } catch (error) {
@@ -151,7 +177,7 @@ Make it easy to read and study-friendly.
         
         // Return fallback instead of failing
         return {
-            success: true,
+            success: true, // Keep true so frontend shows fallback
             summary: getFallbackSummary(text, topic),
             model: 'fallback',
             error: errorMessage
@@ -180,8 +206,20 @@ export async function testOpenRouter() {
                     ],
                     max_tokens: 50
                 });
-                return { success: true, message: completion.choices[0].message.content, model: model };
+                
+                // Safe response parsing
+                let message = null;
+                if (completion.choices && completion.choices[0]?.message?.content) {
+                    message = completion.choices[0].message.content;
+                } else if (completion.message?.content) {
+                    message = completion.message.content;
+                } else {
+                    message = 'Connection successful';
+                }
+                
+                return { success: true, message: message, model: model };
             } catch (modelError) {
+                console.log(`Model ${model} failed:`, modelError.message);
                 continue;
             }
         }
