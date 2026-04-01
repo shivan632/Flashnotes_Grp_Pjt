@@ -1,4 +1,3 @@
-// backend/server.js
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -23,6 +22,7 @@ import feedbackRoutes from './src/routes/feedback.js';
 import pdfRoutes from './src/routes/pdf.js';
 import profileRoutes from './src/routes/profile.js';
 import roadmapRoutes from './src/routes/roadmap.js';
+import notesGenRoutes from './src/routes/notesGenRoutes.js';
 
 dotenv.config();
 
@@ -58,12 +58,11 @@ app.use(cors({
 // ============= RATE LIMITING =============
 app.set('trust proxy', 1);
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,  // 15 minutes
-    max: 500,  // Increased from 100 to 500
+    windowMs: 15 * 60 * 1000,
+    max: 500,
     message: { error: 'Too many requests. Please try again later.' },
     validate: { xForwardedForHeader: false },
     skip: (req) => {
-        // Skip rate limiting for health check
         return req.path === '/api/health';
     }
 });
@@ -100,12 +99,12 @@ app.use((req, res, next) => {
 const frontendPath = path.join(__dirname, '../frontend');
 console.log(`📁 Frontend path: ${frontendPath}`);
 
-// Serve static files from frontend directory
 app.use(express.static(frontendPath));
 
-// API Routes
+// ============= API ROUTES =============
 app.use('/api/auth', authRoutes);
-app.use('/api/notes', notesRoutes);
+app.use('/api/notes', notesRoutes);           // Old notes routes
+app.use('/api/notes-gen', notesGenRoutes);    // ✅ NEW: Notes Generator routes (separate path)
 app.use('/api/history', historyRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/quiz', quizRoutes);
@@ -125,16 +124,14 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// ============= SPA ROUTING - Serve index.html for all non-API routes =============
+// ============= SPA ROUTING =============
 app.get('*', (req, res) => {
-    // Skip API routes
     if (req.path.startsWith('/api')) {
         return res.status(404).json({
             success: false,
             message: `Route not found: ${req.method} ${req.path}`
         });
     }
-    // Serve index.html for all other routes
     res.sendFile(path.join(frontendPath, 'index.html'));
 });
 

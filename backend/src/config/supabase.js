@@ -1,4 +1,3 @@
-// backend/src/config/supabase.js
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 
@@ -18,7 +17,7 @@ console.log('🔗 Connecting to Supabase:', supabaseUrl);
 // Regular client for public operations
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Admin client that bypasses RLS
+// Admin client that bypasses RLS (use this for all operations)
 export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
 
 // Test connection

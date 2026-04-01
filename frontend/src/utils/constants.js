@@ -49,7 +49,7 @@ export const ROUTES = {
     SETTINGS: '/settings',
     NOTIFICATIONS: '/notifications',
     PDF_READER: '/pdf-reader',
-    
+    NOTES_GENERATOR: '/notes-generator',
     // Admin Routes
     ADMIN: '/admin',
     ADMIN_USERS: '/admin/users',

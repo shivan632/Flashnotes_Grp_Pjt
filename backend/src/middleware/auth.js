@@ -1,6 +1,5 @@
-// backend/src/middleware/auth.js
 import jwt from 'jsonwebtoken';
-import { supabase } from '../config/supabase.js';
+import { supabaseAdmin } from '../config/supabase.js';  // ← Change: supabaseAdmin use karo
 
 export const authenticateToken = async (req, res, next) => {
     try {
@@ -25,7 +24,7 @@ export const authenticateToken = async (req, res, next) => {
         let user = null;
         
         // First try by ID
-        const { data: userById, error: idError } = await supabase
+        const { data: userById, error: idError } = await supabaseAdmin  // ← Changed
             .from('users')
             .select('id, name, email, email_verified')
             .eq('id', decoded.id)
@@ -39,7 +38,7 @@ export const authenticateToken = async (req, res, next) => {
         // If not found by ID, try by email
         if (!user && decoded.email) {
             console.log('⚠️ User not found by ID, trying by email:', decoded.email);
-            const { data: userByEmail, error: emailError } = await supabase
+            const { data: userByEmail, error: emailError } = await supabaseAdmin  // ← Changed
                 .from('users')
                 .select('id, name, email, email_verified')
                 .eq('email', decoded.email)

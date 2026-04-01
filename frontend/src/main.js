@@ -67,6 +67,7 @@ import { QuizAttemptPage, initQuizAttempt, cleanupQuiz } from './pages/QuizAttem
 import { VerifyOTPPage, setupVerifyOTP } from './pages/VerifyOTPPage.js';
 import { WelcomePage, setupWelcomePage } from './pages/WelcomePage.js';
 import { PDFReaderPage, setupPDFReaderPage } from './pages/PDFReaderPage.js';
+import { NotesGeneratorPage, setupNotesGeneratorPage } from './pages/NotesGeneratorPage.js';
 
 // ============= ROADMAP PAGE IMPORTS =============
 import { RoadmapPage, setupRoadmapPage } from './pages/RoadmapPage.js';
@@ -243,6 +244,8 @@ const routes = {
     [ROUTES.SETTINGS]: SettingsPage,
     [ROUTES.PDF_READER]: PDFReaderPage,
     [ROUTES.NOTIFICATIONS]: NotificationsPage,
+    [ROUTES.NOTES_GENERATOR]: NotesGeneratorPage,
+    
     // Roadmap Routes
     '/roadmap': RoadmapPage,
     '/my-roadmaps': MyRoadmapsPage,
@@ -483,6 +486,8 @@ async function router() {
                 setupRoadmapDetailPage(roadmapId);
             } else if (quizAttemptMatch) {
                 initQuizAttempt();
+            } else if (path === '/notes-generator') {
+                setupNotesGeneratorPage();
             }
         }, 100);
         
