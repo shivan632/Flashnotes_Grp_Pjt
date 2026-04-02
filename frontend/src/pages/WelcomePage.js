@@ -12,8 +12,8 @@ export function WelcomePage() {
         <div class="min-h-screen flex flex-col">
             ${Navbar()}
             ${WelcomeHero()}
-            ${FeaturesSection()}
             ${Introduction()}
+            ${FeaturesSection()}
             
             <!-- Feedback Section - Full Width with Larger Text -->
             <section class="py-20 bg-gradient-to-b from-[#111827] to-[#0F172A] w-full">

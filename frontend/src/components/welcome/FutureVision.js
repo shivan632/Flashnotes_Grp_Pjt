@@ -6,38 +6,44 @@ export function FutureVision() {
         {
             icon: '🎤',
             title: 'Voice Input',
-            description: 'Ask questions naturally with voice commands',
-            gradient: 'from-[#3B82F6] to-[#60A5FA]'
-        },
-        {
-            icon: '🌐',
-            title: '10+ Languages',
-            description: 'Learn in your preferred language',
-            gradient: 'from-[#10B981] to-[#34D399]'
+            description: 'Ask questions naturally with voice commands. Simply speak your query and our AI will understand and respond. Perfect for hands-free learning while multitasking. Supports multiple accents and languages for seamless interaction.',
+            gradient: 'from-[#3B82F6] to-[#60A5FA]',
+            status: 'Coming Soon'
         },
         {
             icon: '👥',
             title: 'Collaborative Learning',
-            description: 'Study with friends and share notes',
-            gradient: 'from-[#F59E0B] to-[#FBBF24]'
+            description: 'Online network where friends share their notes and study together. Create study groups, share resources, collaborate on projects, and learn collectively. Real-time updates keep everyone synchronized.',
+            gradient: 'from-[#10B981] to-[#34D399]',
+            status: 'Coming Soon'
         },
         {
-            icon: '📊',
-            title: 'Smart Analytics',
-            description: 'Track your progress with detailed insights',
-            gradient: 'from-[#EF4444] to-[#F87171]'
+            icon: '🌍',
+            title: 'Global Posts',
+            description: 'Share your knowledge with the world - access educational posts from everyone globally. Discover insights from learners worldwide, get diverse perspectives, and contribute your expertise to the global learning community.',
+            gradient: 'from-[#F59E0B] to-[#FBBF24]',
+            status: 'Coming Soon'
         },
         {
-            icon: '🧠',
-            title: 'Personalized Paths',
-            description: 'AI-customized learning journeys',
-            gradient: 'from-[#A78BFA] to-[#C084FC]'
+            icon: '🎬',
+            title: 'Video Library',
+            description: 'Curated video content for better visual learning and understanding. Access thousands of educational videos, tutorials, and lectures. Learn complex topics through visual demonstrations and expert explanations.',
+            gradient: 'from-[#EF4444] to-[#F87171]',
+            status: 'Coming Soon'
         },
         {
-            icon: '🎮',
-            title: 'Gamification',
-            description: 'Earn achievements and compete',
-            gradient: 'from-[#EC4899] to-[#F472B6]'
+            icon: '🪙',
+            title: 'Coin System',
+            description: 'Earn coins by sharing notes, exchange for downloading other users\' premium notes. Build your reputation, unlock exclusive content, and create a thriving knowledge economy within our learning community.',
+            gradient: 'from-[#A78BFA] to-[#C084FC]',
+            status: 'Coming Soon'
+        },
+        {
+            icon: '📞',
+            title: 'FlashConnect',
+            description: 'Video calls, voice calls, and real-time messaging - learn together like WhatsApp. Connect instantly with study partners, host virtual study sessions, share screens, and collaborate in real-time with crystal clear audio and video.',
+            gradient: 'from-[#EC4899] to-[#F472B6]',
+            status: 'Coming Soon'
         }
     ];
     
@@ -87,7 +93,7 @@ export function FutureVision() {
                             
                             <!-- Coming Soon Badge -->
                             <div class="mt-4">
-                                <span class="text-xs px-2 py-1 bg-white/10 rounded-full text-white/50">Coming Soon</span>
+                                <span class="text-xs px-2 py-1 bg-white/10 rounded-full text-white/50">${feature.status}</span>
                             </div>
                         </div>
                     `).join('')}
@@ -115,8 +121,8 @@ export function FutureVision() {
                             <div class="flex flex-col md:flex-row items-center gap-6 animate-fadeInUp" style="animation-delay: 0.5s">
                                 <div class="md:w-1/2 text-right md:pr-8">
                                     <div class="bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] inline-block px-4 py-1 rounded-full text-white text-sm font-semibold mb-2">Q4 2024</div>
-                                    <h4 class="text-xl font-bold text-white">Multi-Language Support</h4>
-                                    <p class="text-white/60">Learn in 10+ languages including Hindi, Spanish, French</p>
+                                    <h4 class="text-xl font-bold text-white">Collaborative Learning</h4>
+                                    <p class="text-white/60">Online network where friends share their notes</p>
                                 </div>
                                 <div class="md:w-1/2 md:pl-8">
                                     <div class="w-4 h-4 bg-[#3B82F6] rounded-full border-2 border-white"></div>
@@ -126,8 +132,8 @@ export function FutureVision() {
                             <div class="flex flex-col md:flex-row items-center gap-6 animate-fadeInUp" style="animation-delay: 0.6s">
                                 <div class="md:w-1/2 text-right md:pr-8">
                                     <div class="bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] inline-block px-4 py-1 rounded-full text-white text-sm font-semibold mb-2">Q1 2025</div>
-                                    <h4 class="text-xl font-bold text-white">Collaborative Learning</h4>
-                                    <p class="text-white/60">Study groups, shared notes, and peer challenges</p>
+                                    <h4 class="text-xl font-bold text-white">Global Posts & Video Library</h4>
+                                    <p class="text-white/60">Worldwide knowledge sharing and curated video content</p>
                                 </div>
                                 <div class="md:w-1/2 md:pl-8">
                                     <div class="w-4 h-4 bg-[#3B82F6] rounded-full border-2 border-white"></div>
@@ -137,12 +143,77 @@ export function FutureVision() {
                             <div class="flex flex-col md:flex-row items-center gap-6 animate-fadeInUp" style="animation-delay: 0.7s">
                                 <div class="md:w-1/2 text-right md:pr-8">
                                     <div class="bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] inline-block px-4 py-1 rounded-full text-white text-sm font-semibold mb-2">Q2 2025</div>
-                                    <h4 class="text-xl font-bold text-white">Smart Analytics</h4>
-                                    <p class="text-white/60">Deep insights into your learning patterns and progress</p>
+                                    <h4 class="text-xl font-bold text-white">Coin System & FlashConnect</h4>
+                                    <p class="text-white/60">Earn coins, exchange notes, video/voice calls & messaging</p>
                                 </div>
                                 <div class="md:w-1/2 md:pl-8">
                                     <div class="w-4 h-4 bg-[#3B82F6] rounded-full border-2 border-white"></div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Feature Highlight Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
+                    <!-- Coin System Highlight -->
+                    <div class="bg-gradient-to-br from-[#1E293B] to-[#0F172A] rounded-2xl p-6 border border-[#A78BFA]/30 hover:border-[#A78BFA] transition-all duration-300">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-14 h-14 bg-gradient-to-r from-[#A78BFA] to-[#C084FC] rounded-xl flex items-center justify-center">
+                                <span class="text-2xl">🪙</span>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Coin System Explained</h3>
+                                <p class="text-white/60 text-sm">How it works</p>
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3 text-white/70">
+                                <span class="w-2 h-2 bg-[#A78BFA] rounded-full"></span>
+                                <span>📝 Share notes → Earn coins</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-white/70">
+                                <span class="w-2 h-2 bg-[#A78BFA] rounded-full"></span>
+                                <span>🪙 Spend coins → Download premium notes</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-white/70">
+                                <span class="w-2 h-2 bg-[#A78BFA] rounded-full"></span>
+                                <span>🏆 Top contributors → Bonus coins & badges</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-white/70">
+                                <span class="w-2 h-2 bg-[#A78BFA] rounded-full"></span>
+                                <span>🎁 Daily login rewards → Free coins</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- FlashConnect Highlight -->
+                    <div class="bg-gradient-to-br from-[#1E293B] to-[#0F172A] rounded-2xl p-6 border border-[#EC4899]/30 hover:border-[#EC4899] transition-all duration-300">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="w-14 h-14 bg-gradient-to-r from-[#EC4899] to-[#F472B6] rounded-xl flex items-center justify-center">
+                                <span class="text-2xl">📞</span>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">FlashConnect</h3>
+                                <p class="text-white/60 text-sm">Real-time communication</p>
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3 text-white/70">
+                                <span class="w-2 h-2 bg-[#EC4899] rounded-full"></span>
+                                <span>🎥 Video Calls - Face-to-face learning sessions</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-white/70">
+                                <span class="w-2 h-2 bg-[#EC4899] rounded-full"></span>
+                                <span>🎙️ Voice Calls - Study together remotely</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-white/70">
+                                <span class="w-2 h-2 bg-[#EC4899] rounded-full"></span>
+                                <span>💬 Real-time Messaging - Instant doubt solving</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-white/70">
+                                <span class="w-2 h-2 bg-[#EC4899] rounded-full"></span>
+                                <span>👥 Group Chats - Study groups and communities</span>
                             </div>
                         </div>
                     </div>

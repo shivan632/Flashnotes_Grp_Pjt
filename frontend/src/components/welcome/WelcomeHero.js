@@ -1,11 +1,11 @@
 // frontend/src/components/welcome/WelcomeHero.js
-// Welcome Hero Section - Enhanced UI with modern design
+// Welcome Hero Section - Enhanced UI with modern design + Background Image
 
 export function WelcomeHero() {
     const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
     
     return `
-        <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
+        <section class="hero-with-bg relative min-h-screen flex items-center justify-center overflow-hidden">
             <!-- Animated Gradient Background -->
             <div class="absolute inset-0 animated-bg"></div>
             
@@ -148,7 +148,7 @@ export function WelcomeHero() {
     `;
 }
 
-// Add CSS animations
+// Add CSS animations (with background image via ::before)
 const welcomeHeroStyles = `
     @keyframes fadeInUp {
         from {
@@ -251,6 +251,48 @@ const welcomeHeroStyles = `
         position: absolute;
         inset: 0;
         pointer-events: none;
+    }
+    
+    /* Animated Gradient Background (Purana wala) */
+    .animated-bg {
+        background: linear-gradient(-45deg, #111827, #1F2937, #3B82F6, #A78BFA);
+        background-size: 400% 400%;
+        animation: gradient 15s ease infinite;
+    }
+    
+    /* ✅ NEW: Background Image via ::before - Purana gradient ke upar image layer */
+    .hero-with-bg {
+        position: relative;
+    }
+    
+    .hero-with-bg::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: url('https://i.ibb.co/Zz5SDbC6/Flash-Notes-Logo.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        opacity: 0.12;
+        pointer-events: none;
+        z-index: 1;
+    }
+    
+    /* Gradient background z-index 0, image z-index 1, content z-index 2 */
+    .hero-with-bg .animated-bg {
+        z-index: 0;
+    }
+    
+    .hero-with-bg::before {
+        z-index: 1;
+    }
+    
+    .hero-with-bg .container {
+        position: relative;
+        z-index: 2;
     }
 `;
 
