@@ -15,9 +15,9 @@ if (!NOTES_GEMINI_API_KEY) {
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(NOTES_GEMINI_API_KEY);
 
-// Model configuration - using confirmed working model
+// ✅ Use gemini-2.0-flash (different quota pool than 2.5-flash)
 const MODEL_CONFIG = {
-    model: 'gemini-2.5-flash',
+    model: 'gemini-2.0-flash',  // Changed from 'gemini-2.5-flash'
     generationConfig: {
         temperature: 0.7,
         maxOutputTokens: 4096,

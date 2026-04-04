@@ -232,8 +232,8 @@ export function FutureVision() {
                             </span>
                             <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         </a>
-                        <a href="#features" 
-                           class="group relative overflow-hidden border-2 border-white/30 hover:border-white text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105">
+                        <a href="./features.html" 
+                           class="group relative overflow-hidden border-2 border-white/30 hover:border-white text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 target="_blank"">
                             <span class="relative z-10 flex items-center gap-2">
                                 Learn More
                                 <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">

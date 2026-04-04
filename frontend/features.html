@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashnotes - AI-Powered Learning</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="https://i.ibb.co/Zz5SDbC6/Flash-Notes-Logo.jpg">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- AOS Animation -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0F172A 0%, #111827 50%, #0F172A 100%);
+            color: #E5E7EB;
+            overflow-x: hidden;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1F2937;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3B82F6;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #60A5FA;
+        }
+        
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); }
+            50% { transform: translateY(-20px) translateX(10px); }
+        }
+        
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 0.2; transform: scale(1); }
+            50% { opacity: 0.35; transform: scale(1.05); }
+        }
+        
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes gradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        @keyframes borderGlow {
+            0%, 100% { border-color: #3B82F6; box-shadow: 0 0 5px #3B82F6; }
+            50% { border-color: #A78BFA; box-shadow: 0 0 20px #A78BFA; }
+        }
+        
+        .animate-fadeInUp {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .animate-pulse-slow {
+            animation: pulse-slow 4s ease-in-out infinite;
+        }
+        
+        .animate-spin-slow {
+            animation: spin-slow 20s linear infinite;
+        }
+        
+        .animate-gradient {
+            background-size: 200% 200%;
+            animation: gradient 3s ease infinite;
+        }
+        
+        .feature-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.2);
+        }
+        
+        .glow-border {
+            animation: borderGlow 2s ease-in-out infinite;
+        }
+        
+        .bg-blur {
+            backdrop-filter: blur(10px);
+        }
+        
+        /* Particle styles */
+        .particle {
+            position: absolute;
+            background: rgba(59, 130, 246, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float 8s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Animated Background -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute -top-40 -right-40 w-96 h-96 bg-[#3B82F6] rounded-full filter blur-3xl opacity-20 animate-pulse-slow"></div>
+    <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-[#A78BFA] rounded-full filter blur-3xl opacity-20 animate-pulse-slow" style="animation-delay: 2s"></div>
+    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-full filter blur-3xl opacity-5 animate-spin-slow"></div>
+</div>
+
+<!-- Navbar -->
+<nav class="bg-[#0F172A]/80 backdrop-blur-md border-b border-[#374151] sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-3">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-xl flex items-center justify-center shadow-lg">
+                    <span class="text-white text-xl font-bold">F</span>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] bg-clip-text text-transparent">Flashnotes</h1>
+                    <p class="text-xs text-[#6B7280]">AI-Powered Learning</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="#current" class="text-[#9CA3AF] hover:text-[#3B82F6] transition-colors">Current Features</a>
+                <a href="#future" class="text-[#9CA3AF] hover:text-[#3B82F6] transition-colors">Future Features</a>
+                <a href="#roadmap" class="text-[#9CA3AF] hover:text-[#3B82F6] transition-colors">Roadmap</a>
+                <button href="#/register" class="px-4 py-2 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-lg text-white text-sm font-medium hover:scale-105 transition-transform">
+                    Get Started
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<main class="container mx-auto px-4 py-8 relative z-10">
+    
+    <!-- Hero Section -->
+    <div class="text-center mb-16 animate-fadeInUp" data-aos="fade-up">
+        <div class="inline-flex items-center gap-2 px-4 py-2 bg-[#3B82F6]/20 rounded-full mb-4">
+            <span class="w-2 h-2 bg-[#3B82F6] rounded-full animate-pulse"></span>
+            <span class="text-sm text-[#60A5FA] font-medium">Flashnotes v2.0</span>
+        </div>
+        <h1 class="text-5xl md:text-7xl font-bold bg-gradient-to-r from-[#3B82F6] via-[#60A5FA] to-[#A78BFA] bg-clip-text text-transparent animate-gradient mb-4">
+            All Features
+        </h1>
+        <p class="text-xl text-[#9CA3AF] max-w-2xl mx-auto">
+            Everything you need to supercharge your learning journey
+        </p>
+        <div class="w-24 h-1 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-full mx-auto mt-6"></div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CURRENT FEATURES SECTION -->
+    <!-- ============================================ -->
+    <section id="current" class="mb-20">
+        <div class="flex items-center gap-3 mb-8" data-aos="fade-right">
+            <div class="w-12 h-12 bg-gradient-to-r from-[#10B981] to-[#34D399] rounded-xl flex items-center justify-center">
+                <i class="fas fa-check-circle text-white text-xl"></i>
+            </div>
+            <div>
+                <h2 class="text-3xl font-bold text-white">Current Features</h2>
+                <p class="text-[#9CA3AF]">Available right now in Flashnotes</p>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Feature 1: AI Notes Generator -->
+            <div class="feature-card bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-6 border border-[#374151] hover:border-[#3B82F6] transition-all duration-300" data-aos="fade-up" data-aos-delay="0">
+                <div class="w-14 h-14 bg-gradient-to-r from-[#3B82F6] to-[#60A5FA] rounded-xl flex items-center justify-center mb-4">
+                    <i class="fas fa-robot text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">AI Notes Generator</h3>
+                <p class="text-[#9CA3AF] mb-4">Generate comprehensive, structured notes on any topic using Google Gemini AI. Includes overview, key concepts, code examples, best practices, and common mistakes.</p>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-2 py-1 bg-[#3B82F6]/20 text-[#3B82F6] text-xs rounded-full">Python</span>
+                    <span class="px-2 py-1 bg-[#3B82F6]/20 text-[#3B82F6] text-xs rounded-full">JavaScript</span>
+                    <span class="px-2 py-1 bg-[#3B82F6]/20 text-[#3B82F6] text-xs rounded-full">Java</span>
+                    <span class="px-2 py-1 bg-[#3B82F6]/20 text-[#3B82F6] text-xs rounded-full">C++</span>
+                </div>
+                <div class="mt-4 pt-4 border-t border-[#374151]">
+                    <span class="text-xs text-[#10B981]"><i class="fas fa-circle mr-1" style="font-size: 6px;"></i> Active</span>
+                </div>
+            </div>
+            
+            <!-- Feature 2: Code Editor -->
+            <div class="feature-card bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-6 border border-[#374151] hover:border-[#3B82F6] transition-all duration-300" data-aos="fade-up" data-aos-delay="100">
+                <div class="w-14 h-14 bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] rounded-xl flex items-center justify-center mb-4">
+                    <i class="fas fa-code text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Code Editor</h3>
+                <p class="text-[#9CA3AF] mb-4">Write, execute, and test code online. Supports Python, JavaScript, C++, and Java with real-time output display.</p>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-2 py-1 bg-[#F59E0B]/20 text-[#F59E0B] text-xs rounded-full">Run Code</span>
+                    <span class="px-2 py-1 bg-[#F59E0B]/20 text-[#F59E0B] text-xs rounded-full">Save Code</span>
+                    <span class="px-2 py-1 bg-[#F59E0B]/20 text-[#F59E0B] text-xs rounded-full">Load Code</span>
+                </div>
+                <div class="mt-4 pt-4 border-t border-[#374151]">
+                    <span class="text-xs text-[#10B981]"><i class="fas fa-circle mr-1" style="font-size: 6px;"></i> Active</span>
+                </div>
+            </div>
+            
+            <!-- Feature 3: PDF Summarizer -->
+            <div class="feature-card bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-6 border border-[#374151] hover:border-[#3B82F6] transition-all duration-300" data-aos="fade-up" data-aos-delay="200">
+                <div class="w-14 h-14 bg-gradient-to-r from-[#EF4444] to-[#F87171] rounded-xl flex items-center justify-center mb-4">
+                    <i class="fas fa-file-pdf text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">PDF Summarizer</h3>
+                <p class="text-[#9CA3AF] mb-4">Upload any PDF and get instant AI-powered summaries. Extract key insights, main points, and important information.</p>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-2 py-1 bg-[#EF4444]/20 text-[#EF4444] text-xs rounded-full">Drag & Drop</span>
+                    <span class="px-2 py-1 bg-[#EF4444]/20 text-[#EF4444] text-xs rounded-full">AI Summary</span>
+                </div>
+                <div class="mt-4 pt-4 border-t border-[#374151]">
+                    <span class="text-xs text-[#10B981]"><i class="fas fa-circle mr-1" style="font-size: 6px;"></i> Active</span>
+                </div>
+            </div>
+            
+            <!-- Feature 4: Quiz System -->
+            <div class="feature-card bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-6 border border-[#374151] hover:border-[#3B82F6] transition-all duration-300" data-aos="fade-up" data-aos-delay="300">
+                <div class="w-14 h-14 bg-gradient-to-r from-[#10B981] to-[#34D399] rounded-xl flex items-center justify-center mb-4">
+                    <i class="fas fa-brain text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Quiz System</h3>
+                <p class="text-[#9CA3AF] mb-4">Test your knowledge with AI-generated quizzes. Track scores, view leaderboard, and earn achievements.</p>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-2 py-1 bg-[#10B981]/20 text-[#10B981] text-xs rounded-full">Multiple Subjects</span>
+                    <span class="px-2 py-1 bg-[#10B981]/20 text-[#10B981] text-xs rounded-full">Leaderboard</span>
+                </div>
+                <div class="mt-4 pt-4 border-t border-[#374151]">
+                    <span class="text-xs text-[#10B981]"><i class="fas fa-circle mr-1" style="font-size: 6px;"></i> Active</span>
+                </div>
+            </div>
+            
+            <!-- Feature 5: Roadmap Generator -->
+            <div class="feature-card bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-6 border border-[#374151] hover:border-[#3B82F6] transition-all duration-300" data-aos="fade-up" data-aos-delay="400">
+                <div class="w-14 h-14 bg-gradient-to-r from-[#8B5CF6] to-[#A78BFA] rounded-xl flex items-center justify-center mb-4">
+                    <i class="fas fa-map text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Roadmap Generator</h3>
+                <p class="text-[#9CA3AF] mb-4">Create personalized learning paths for any skill or subject. Step-by-step guidance from beginner to advanced.</p>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-2 py-1 bg-[#8B5CF6]/20 text-[#8B5CF6] text-xs rounded-full">Personalized</span>
+                    <span class="px-2 py-1 bg-[#8B5CF6]/20 text-[#8B5CF6] text-xs rounded-full">Progress Tracking</span>
+                </div>
+                <div class="mt-4 pt-4 border-t border-[#374151]">
+                    <span class="text-xs text-[#10B981]"><i class="fas fa-circle mr-1" style="font-size: 6px;"></i> Active</span>
+                </div>
+            </div>
+            
+            <!-- Feature 6: Dashboard -->
+            <div class="feature-card bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-6 border border-[#374151] hover:border-[#3B82F6] transition-all duration-300" data-aos="fade-up" data-aos-delay="500">
+                <div class="w-14 h-14 bg-gradient-to-r from-[#EC4899] to-[#F472B6] rounded-xl flex items-center justify-center mb-4">
+                    <i class="fas fa-chart-line text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Dashboard & Analytics</h3>
+                <p class="text-[#9CA3AF] mb-4">Track your learning progress with stats cards, progress charts, and achievement badges.</p>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-2 py-1 bg-[#EC4899]/20 text-[#EC4899] text-xs rounded-full">Stats Cards</span>
+                    <span class="px-2 py-1 bg-[#EC4899]/20 text-[#EC4899] text-xs rounded-full">Progress Chart</span>
+                </div>
+                <div class="mt-4 pt-4 border-t border-[#374151]">
+                    <span class="text-xs text-[#10B981]"><i class="fas fa-circle mr-1" style="font-size: 6px;"></i> Active</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- FUTURE FEATURES SECTION -->
+    <!-- ============================================ -->
+    <section id="future" class="mb-20">
+        <div class="flex items-center gap-3 mb-8" data-aos="fade-right">
+            <div class="w-12 h-12 bg-gradient-to-r from-[#A78BFA] to-[#C084FC] rounded-xl flex items-center justify-center">
+                <i class="fas fa-rocket text-white text-xl"></i>
+            </div>
+            <div>
+                <h2 class="text-3xl font-bold text-white">Coming Soon</h2>
+                <p class="text-[#9CA3AF]">Exciting new features on the horizon</p>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Future Feature 1: Voice Input -->
+            <div class="feature-card bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-6 border border-[#A78BFA]/30 hover:border-[#A78BFA] transition-all duration-300 relative overflow-hidden" data-aos="fade-up" data-aos-delay="0">
+                <div class="absolute top-0 right-0">
+                    <div class="px-3 py-1 bg-gradient-to-r from-[#A78BFA] to-[#C084FC] rounded-bl-2xl text-white text-xs font-semibold">
+                        Coming Soon
+                    </div>
+                </div>
+                <div class="w-14 h-14 bg-gradient-to-r from-[#A78BFA] to-[#C084FC] rounded-xl flex items-center justify-center mb-4 animate-float">
+                    <i class="fas fa-microphone-alt text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Voice Input</h3>
+                <p class="text-[#9CA3AF] mb-4">Ask questions naturally with voice commands. Simply speak your query and our AI will understand and respond. Perfect for hands-free learning while multitasking. Supports multiple accents and languages for seamless interaction.</p>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-2 py-1 bg-[#A78BFA]/20 text-[#A78BFA] text-xs rounded-full">Speech Recognition</span>
+                    <span class="px-2 py-1 bg-[#A78BFA]/20 text-[#A78BFA] text-xs rounded-full">Multi-Language</span>
+                </div>
+                <div class="mt-4 pt-4 border-t border-[#374151]">
+                    <span class="text-xs text-[#A78BFA]"><i class="fas fa-clock mr-1"></i> Q3 2024</span>
+                </div>
+            </div>
+            
+            <!-- Future Feature 2: Collaborative Learning -->
+            <div class="feature-card bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-6 border border-[#10B981]/30 hover:border-[#10B981] transition-all duration-300 relative overflow-hidden" data-aos="fade-up" data-aos-delay="100">
+                <div class="absolute top-0 right-0">
+                    <div class="px-3 py-1 bg-gradient-to-r from-[#10B981] to-[#34D399] rounded-bl-2xl text-white text-xs font-semibold">
+                        Coming Soon
+                    </div>
+                </div>
+                <div class="w-14 h-14 bg-gradient-to-r from-[#10B981] to-[#34D399] rounded-xl flex items-center justify-center mb-4 animate-float" style="animation-delay: 0.5s">
+                    <i class="fas fa-users text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Collaborative Learning</h3>
+                <p class="text-[#9CA3AF] mb-4">Online network where friends share their notes and study together. Create study groups, share resources, collaborate on projects, and learn collectively. Real-time updates keep everyone synchronized.</p>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-2 py-1 bg-[#10B981]/20 text-[#10B981] text-xs rounded-full">Study Groups</span>
+                    <span class="px-2 py-1 bg-[#10B981]/20 text-[#10B981] text-xs rounded-full">Real-time Sync</span>
+                </div>
+                <div class="mt-4 pt-4 border-t border-[#374151]">
+                    <span class="text-xs text-[#10B981]"><i class="fas fa-clock mr-1"></i> Q4 2024</span>
+                </div>
+            </div>
+            
+            <!-- Future Feature 3: Global Posts -->
+            <div class="feature-card bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-6 border border-[#F59E0B]/30 hover:border-[#F59E0B] transition-all duration-300 relative overflow-hidden" data-aos="fade-up" data-aos-delay="200">
+                <div class="absolute top-0 right-0">
+                    <div class="px-3 py-1 bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] rounded-bl-2xl text-white text-xs font-semibold">
+                        Coming Soon
+                    </div>
+                </div>
+                <div class="w-14 h-14 bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] rounded-xl flex items-center justify-center mb-4 animate-float" style="animation-delay: 1s">
+                    <i class="fas fa-globe text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Global Posts</h3>
+                <p class="text-[#9CA3AF] mb-4">Share your knowledge with the world - access educational posts from everyone globally. Discover insights from learners worldwide, get diverse perspectives, and contribute your expertise to the global learning community.</p>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-2 py-1 bg-[#F59E0B]/20 text-[#F59E0B] text-xs rounded-full">Global Feed</span>
+                    <span class="px-2 py-1 bg-[#F59E0B]/20 text-[#F59E0B] text-xs rounded-full">Community</span>
+                </div>
+                <div class="mt-4 pt-4 border-t border-[#374151]">
+                    <span class="text-xs text-[#F59E0B]"><i class="fas fa-clock mr-1"></i> Q1 2025</span>
+                </div>
+            </div>
+            
+            <!-- Future Feature 4: Video Library -->
+            <div class="feature-card bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-6 border border-[#EF4444]/30 hover:border-[#EF4444] transition-all duration-300 relative overflow-hidden" data-aos="fade-up" data-aos-delay="300">
+                <div class="absolute top-0 right-0">
+                    <div class="px-3 py-1 bg-gradient-to-r from-[#EF4444] to-[#F87171] rounded-bl-2xl text-white text-xs font-semibold">
+                        Coming Soon
+                    </div>
+                </div>
+                <div class="w-14 h-14 bg-gradient-to-r from-[#EF4444] to-[#F87171] rounded-xl flex items-center justify-center mb-4 animate-float" style="animation-delay: 1.5s">
+                    <i class="fas fa-video text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Video Library</h3>
+                <p class="text-[#9CA3AF] mb-4">Curated video content for better visual learning and understanding. Access thousands of educational videos, tutorials, and lectures. Learn complex topics through visual demonstrations and expert explanations.</p>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-2 py-1 bg-[#EF4444]/20 text-[#EF4444] text-xs rounded-full">Tutorials</span>
+                    <span class="px-2 py-1 bg-[#EF4444]/20 text-[#EF4444] text-xs rounded-full">Lectures</span>
+                </div>
+                <div class="mt-4 pt-4 border-t border-[#374151]">
+                    <span class="text-xs text-[#EF4444]"><i class="fas fa-clock mr-1"></i> Q1 2025</span>
+                </div>
+            </div>
+            
+            <!-- Future Feature 5: Coin System -->
+            <div class="feature-card bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-6 border border-[#EC4899]/30 hover:border-[#EC4899] transition-all duration-300 relative overflow-hidden" data-aos="fade-up" data-aos-delay="400">
+                <div class="absolute top-0 right-0">
+                    <div class="px-3 py-1 bg-gradient-to-r from-[#EC4899] to-[#F472B6] rounded-bl-2xl text-white text-xs font-semibold">
+                        Coming Soon
+                    </div>
+                </div>
+                <div class="w-14 h-14 bg-gradient-to-r from-[#EC4899] to-[#F472B6] rounded-xl flex items-center justify-center mb-4 animate-float" style="animation-delay: 2s">
+                    <i class="fas fa-coins text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">Coin System</h3>
+                <p class="text-[#9CA3AF] mb-4">Earn coins by sharing notes, exchange for downloading other users' premium notes. Build your reputation, unlock exclusive content, and create a thriving knowledge economy within our learning community.</p>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-2 py-1 bg-[#EC4899]/20 text-[#EC4899] text-xs rounded-full">Earn Rewards</span>
+                    <span class="px-2 py-1 bg-[#EC4899]/20 text-[#EC4899] text-xs rounded-full">Exchange</span>
+                </div>
+                <div class="mt-4 pt-4 border-t border-[#374151]">
+                    <span class="text-xs text-[#EC4899]"><i class="fas fa-clock mr-1"></i> Q2 2025</span>
+                </div>
+            </div>
+            
+            <!-- Future Feature 6: FlashConnect -->
+            <div class="feature-card bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-6 border border-[#3B82F6]/30 hover:border-[#3B82F6] transition-all duration-300 relative overflow-hidden" data-aos="fade-up" data-aos-delay="500">
+                <div class="absolute top-0 right-0">
+                    <div class="px-3 py-1 bg-gradient-to-r from-[#3B82F6] to-[#60A5FA] rounded-bl-2xl text-white text-xs font-semibold">
+                        Coming Soon
+                    </div>
+                </div>
+                <div class="w-14 h-14 bg-gradient-to-r from-[#3B82F6] to-[#60A5FA] rounded-xl flex items-center justify-center mb-4 animate-float" style="animation-delay: 2.5s">
+                    <i class="fas fa-phone-alt text-white text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-2">FlashConnect</h3>
+                <p class="text-[#9CA3AF] mb-4">Video calls, voice calls, and real-time messaging - learn together like WhatsApp. Connect instantly with study partners, host virtual study sessions, share screens, and collaborate in real-time with crystal clear audio and video.</p>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-2 py-1 bg-[#3B82F6]/20 text-[#3B82F6] text-xs rounded-full">Video Calls</span>
+                    <span class="px-2 py-1 bg-[#3B82F6]/20 text-[#3B82F6] text-xs rounded-full">Voice Calls</span>
+                    <span class="px-2 py-1 bg-[#3B82F6]/20 text-[#3B82F6] text-xs rounded-full">Messaging</span>
+                </div>
+                <div class="mt-4 pt-4 border-t border-[#374151]">
+                    <span class="text-xs text-[#3B82F6]"><i class="fas fa-clock mr-1"></i> Q2 2025</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- ROADMAP TIMELINE SECTION -->
+    <!-- ============================================ -->
+    <section id="roadmap" class="mb-20">
+        <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-8 border border-[#374151]" data-aos="fade-up">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center gap-2 px-4 py-2 bg-[#3B82F6]/20 rounded-full mb-4">
+                    <span class="w-2 h-2 bg-[#3B82F6] rounded-full animate-pulse"></span>
+                    <span class="text-sm text-[#60A5FA] font-medium">Development Roadmap</span>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-bold text-white">Release Timeline</h2>
+                <p class="text-[#9CA3AF] mt-2">Features rolling out in phases</p>
+            </div>
+            
+            <div class="relative">
+                <!-- Timeline Line -->
+                <div class="absolute left-1/2 transform -translate-x-1/2 w-0.5 h-full bg-gradient-to-b from-[#3B82F6] to-[#A78BFA] hidden md:block"></div>
+                
+                <div class="space-y-8">
+                    <!-- Phase 1 -->
+                    <div class="flex flex-col md:flex-row items-center gap-6" data-aos="fade-right">
+                        <div class="md:w-1/2 text-right md:pr-8">
+                            <div class="inline-block px-4 py-1 bg-gradient-to-r from-[#3B82F6] to-[#60A5FA] rounded-full text-white text-sm font-semibold mb-2">Phase 1 - Q3 2024</div>
+                            <h4 class="text-xl font-bold text-white">Voice Input</h4>
+                            <p class="text-[#9CA3AF]">Natural voice commands for hands-free learning</p>
+                        </div>
+                        <div class="md:w-1/2 md:pl-8">
+                            <div class="w-4 h-4 bg-[#3B82F6] rounded-full border-2 border-white"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Phase 2 -->
+                    <div class="flex flex-col md:flex-row items-center gap-6" data-aos="fade-left">
+                        <div class="md:w-1/2 text-right md:pr-8">
+                            <div class="inline-block px-4 py-1 bg-gradient-to-r from-[#10B981] to-[#34D399] rounded-full text-white text-sm font-semibold mb-2">Phase 2 - Q4 2024</div>
+                            <h4 class="text-xl font-bold text-white">Collaborative Learning</h4>
+                            <p class="text-[#9CA3AF]">Online network where friends share their notes</p>
+                        </div>
+                        <div class="md:w-1/2 md:pl-8">
+                            <div class="w-4 h-4 bg-[#10B981] rounded-full border-2 border-white"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Phase 3 -->
+                    <div class="flex flex-col md:flex-row items-center gap-6" data-aos="fade-right">
+                        <div class="md:w-1/2 text-right md:pr-8">
+                            <div class="inline-block px-4 py-1 bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] rounded-full text-white text-sm font-semibold mb-2">Phase 3 - Q1 2025</div>
+                            <h4 class="text-xl font-bold text-white">Global Posts & Video Library</h4>
+                            <p class="text-[#9CA3AF]">Worldwide knowledge sharing and curated video content</p>
+                        </div>
+                        <div class="md:w-1/2 md:pl-8">
+                            <div class="w-4 h-4 bg-[#F59E0B] rounded-full border-2 border-white"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Phase 4 -->
+                    <div class="flex flex-col md:flex-row items-center gap-6" data-aos="fade-left">
+                        <div class="md:w-1/2 text-right md:pr-8">
+                            <div class="inline-block px-4 py-1 bg-gradient-to-r from-[#EC4899] to-[#F472B6] rounded-full text-white text-sm font-semibold mb-2">Phase 4 - Q2 2025</div>
+                            <h4 class="text-xl font-bold text-white">Coin System & FlashConnect</h4>
+                            <p class="text-[#9CA3AF]">Earn coins, exchange notes, video/voice calls & messaging</p>
+                        </div>
+                        <div class="md:w-1/2 md:pl-8">
+                            <div class="w-4 h-4 bg-[#EC4899] rounded-full border-2 border-white"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4" data-aos="fade-up">
+        <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-xl p-4 text-center border border-[#374151] hover:border-[#3B82F6] transition-all duration-300 group">
+            <i class="fas fa-users text-3xl text-[#3B82F6] mb-2 group-hover:scale-110 transition-transform"></i>
+            <div class="text-2xl font-bold text-white">10K+</div>
+            <div class="text-xs text-[#6B7280]">Active Users</div>
+        </div>
+        <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-xl p-4 text-center border border-[#374151] hover:border-[#3B82F6] transition-all duration-300 group">
+            <i class="fas fa-question-circle text-3xl text-[#10B981] mb-2 group-hover:scale-110 transition-transform"></i>
+            <div class="text-2xl font-bold text-white">50K+</div>
+            <div class="text-xs text-[#6B7280]">Questions Generated</div>
+        </div>
+        <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-xl p-4 text-center border border-[#374151] hover:border-[#3B82F6] transition-all duration-300 group">
+            <i class="fas fa-book text-3xl text-[#A78BFA] mb-2 group-hover:scale-110 transition-transform"></i>
+            <div class="text-2xl font-bold text-white">100+</div>
+            <div class="text-xs text-[#6B7280]">Topics Covered</div>
+        </div>
+        <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-xl p-4 text-center border border-[#374151] hover:border-[#3B82F6] transition-all duration-300 group">
+            <i class="fas fa-star text-3xl text-[#F59E0B] mb-2 group-hover:scale-110 transition-transform"></i>
+            <div class="text-2xl font-bold text-white">4.8</div>
+            <div class="text-xs text-[#6B7280]">User Rating</div>
+        </div>
+    </div>
+</main>
+
+<!-- Footer -->
+<footer class="mt-16 py-8 border-t border-[#374151]">
+    <div class="container mx-auto px-4 text-center">
+        <p class="text-[#6B7280] text-sm">&copy; 2024 Flashnotes - AI-Powered Learning Companion. All rights reserved.</p>
+    </div>
+</footer>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    AOS.init({
+        duration: 800,
+        once: true,
+        offset: 100
+    });
+    
+    // Create floating particles
+    const container = document.querySelector('.fixed.inset-0');
+    for (let i = 0; i < 30; i++) {
+        const particle = document.createElement('div');
+        particle.classList.add('particle');
+        particle.style.width = Math.random() * 4 + 2 + 'px';
+        particle.style.height = particle.style.width;
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.top = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 5 + 's';
+        particle.style.animationDuration = Math.random() * 10 + 5 + 's';
+        container.appendChild(particle);
+    }
+
+    
+</script>
+</body>
+</html>

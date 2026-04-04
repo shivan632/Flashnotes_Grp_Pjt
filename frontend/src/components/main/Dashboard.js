@@ -229,6 +229,10 @@ export async function Dashboard() {
                             <span class="text-xl">📄</span>
                             <span class="text-sm text-amber-300">Upload PDF</span>
                         </a>
+                        <a href="#/code-editor" class="group flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-pink-600/20 to-pink-600/5 border border-pink-500/30 rounded-xl hover:bg-pink-600/30 transition-all duration-300 hover:scale-105">
+                            <span class="text-xl">💻</span>
+                            <span class="text-sm text-pink-300">Code Editor</span>
+                        </a>
                     </div>
                 </div>
                 

@@ -68,6 +68,7 @@ import { VerifyOTPPage, setupVerifyOTP } from './pages/VerifyOTPPage.js';
 import { WelcomePage, setupWelcomePage } from './pages/WelcomePage.js';
 import { PDFReaderPage, setupPDFReaderPage } from './pages/PDFReaderPage.js';
 import { NotesGeneratorPage, setupNotesGeneratorPage } from './pages/NotesGeneratorPage.js';
+import { CodeEditorPage, setupCodeEditorPage } from './pages/CodeEditorPage.js';
 
 // ============= ROADMAP PAGE IMPORTS =============
 import { RoadmapPage, setupRoadmapPage } from './pages/RoadmapPage.js';
@@ -76,10 +77,13 @@ import { RoadmapDetailPage, setupRoadmapDetailPage } from './pages/RoadmapDetail
 
 // ============= API URL CONFIGURATION =============
 if (typeof window !== 'undefined' && !window.API_URL) {
-    console.warn('⚠️ API_URL not configured, using default');
-    window.API_URL = window.location.hostname === 'localhost' 
-        ? 'http://localhost:10000/api'
-        : 'https://flashnotes-api.onrender.com/api';
+    const hostname = window.location.hostname;
+    // Check for localhost OR 127.0.0.1
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        window.API_URL = 'http://localhost:10000/api';
+    } else {
+        window.API_URL = 'https://flashnotes-api.onrender.com/api';
+    }
 }
 console.log('✅ API_URL:', window.API_URL);
 
@@ -249,6 +253,9 @@ const routes = {
     // Roadmap Routes
     '/roadmap': RoadmapPage,
     '/my-roadmaps': MyRoadmapsPage,
+
+    // ... existing routes
+    '/code-editor': CodeEditorPage,
 };
 
 // ============= GLOBAL STATE =============
@@ -488,6 +495,8 @@ async function router() {
                 initQuizAttempt();
             } else if (path === '/notes-generator') {
                 setupNotesGeneratorPage();
+            }else if (path === '/code-editor') {
+                setupCodeEditorPage();
             }
         }, 100);
         
