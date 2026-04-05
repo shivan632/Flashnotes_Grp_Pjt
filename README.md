@@ -6,7 +6,7 @@
 
 ---
 <p align="center">
-  <img src="https://i.ibb.co/Zz5SDbC6/Flash-Notes-Logo.jpg" alt="FlashNotes Logo" width="220"/>
+  <img src="https://i.ibb.co/Zz5SDbC6/Flash-Notes-Logo.jpg" alt="FlashNotes Logo" width="250"/>
 </p>
 ---
 
