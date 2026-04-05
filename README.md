@@ -1,8 +1,8 @@
 # 📚 FlashNotes – Full Stack Learning Platform
 
-> Team Project – Flashnotes - AI-Powered Learning
-> My Role - Frontend Developer  
-> Team Name: Flash Coder
+> Team Project – Flashnotes - AI-Powered Learning ||
+> My Role - Frontend Developer ||
+> Team Name: Flash Coder ||
 
 ---
 <p align="center">
