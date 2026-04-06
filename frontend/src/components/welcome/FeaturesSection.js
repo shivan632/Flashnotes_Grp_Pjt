@@ -158,7 +158,7 @@ export function FeaturesSection() {
                         <div class="absolute inset-0 bg-gradient-to-r from-[#3B82F6]/20 to-[#A78BFA]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
                         
                         <video class="w-full h-auto aspect-video rounded-2xl" controls autoplay muted loop playsinline>
-                            <source src="/public/Flashnotes-Feature.mp4" type="video/mp4">
+                            <source src="https://res.cloudinary.com/dfzhjogqm/video/upload/v1775485873/Flashnotes-Feature_jiip0u.mp4" type="video/mp4">
                             Your browser does not support the video tag.
                         </video>
                         

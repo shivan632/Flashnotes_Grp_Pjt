@@ -8,7 +8,7 @@ export function WelcomeHero() {
         <section class="hero-with-bg relative min-h-screen flex items-center justify-center overflow-hidden">
             <!-- Video Background Layer -->
             <video autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-cover z-0">
-                <source src="/public/Intro-Background.mp4" type="video/mp4">
+                <source src="https://res.cloudinary.com/dfzhjogqm/video/upload/v1775485790/Intro-Background_kqju9m.mp4" type="video/mp4">
                 Your browser does not support the video tag.
             </video>
             
