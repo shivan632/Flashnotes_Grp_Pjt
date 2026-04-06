@@ -5,11 +5,10 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const GEMINI_API_KEY = process.env.GEMINI_CODE_API_KEY || process.env.GEMINI_API_KEY;
-const OPENROUTER_API_KEY = process.env.OPENROUTER_CODE_API_KEY || process.env.OPENROUTER_API_KEY;
+const OPENROUTER_CODE_API_KEY = process.env.OPENROUTER_CODE_API_KEY || process.env.OPENROUTER_API_KEY;
 
-// ✅ ALL WORKING MODELS FROM TEST (Ordered by speed - fastest first)
+// ✅ ALL WORKING MODELS FROM TEST
 const WORKING_MODELS = [
-    // OpenRouter Models (Fastest first)
     { name: 'Liquid 2.5 Instruct', id: 'liquid/lfm-2.5-1.2b-instruct:free', provider: 'OpenRouter', timeout: 5000 },
     { name: 'Trinity Mini', id: 'arcee-ai/trinity-mini:free', provider: 'OpenRouter', timeout: 8000 },
     { name: 'GPT OSS 120B', id: 'openai/gpt-oss-120b:free', provider: 'OpenRouter', timeout: 12000 },
@@ -17,7 +16,6 @@ const WORKING_MODELS = [
     { name: 'GLM 4.5 Air', id: 'z-ai/glm-4.5-air:free', provider: 'OpenRouter', timeout: 15000 },
     { name: 'Nemotron 9B', id: 'nvidia/nemotron-nano-9b-v2:free', provider: 'OpenRouter', timeout: 25000 },
     { name: 'Nemotron 12B', id: 'nvidia/nemotron-nano-12b-v2-vl:free', provider: 'OpenRouter', timeout: 25000 },
-    // Gemini Fallback
     { name: 'Gemini 2.5 Flash', id: 'gemini-2.5-flash', provider: 'Google', timeout: 10000 },
 ];
 
@@ -37,8 +35,12 @@ const LANGUAGE_MAP = {
     'ruby': 'ruby'
 };
 
-// Execute code with OpenRouter
+// Execute code with OpenRouter (using CODE API key)
 async function executeWithOpenRouter(code, language, modelId, timeout = 10000) {
+    if (!OPENROUTER_CODE_API_KEY) {
+        return { success: false, error: 'OpenRouter Code API key not configured' };
+    }
+    
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
     
@@ -47,7 +49,7 @@ async function executeWithOpenRouter(code, language, modelId, timeout = 10000) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+                'Authorization': `Bearer ${OPENROUTER_CODE_API_KEY}`,
                 'HTTP-Referer': 'https://flashnotes.app',
                 'X-Title': 'Flashnotes Code Editor'
             },
@@ -135,8 +137,8 @@ export async function executeCode(code, language) {
         let result;
         
         if (model.provider === 'OpenRouter') {
-            if (!OPENROUTER_API_KEY) {
-                console.log(`   ⚠️ OpenRouter API key missing, skipping`);
+            if (!OPENROUTER_CODE_API_KEY) {
+                console.log(`   ⚠️ OpenRouter Code API key missing, skipping`);
                 continue;
             }
             result = await executeWithOpenRouter(code, language, model.id, model.timeout);
@@ -156,7 +158,6 @@ export async function executeCode(code, language) {
         console.log(`   ❌ Failed: ${result.error}`);
         lastError = result.error;
         
-        // Small delay between retries
         await new Promise(resolve => setTimeout(resolve, 500));
     }
     
@@ -168,33 +169,4 @@ export async function executeCode(code, language) {
     };
 }
 
-// Test function to check which models are working
-export async function testAllModels() {
-    const results = [];
-    const testCode = 'print("test")';
-    
-    for (const model of WORKING_MODELS) {
-        console.log(`Testing ${model.name}...`);
-        
-        let result;
-        if (model.provider === 'OpenRouter') {
-            if (!OPENROUTER_API_KEY) continue;
-            result = await executeWithOpenRouter(testCode, 'python', model.id, model.timeout);
-        } else {
-            if (!GEMINI_API_KEY) continue;
-            result = await executeWithGemini(testCode, 'python', model.id);
-        }
-        
-        results.push({
-            name: model.name,
-            id: model.id,
-            provider: model.provider,
-            working: result.success,
-            error: result.error
-        });
-    }
-    
-    return results;
-}
-
-export default { executeCode, testAllModels };
+export default { executeCode };
