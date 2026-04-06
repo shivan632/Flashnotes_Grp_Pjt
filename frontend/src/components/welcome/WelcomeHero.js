@@ -1,19 +1,28 @@
 // frontend/src/components/welcome/WelcomeHero.js
-// Welcome Hero Section - Enhanced UI with modern design + Background Image
+// Welcome Hero Section - Enhanced UI with modern design + Video Background
 
 export function WelcomeHero() {
     const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
     
     return `
         <section class="hero-with-bg relative min-h-screen flex items-center justify-center overflow-hidden">
+            <!-- Video Background Layer -->
+            <video autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-cover z-0">
+                <source src="/public/Intro-Background.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            
+            <!-- Dark Overlay for text readability -->
+            <div class="absolute inset-0 bg-black/50 z-10"></div>
+            
             <!-- Animated Gradient Background -->
-            <div class="absolute inset-0 animated-bg"></div>
+            <div class="absolute inset-0 animated-bg opacity-30 z-0"></div>
             
             <!-- Animated Particles -->
-            <div class="absolute inset-0 overflow-hidden">
+            <div class="absolute inset-0 overflow-hidden z-20">
                 <div class="particles-container">
                     ${Array(20).fill(0).map((_, i) => `
-                        <div class="absolute rounded-full bg-white/10 animate-float" 
+                        <div class="absolute rounded-full bg-white/15 animate-float" 
                              style="
                                 width: ${Math.random() * 4 + 2}px;
                                 height: ${Math.random() * 4 + 2}px;
@@ -27,13 +36,13 @@ export function WelcomeHero() {
             </div>
             
             <!-- Gradient Orbs -->
-            <div class="absolute inset-0 overflow-hidden">
-                <div class="absolute -top-40 -right-40 w-96 h-96 bg-[#3B82F6] rounded-full filter blur-3xl opacity-30 animate-pulse"></div>
-                <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-[#A78BFA] rounded-full filter blur-3xl opacity-30 animate-pulse" style="animation-delay: 1s"></div>
+            <div class="absolute inset-0 overflow-hidden z-20">
+                <div class="absolute -top-40 -right-40 w-96 h-96 bg-[#3B82F6] rounded-full filter blur-3xl opacity-20 animate-pulse"></div>
+                <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-[#A78BFA] rounded-full filter blur-3xl opacity-20 animate-pulse" style="animation-delay: 1s"></div>
                 <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-full filter blur-3xl opacity-10 animate-spin-slow"></div>
             </div>
             
-            <div class="container mx-auto px-4 relative z-10">
+            <div class="container mx-auto px-4 relative z-30">
                 <div class="max-w-5xl mx-auto text-center">
                     <!-- Floating Logo with Animation -->
                     <div class="relative mb-8 group">
@@ -57,7 +66,7 @@ export function WelcomeHero() {
                     
                     <div class="h-1 w-24 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] mx-auto rounded-full mb-8"></div>
                     
-                    <p class="text-lg md:text-xl text-[#E5E7EB] mb-12 max-w-3xl mx-auto leading-relaxed animate-fadeInUp" style="animation-delay: 0.2s">
+                    <p class="text-lg md:text-xl text-white/90 mb-12 max-w-3xl mx-auto leading-relaxed animate-fadeInUp" style="animation-delay: 0.2s">
                         Transform the way you learn. Generate instant questions and answers for any topic, 
                         save your favorites, and track your progress - all powered by cutting-edge AI.
                     </p>
@@ -76,7 +85,7 @@ export function WelcomeHero() {
                                 <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                             </a>
                             <a href="#/login" 
-                               class="group relative overflow-hidden border-2 border-[#3B82F6] text-white hover:bg-[#3B82F6] px-8 py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 text-lg">
+                               class="group relative overflow-hidden border-2 border-white/30 hover:border-white text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 text-lg">
                                 <span class="relative z-10 flex items-center justify-center gap-2">
                                     Sign In
                                     <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -102,36 +111,36 @@ export function WelcomeHero() {
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-8">
                             <div class="group">
                                 <div class="flex items-center justify-center gap-2 mb-2">
-                                    <div class="w-10 h-10 bg-gradient-to-r from-[#3B82F6] to-[#60A5FA] rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <div class="w-10 h-10 bg-gradient-to-r from-[#032151] to-[#378ffb] rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
                                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
                                         </svg>
                                     </div>
                                     <div class="text-3xl font-bold text-[#3B82F6] group-hover:scale-110 transition-transform">10K+</div>
                                 </div>
-                                <div class="text-sm text-[#9CA3AF]">Active Learners</div>
+                                <div class="text-sm text-white/70">Active Learners</div>
                             </div>
                             <div class="group">
                                 <div class="flex items-center justify-center gap-2 mb-2">
-                                    <div class="w-10 h-10 bg-gradient-to-r from-[#3B82F6] to-[#60A5FA] rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <div class="w-10 h-10 bg-gradient-to-r from-[#032151] to-[#378ffb] rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
                                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                         </svg>
                                     </div>
                                     <div class="text-3xl font-bold text-[#3B82F6] group-hover:scale-110 transition-transform">50K+</div>
                                 </div>
-                                <div class="text-sm text-[#9CA3AF]">Q&A Generated</div>
+                                <div class="text-sm text-white/70">Q&A Generated</div>
                             </div>
                             <div class="group">
                                 <div class="flex items-center justify-center gap-2 mb-2">
-                                    <div class="w-10 h-10 bg-gradient-to-r from-[#3B82F6] to-[#60A5FA] rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <div class="w-10 h-10 bg-gradient-to-r from-[#032151] to-[#378ffb] rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
                                         <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                                         </svg>
                                     </div>
                                     <div class="text-3xl font-bold text-[#3B82F6] group-hover:scale-110 transition-transform">100+</div>
                                 </div>
-                                <div class="text-sm text-[#9CA3AF]">Topics Covered</div>
+                                <div class="text-sm text-white/70">Topics Covered</div>
                             </div>
                         </div>
                     </div>
@@ -139,7 +148,7 @@ export function WelcomeHero() {
             </div>
             
             <!-- Scroll Indicator with Animation -->
-            <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce-slow">
+            <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce-slow z-30">
                 <div class="w-6 h-10 border-2 border-[#3B82F6] rounded-full flex justify-center">
                     <div class="w-1 h-2 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-full mt-2 animate-scroll"></div>
                 </div>
@@ -148,7 +157,7 @@ export function WelcomeHero() {
     `;
 }
 
-// Add CSS animations (with background image via ::before)
+// Add CSS animations
 const welcomeHeroStyles = `
     @keyframes fadeInUp {
         from {
@@ -253,46 +262,21 @@ const welcomeHeroStyles = `
         pointer-events: none;
     }
     
-    /* Animated Gradient Background (Purana wala) */
+    /* Animated Gradient Background */
     .animated-bg {
         background: linear-gradient(-45deg, #111827, #1F2937, #3B82F6, #A78BFA);
         background-size: 400% 400%;
         animation: gradient 15s ease infinite;
     }
     
-    /* ✅ NEW: Background Image via ::before - Purana gradient ke upar image layer */
+    /* Hero section base */
     .hero-with-bg {
         position: relative;
     }
     
-    .hero-with-bg::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-image: url('https://i.ibb.co/Zz5SDbC6/Flash-Notes-Logo.jpg');
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        opacity: 0.12;
-        pointer-events: none;
-        z-index: 1;
-    }
-    
-    /* Gradient background z-index 0, image z-index 1, content z-index 2 */
-    .hero-with-bg .animated-bg {
-        z-index: 0;
-    }
-    
-    .hero-with-bg::before {
-        z-index: 1;
-    }
-    
-    .hero-with-bg .container {
-        position: relative;
-        z-index: 2;
+    /* Video styling */
+    .hero-with-bg video {
+        object-fit: cover;
     }
 `;
 

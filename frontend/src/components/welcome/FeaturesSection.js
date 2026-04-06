@@ -136,6 +136,52 @@ export function FeaturesSection() {
                     `).join('')}
                 </div>
                 
+                <!-- ========== EXPLANATION VIDEO SECTION (Wider & Taller) ========== -->
+                <div class="mb-24 animate-fadeInUp">
+                    <div class="text-center mb-8">
+                        <div class="inline-flex items-center gap-2 px-4 py-2 bg-[#3B82F6]/10 rounded-full mb-4 backdrop-blur-sm">
+                            <span class="w-2 h-2 bg-[#3B82F6] rounded-full animate-pulse"></span>
+                            <span class="text-sm text-[#60A5FA] font-medium">Watch & Learn</span>
+                        </div>
+                        <h3 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] bg-clip-text text-transparent">
+                            See Flashnotes in Action
+                        </h3>
+                        <p class="text-[#9CA3AF] mt-2 max-w-2xl mx-auto">
+                            Watch this quick demo to understand how Flashnotes can transform your learning experience
+                        </p>
+                        <div class="w-20 h-0.5 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] mx-auto mt-4 rounded-full"></div>
+                    </div>
+                    
+                    <!-- Video Container - Wider (max-w-6xl) and Taller (aspect-video to 16:9 ratio) -->
+                    <div class="relative max-w-6xl mx-auto rounded-2xl overflow-hidden shadow-2xl border border-[#374151] group">
+                        <!-- Video Glow Effect on Hover -->
+                        <div class="absolute inset-0 bg-gradient-to-r from-[#3B82F6]/20 to-[#A78BFA]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
+                        
+                        <video class="w-full h-auto aspect-video rounded-2xl" controls autoplay muted loop playsinline>
+                            <source src="/public/Flashnotes-Feature.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        
+                        <!-- Play Button Overlay (Optional - browser default controls are used) -->
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div class="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Video Description -->
+                    <div class="text-center mt-6">
+                        <p class="text-[#9CA3AF] text-sm max-w-3xl mx-auto">
+                            🎥 This video demonstrates how Flashnotes generates AI notes, summarizes PDFs, creates quizzes, 
+                            and helps you track your learning progress - all in one place.
+                        </p>
+                    </div>
+                </div>
+                
                 <!-- How It Works Section -->
                 <div class="mb-24">
                     <div class="text-center mb-12">
@@ -207,7 +253,6 @@ export function FeaturesSection() {
                         <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                         </svg>
-                        <!-- Ripple Effect -->
                         <span class="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></span>
                     </a>
                 </div>
