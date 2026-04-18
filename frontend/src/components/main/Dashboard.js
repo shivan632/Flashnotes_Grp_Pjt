@@ -237,6 +237,10 @@ export async function Dashboard() {
                             <span class="text-xl">📝</span>
                             <span class="text-sm text-indigo-300">AI Notes Generation</span>
                         </a>
+                        <a href="#/voice-notes" class="group flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-cyan-600/20 to-cyan-600/5 border border-cyan-500/30 rounded-xl hover:bg-cyan-600/30 transition-all duration-300 hover:scale-105">
+                            <span class="text-xl">🎤</span>
+                            <span class="text-sm text-cyan-300">Voice Notes</span>
+                        </a>
                     </div>
                 </div>
                 

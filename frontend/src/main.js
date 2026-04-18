@@ -1,4 +1,4 @@
-// frontend/src/main.js - UPDATED WITH ROADMAP ROUTES
+// frontend/src/main.js - UPDATED WITH ROADMAP ROUTES & FIXED VOICE NOTES
 
 // ============= UTILITIES =============
 import { setupNavigation, getCurrentPath, redirectIfNotAuthenticated, redirectIfAuthenticated } from './utils/navigation.js';
@@ -69,6 +69,7 @@ import { WelcomePage, setupWelcomePage } from './pages/WelcomePage.js';
 import { PDFReaderPage, setupPDFReaderPage } from './pages/PDFReaderPage.js';
 import { NotesGeneratorPage, setupNotesGeneratorPage } from './pages/NotesGeneratorPage.js';
 import { CodeEditorPage, setupCodeEditorPage } from './pages/CodeEditorPage.js';
+import { VoiceNotesPage, setupVoiceNotesPage } from './pages/VoiceNotesPage.js';
 
 // ============= ROADMAP PAGE IMPORTS =============
 import { RoadmapPage, setupRoadmapPage } from './pages/RoadmapPage.js';
@@ -253,9 +254,8 @@ const routes = {
     // Roadmap Routes
     '/roadmap': RoadmapPage,
     '/my-roadmaps': MyRoadmapsPage,
-
-    // ... existing routes
     '/code-editor': CodeEditorPage,
+    '/voice-notes': VoiceNotesPage,
 };
 
 // ============= GLOBAL STATE =============
@@ -495,8 +495,13 @@ async function router() {
                 initQuizAttempt();
             } else if (path === '/notes-generator') {
                 setupNotesGeneratorPage();
-            }else if (path === '/code-editor') {
+            } else if (path === '/code-editor') {
                 setupCodeEditorPage();
+            } else if (path === '/voice-notes') {
+                // ✅ FIXED: VoiceNotesPage doesn't need a setup function
+                // The page is self-contained with its own initialization
+                setupVoiceNotesPage();
+                console.log('Voice Notes page loaded');
             }
         }, 100);
         

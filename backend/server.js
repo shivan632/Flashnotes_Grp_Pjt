@@ -24,6 +24,7 @@ import profileRoutes from './src/routes/profile.js';
 import roadmapRoutes from './src/routes/roadmap.js';
 import notesGenRoutes from './src/routes/notesGenRoutes.js';
 import codeRoutes from './src/routes/codeRoutes.js';
+import voiceNotesRoutes from './src/routes/voiceNotesRoutes.js';
 
 dotenv.config();
 
@@ -115,6 +116,7 @@ app.use('/api/pdf', pdfRoutes);
 app.use('/api/user', profileRoutes);
 app.use('/api/roadmap', roadmapRoutes);
 app.use('/api/code', codeRoutes);
+app.use('/api/voice-notes', voiceNotesRoutes);
 
 // Health check route
 app.get('/api/health', (req, res) => {
