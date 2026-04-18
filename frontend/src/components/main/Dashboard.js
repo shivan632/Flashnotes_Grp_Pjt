@@ -215,7 +215,7 @@ export async function Dashboard() {
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <a href="#/dashboard" class="group flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-blue-600/20 to-blue-600/5 border border-blue-500/30 rounded-xl hover:bg-blue-600/30 transition-all duration-300 hover:scale-105">
                             <span class="text-xl">✨</span>
-                            <span class="text-sm text-blue-300">Generate Notes</span>
+                            <span class="text-sm text-blue-300">Generate Question</span>
                         </a>
                         <a href="#/quiz" class="group flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-purple-600/20 to-purple-600/5 border border-purple-500/30 rounded-xl hover:bg-purple-600/30 transition-all duration-300 hover:scale-105">
                             <span class="text-xl">🎯</span>
@@ -232,6 +232,10 @@ export async function Dashboard() {
                         <a href="#/code-editor" class="group flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-pink-600/20 to-pink-600/5 border border-pink-500/30 rounded-xl hover:bg-pink-600/30 transition-all duration-300 hover:scale-105">
                             <span class="text-xl">💻</span>
                             <span class="text-sm text-pink-300">Code Editor</span>
+                        </a>
+                        <a href="#/notes-generator" class="group flex items-center justify-center gap-2 p-3 bg-gradient-to-r from-indigo-600/20 to-indigo-600/5 border border-indigo-500/30 rounded-xl hover:bg-indigo-600/30 transition-all duration-300 hover:scale-105">
+                            <span class="text-xl">📝</span>
+                            <span class="text-sm text-indigo-300">AI Notes Generation</span>
                         </a>
                     </div>
                 </div>

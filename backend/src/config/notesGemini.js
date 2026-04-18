@@ -1,3 +1,4 @@
+// backend/src/config/notesGemini.js
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
 
@@ -15,9 +16,9 @@ if (!NOTES_GEMINI_API_KEY) {
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(NOTES_GEMINI_API_KEY);
 
-// ✅ Use gemini-2.0-flash (different quota pool than 2.5-flash)
+// ✅ Use gemini-1.5-pro (more stable and widely available)
 const MODEL_CONFIG = {
-    model: 'gemini-2.0-flash',  // Changed from 'gemini-2.5-flash'
+    model: 'gemini-1.5-pro',
     generationConfig: {
         temperature: 0.7,
         maxOutputTokens: 4096,

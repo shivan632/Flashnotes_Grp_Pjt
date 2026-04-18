@@ -1,30 +1,60 @@
 // backend/src/services/notesGeneratorService.js
 import { getNotesGeminiModel } from '../config/notesGemini.js';
+import { generateWithFallback } from './openrouterNotesService.js';
 
 export async function generateNotes(topic, difficulty = 'beginner', style = 'detailed') {
     try {
         console.log(`📝 Generating notes for: ${topic} (${difficulty}, ${style})`);
         
-        const model = getNotesGeminiModel();
         const prompt = buildNotesPrompt(topic, difficulty, style);
         
+        // Try OpenRouter first (working, no quota issues)
+        console.log('📡 Trying OpenRouter API first...');
+        try {
+            const openRouterResult = await generateWithFallback(prompt, {
+                temperature: 0.7,
+                max_tokens: 4096
+            });
+            
+            if (openRouterResult.success) {
+                const notesData = parseNotesResponse(openRouterResult.text, topic);
+                console.log(`✅ Notes generated with OpenRouter: ${notesData.key_concepts?.length || 0} concepts`);
+                console.log(`📡 Model used: ${openRouterResult.model}`);
+                
+                return {
+                    success: true,
+                    notes: notesData,
+                    topic: topic,
+                    difficulty: difficulty,
+                    generated_at: new Date().toISOString(),
+                    model_used: openRouterResult.model,
+                    source: 'openrouter'
+                };
+            }
+        } catch (openRouterError) {
+            console.log(`⚠️ OpenRouter failed: ${openRouterError.message}`);
+            console.log('🔄 Falling back to Gemini API...');
+        }
+        
+        // Fallback to Gemini API
         console.log('📡 Sending request to Gemini API...');
+        const model = getNotesGeminiModel();
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = response.text();
         
-        console.log('📥 Raw response received, length:', text.length);
-        
         const notesData = parseNotesResponse(text, topic);
         
-        console.log(`✅ Notes generated: ${notesData.key_concepts?.length || 0} concepts`);
+        console.log(`✅ Notes generated with Gemini: ${notesData.key_concepts?.length || 0} concepts`);
         
         return {
             success: true,
             notes: notesData,
             topic: topic,
             difficulty: difficulty,
-            generated_at: new Date().toISOString()
+            generated_at: new Date().toISOString(),
+            model_used: 'gemini-1.5-pro',
+            source: 'gemini'
         };
         
     } catch (error) {
@@ -91,7 +121,7 @@ Requirements:
 
 function parseNotesResponse(text, topic) {
     try {
-        console.log('🔍 Parsing Gemini response...');
+        console.log('🔍 Parsing API response...');
         
         let cleanText = text.trim();
         
@@ -112,18 +142,11 @@ function parseNotesResponse(text, topic) {
         
         // Fix common JSON issues
         jsonStr = jsonStr
-            .replace(/,\s*}/g, '}')           // Remove trailing commas in objects
-            .replace(/,\s*]/g, ']')           // Remove trailing commas in arrays
-            .replace(/\n/g, ' ')              // Replace newlines with spaces
-            .replace(/\r/g, '')               // Remove carriage returns
-            .replace(/\t/g, ' ')              // Replace tabs with spaces
-            .replace(/\\/g, '\\\\')           // Escape backslashes
-            .replace(/\\"/g, '\\\\"');        // Escape quotes
-        
-        // Fix unescaped quotes in strings
-        jsonStr = jsonStr.replace(/(?<!\\)"([^"\\]*(?:\\.[^"\\]*)*)"/g, (match) => {
-            return match.replace(/"/g, '\\"').replace(/\\"/g, '"');
-        });
+            .replace(/,\s*}/g, '}')
+            .replace(/,\s*]/g, ']')
+            .replace(/\n/g, ' ')
+            .replace(/\r/g, '')
+            .replace(/\t/g, ' ');
         
         // Try to parse
         let notes;
@@ -133,19 +156,10 @@ function parseNotesResponse(text, topic) {
         } catch (firstError) {
             console.log('⚠️ First parse failed, trying aggressive cleaning...');
             
-            // More aggressive cleaning
             let cleaned = jsonStr;
-            
-            // Remove any control characters
             cleaned = cleaned.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
-            
-            // Fix unquoted property names
             cleaned = cleaned.replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":');
-            
-            // Fix single quotes to double quotes
             cleaned = cleaned.replace(/'/g, '"');
-            
-            // Remove BOM if present
             cleaned = cleaned.replace(/^\uFEFF/, '');
             
             notes = JSON.parse(cleaned);

@@ -1,12 +1,13 @@
+// backend/src/routes/notesGenRoutes.js
 import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
-import {
-    generateNotesAPI,
-    getUserNotes,
-    getNoteById,
-    downloadNotes,
-    deleteNote,
+import { 
+    generateNotesAPI, 
+    getUserNotes, 
+    getNoteById, 
+    deleteNote, 
     toggleFavorite,
+    downloadNotes,
     getUserNotesStats
 } from '../controllers/notesGenController.js';
 
@@ -15,20 +16,26 @@ const router = express.Router();
 // All routes require authentication
 router.use(authenticateToken);
 
-// ============= ORDER MATTERS! =============
-// POST routes
+// Generate new notes
 router.post('/generate', generateNotesAPI);
 
-// GET routes - SPECIFIC PATHS (must come before dynamic)
-router.get('/user/all', getUserNotes);
-router.get('/stats', getUserNotesStats);
-router.get('/:id/download', downloadNotes);
+// Get user's notes (both routes point to same function)
+router.get('/my-notes', getUserNotes);
+router.get('/user/all', getUserNotes);  // ✅ ADD THIS LINE - for frontend compatibility
 
-// GET routes - DYNAMIC (must be LAST)
+// Get user stats
+router.get('/stats', getUserNotesStats);
+
+// Get single note
 router.get('/:id', getNoteById);
 
-// DELETE and PATCH routes
+// Delete note
 router.delete('/:id', deleteNote);
+
+// Toggle favorite
 router.patch('/:id/favorite', toggleFavorite);
+
+// Download as markdown
+router.get('/:id/download', downloadNotes);
 
 export default router;
