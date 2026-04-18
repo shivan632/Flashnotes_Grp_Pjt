@@ -1,8 +1,25 @@
 // frontend/src/services/voiceNotesService.js
 
-const API_BASE_URL = 'http://localhost:10000/api';
+// ============= DYNAMIC API URL DETECTION =============
+const getApiBaseUrl = () => {
+    // Check if we're in production (Vercel)
+    const isProduction = window.location.hostname !== 'localhost' && 
+                         window.location.hostname !== '127.0.0.1';
+    
+    if (isProduction) {
+        // Use your deployed Render backend URL
+        // Make sure this matches your actual Render URL
+        return 'https://flashnotes-api.onrender.com/api';
+    }
+    
+    // Local development
+    return 'http://localhost:10000/api';
+};
 
-// Helper function for API calls
+const API_BASE_URL = getApiBaseUrl();
+console.log('🎤 Voice Notes API URL:', API_BASE_URL);
+
+// ============= HELPER FUNCTION =============
 async function fetchAPI(endpoint, options = {}) {
     const token = localStorage.getItem('token');
     
@@ -13,22 +30,31 @@ async function fetchAPI(endpoint, options = {}) {
         }
     };
     
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        ...defaultOptions,
-        ...options,
-        headers: {
-            ...defaultOptions.headers,
-            ...options.headers
+    const url = `${API_BASE_URL}${endpoint}`;
+    console.log('📡 Fetching:', url);
+    
+    try {
+        const response = await fetch(url, {
+            ...defaultOptions,
+            ...options,
+            headers: {
+                ...defaultOptions.headers,
+                ...options.headers
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.message || 'API request failed');
         }
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-        throw new Error(data.message || 'API request failed');
+        
+        return data;
+        
+    } catch (error) {
+        console.error('Fetch error:', error);
+        throw error;
     }
-    
-    return data;
 }
 
 // ============= VOICE NOTES CRUD OPERATIONS =============
@@ -188,7 +214,8 @@ export async function getVoiceNotesStats() {
     }
 }
 
-// Helper functions
+// ============= HELPER FUNCTIONS =============
+
 export function formatNoteDate(dateString) {
     const date = new Date(dateString);
     const now = new Date();
@@ -253,7 +280,7 @@ export function sortVoiceNotes(notes, sortBy = 'date', order = 'desc') {
     return sorted;
 }
 
-// Default export for convenience
+// ============= DEFAULT EXPORT =============
 export default {
     saveVoiceNote,
     getVoiceNotes,
