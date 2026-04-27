@@ -1,12 +1,38 @@
 # python/config.py
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
+import streamlit as st
 
 class Config:
-    SUPABASE_URL = os.getenv("SUPABASE_URL")
-    SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+    # Get Supabase credentials - Priority: Streamlit Secrets > .env file
+    SUPABASE_URL = None
+    SUPABASE_SERVICE_KEY = None
+    
+    # Try to get from Streamlit secrets (for production on Streamlit Cloud)
+    try:
+        if hasattr(st, 'secrets') and "SUPABASE_URL" in st.secrets:
+            SUPABASE_URL = st.secrets["SUPABASE_URL"]
+            SUPABASE_SERVICE_KEY = st.secrets["SUPABASE_SERVICE_KEY"]
+            print("✅ Using credentials from Streamlit secrets")
+    except Exception:
+        pass
+    
+    # Fallback to .env file (for local development)
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        try:
+            from dotenv import load_dotenv
+            load_dotenv()
+            SUPABASE_URL = os.getenv("SUPABASE_URL")
+            SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+            if SUPABASE_URL and SUPABASE_SERVICE_KEY:
+                print("✅ Using credentials from .env file")
+        except Exception:
+            pass
+    
+    # Validate credentials are present
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        print("❌ ERROR: Supabase credentials not found!")
+        print("   For local: Add SUPABASE_URL and SUPABASE_SERVICE_KEY to .env file")
+        print("   For Streamlit Cloud: Add them in Settings → Secrets")
     
     # App Settings
     APP_TITLE = "FlashNotes Analytics Dashboard"
