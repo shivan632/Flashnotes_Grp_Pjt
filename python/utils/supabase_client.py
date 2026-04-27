@@ -5,8 +5,6 @@ from supabase import create_client, Client
 from config import Config
 from datetime import datetime, timedelta
 import json
-import warnings
-warnings.filterwarnings('ignore', category=UserWarning)
 
 class SupabaseClient:
     def __init__(self):
