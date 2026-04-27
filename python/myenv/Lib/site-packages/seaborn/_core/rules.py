@@ -8,8 +8,6 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-from seaborn.external.version import Version
-
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Literal
@@ -69,12 +67,15 @@ def variable_type(
     """
 
     # If a categorical dtype is set, infer categorical
-    if pd.api.types.is_categorical_dtype(vector):
+    if isinstance(getattr(vector, 'dtype', None), pd.CategoricalDtype):
         return VarType("categorical")
 
     # Special-case all-na data, which is always "numeric"
     if pd.isna(vector).all():
         return VarType("numeric")
+
+    # Now drop nulls to simplify further type inference
+    vector = vector.dropna()
 
     # Special-case binary/boolean data, allow caller to determine
     # This triggers a numpy warning when vector has strings/objects
@@ -90,13 +91,18 @@ def variable_type(
             category=(FutureWarning, DeprecationWarning)  # type: ignore  # mypy bug?
         )
         if strict_boolean:
-            if Version(pd.__version__) < Version("1.0.0"):
-                boolean_dtypes = ["bool"]
-            else:
+            if isinstance(vector.dtype, pd.core.dtypes.base.ExtensionDtype):
                 boolean_dtypes = ["bool", "boolean"]
+            else:
+                boolean_dtypes = ["bool"]
             boolean_vector = vector.dtype in boolean_dtypes
         else:
-            boolean_vector = bool(np.isin(vector, [0, 1, np.nan]).all())
+            try:
+                boolean_vector = bool(np.isin(vector, [0, 1]).all())
+            except TypeError:
+                # .isin comparison is not guaranteed to be possible under NumPy
+                # casting rules, depending on the (unknown) dtype of 'vector'
+                boolean_vector = False
         if boolean_vector:
             return VarType(boolean_type)
 

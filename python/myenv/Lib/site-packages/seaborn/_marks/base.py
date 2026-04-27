@@ -88,7 +88,8 @@ class Mappable:
         """Get the default value for this feature, or access the relevant rcParam."""
         if self._val is not None:
             return self._val
-        return mpl.rcParams.get(self._rc)
+        elif self._rc is not None:
+            return mpl.rcParams.get(self._rc)
 
 
 # TODO where is the right place to put this kind of type aliasing?
@@ -198,7 +199,7 @@ class Mark:
 
     def _infer_orient(self, scales: dict) -> str:  # TODO type scales
 
-        # TODO The original version of this (in seaborn._oldcore) did more checking.
+        # TODO The original version of this (in seaborn._base) did more checking.
         # Paring that down here for the prototype to see what restrictions make sense.
 
         # TODO rethink this to map from scale type to "DV priority" and use that?
@@ -223,7 +224,7 @@ class Mark:
 
     def _legend_artist(
         self, variables: list[str], value: Any, scales: dict[str, Scale],
-    ) -> Artist:
+    ) -> Artist | None:
 
         return None
 

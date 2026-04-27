@@ -10,12 +10,11 @@ import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.transforms as tx
+from matplotlib.cbook import normalize_kwargs
 from matplotlib.colors import to_rgba
 from matplotlib.collections import LineCollection
 
-from ._oldcore import (
-    VectorPlotter,
-)
+from ._base import VectorPlotter
 
 # We have moved univariate histogram computation over to the new Hist class,
 # but still use the older Histogram for bivariate computation.
@@ -28,8 +27,8 @@ from .axisgrid import (
 )
 from .utils import (
     remove_na,
+    _get_transform_functions,
     _kde_support,
-    _normalize_kwargs,
     _check_argument,
     _assign_default_kwargs,
     _default_color,
@@ -58,10 +57,10 @@ multiple : {{"layer", "stack", "fill"}}
     """,
     log_scale="""
 log_scale : bool or number, or pair of bools or numbers
-    Set axis scale(s) to log. A single value sets the data axis for univariate
-    distributions and both axes for bivariate distributions. A pair of values
-    sets each axis independently. Numeric values are interpreted as the desired
-    base (default 10). If `False`, defer to the existing Axes scale.
+    Set axis scale(s) to log. A single value sets the data axis for any numeric
+    axes in the plot. A pair of values sets each axis independently.
+    Numeric values are interpreted as the desired base (default 10).
+    When `None` or `False`, seaborn defers to the existing Axes scale.
     """,
     legend="""
 legend : bool
@@ -98,8 +97,6 @@ _param_docs = DocstringComponents.from_nested_components(
 
 
 class _DistributionPlotter(VectorPlotter):
-
-    semantics = "x", "y", "hue", "weights"
 
     wide_structure = {"x": "@values", "hue": "@columns"}
     flat_structure = {"x": "@values"}
@@ -174,7 +171,7 @@ class _DistributionPlotter(VectorPlotter):
         """Handle differences between artists in filled/unfilled plots."""
         kws = kws.copy()
         if fill:
-            kws = _normalize_kwargs(kws, mpl.collections.PolyCollection)
+            kws = normalize_kwargs(kws, mpl.collections.PolyCollection)
             kws.setdefault("facecolor", to_rgba(color, alpha))
 
             if element == "bars":
@@ -253,6 +250,7 @@ class _DistributionPlotter(VectorPlotter):
                 column_groups[facet_key].append(i)
 
             baselines = curves.copy()
+
             for col_idxs in column_groups.values():
                 cols = curves.columns[col_idxs]
 
@@ -274,21 +272,20 @@ class _DistributionPlotter(VectorPlotter):
             # This will require rethiniking if we add other semantics!
             hue_levels = self.var_levels["hue"]
             n = len(hue_levels)
+            f_fwd, f_inv = self._get_scale_transforms(self.data_variable)
             for key in curves:
+
                 level = dict(key)["hue"]
                 hist = curves[key].reset_index(name="heights")
                 level_idx = hue_levels.index(level)
-                if self._log_scaled(self.data_variable):
-                    log_min = np.log10(hist["edges"])
-                    log_max = np.log10(hist["edges"] + hist["widths"])
-                    log_width = (log_max - log_min) / n
-                    new_min = np.power(10, log_min + level_idx * log_width)
-                    new_max = np.power(10, log_min + (level_idx + 1) * log_width)
-                    hist["widths"] = new_max - new_min
-                    hist["edges"] = new_min
-                else:
-                    hist["widths"] /= n
-                    hist["edges"] += level_idx * hist["widths"]
+
+                a = f_fwd(hist["edges"])
+                b = f_fwd(hist["edges"] + hist["widths"])
+                w = (b - a) / n
+                new_min = f_inv(a + level_idx * w)
+                new_max = f_inv(a + (level_idx + 1) * w)
+                hist["widths"] = new_max - new_min
+                hist["edges"] = new_min
 
                 curves[key] = hist.set_index(["edges", "widths"])["heights"]
 
@@ -304,7 +301,6 @@ class _DistributionPlotter(VectorPlotter):
         common_norm,
         common_grid,
         estimate_kws,
-        log_scale,
         warn_singular=True,
     ):
 
@@ -359,8 +355,9 @@ class _DistributionPlotter(VectorPlotter):
                     warnings.warn(msg, UserWarning, stacklevel=4)
                 continue
 
-            if log_scale:
-                support = np.power(10, support)
+            # Invert the scaling of the support points
+            _, f_inv = self._get_scale_transforms(self.data_variable)
+            support = f_inv(support)
 
             # Apply a scaling factor so that the integral over all subsets is 1
             if common_norm:
@@ -447,13 +444,11 @@ class _DistributionPlotter(VectorPlotter):
             # TODO alternatively, clip at min/max bins?
             kde_kws.setdefault("cut", 0)
             kde_kws["cumulative"] = estimate_kws["cumulative"]
-            log_scale = self._log_scaled(self.data_variable)
             densities = self._compute_univariate_density(
                 self.data_variable,
                 common_norm,
                 common_bins,
                 kde_kws,
-                log_scale,
                 warn_singular=False,
             )
 
@@ -488,9 +483,10 @@ class _DistributionPlotter(VectorPlotter):
                 densities[key] *= hist_norm
 
             # Convert edges back to original units for plotting
-            if self._log_scaled(self.data_variable):
-                widths = np.power(10, edges + widths) - np.power(10, edges)
-                edges = np.power(10, edges)
+            ax = self._get_axes(sub_vars)
+            _, inv = _get_transform_functions(ax, self.data_variable)
+            widths = inv(edges + widths) - inv(edges)
+            edges = inv(edges)
 
             # Pack the histogram data and metadata together
             edges = edges + (1 - shrink) / 2 * widths
@@ -810,11 +806,14 @@ class _DistributionPlotter(VectorPlotter):
                 weights=sub_data.get("weights", None),
             )
 
-            # Check for log scaling on the data axis
-            if self._log_scaled("x"):
-                x_edges = np.power(10, x_edges)
-            if self._log_scaled("y"):
-                y_edges = np.power(10, y_edges)
+            # Get the axes for this plot
+            ax = self._get_axes(sub_vars)
+
+            # Invert the scale for the edges
+            _, inv_x = _get_transform_functions(ax, "x")
+            _, inv_y = _get_transform_functions(ax, "y")
+            x_edges = inv_x(x_edges)
+            y_edges = inv_y(y_edges)
 
             # Apply scaling to normalize across groups
             if estimator.stat != "count" and common_norm:
@@ -845,9 +844,6 @@ class _DistributionPlotter(VectorPlotter):
                 thresh = self._quantile_to_level(heights, pthresh)
             if thresh is not None:
                 heights = np.ma.masked_less_equal(heights, thresh)
-
-            # Get the axes for this plot
-            ax = self._get_axes(sub_vars)
 
             # pcolormesh is going to turn the grid off, but we want to keep it
             # I'm not sure if there's a better way to get the grid state
@@ -920,7 +916,7 @@ class _DistributionPlotter(VectorPlotter):
             artist = mpl.collections.PolyCollection
         else:
             artist = mpl.lines.Line2D
-        plot_kws = _normalize_kwargs(plot_kws, artist)
+        plot_kws = normalize_kwargs(plot_kws, artist)
 
         # Input checking
         _check_argument("multiple", ["layer", "stack", "fill"], multiple)
@@ -930,16 +926,12 @@ class _DistributionPlotter(VectorPlotter):
         if subsets and multiple in ("stack", "fill"):
             common_grid = True
 
-        # Check if the data axis is log scaled
-        log_scale = self._log_scaled(self.data_variable)
-
         # Do the computation
         densities = self._compute_univariate_density(
             self.data_variable,
             common_norm,
             common_grid,
             estimate_kws,
-            log_scale,
             warn_singular,
         )
 
@@ -1094,12 +1086,10 @@ class _DistributionPlotter(VectorPlotter):
                 continue
 
             # Transform the support grid back to the original scale
-            xx, yy = support
-            if self._log_scaled("x"):
-                xx = np.power(10, xx)
-            if self._log_scaled("y"):
-                yy = np.power(10, yy)
-            support = xx, yy
+            ax = self._get_axes(sub_vars)
+            _, inv_x = _get_transform_functions(ax, "x")
+            _, inv_y = _get_transform_functions(ax, "y")
+            support = inv_x(support[0]), inv_y(support[1])
 
             # Apply a scaling factor so that the integral over all subsets is 1
             if common_norm:
@@ -1180,16 +1170,14 @@ class _DistributionPlotter(VectorPlotter):
             density = densities[key]
             xx, yy = supports[key]
 
-            label = contour_kws.pop("label", None)
+            # Pop the label kwarg which is unused by contour_func (but warns)
+            contour_kws.pop("label", None)
 
             cset = contour_func(
                 xx, yy, density,
                 levels=draw_levels[key],
                 **contour_kws,
             )
-
-            if "hue" not in self.variables:
-                cset.collections[0].set_label(label)
 
             # Add a color bar representing the contour heights
             # Note: this shows iso densities, not iso proportions
@@ -1246,9 +1234,12 @@ class _DistributionPlotter(VectorPlotter):
                 artist_kws["color"] = self._hue_map(sub_vars["hue"])
 
             # Return the data variable to the linear domain
-            # This needs an automatic solution; see GH2409
-            if self._log_scaled(self.data_variable):
-                vals = np.power(10, vals)
+            ax = self._get_axes(sub_vars)
+            _, inv = _get_transform_functions(ax, self.data_variable)
+            vals = inv(vals)
+
+            # Manually set the minimum value on a "log" scale
+            if isinstance(inv.__self__, mpl.scale.LogTransform):
                 vals[0] = -np.inf
 
             # Work out the orientation of the plot
@@ -1265,7 +1256,6 @@ class _DistributionPlotter(VectorPlotter):
                 top_edge = 1
 
             # Draw the line for this subset
-            ax = self._get_axes(sub_vars)
             artist, = ax.plot(*plot_args, **artist_kws)
             sticky_edges = getattr(artist.sticky_edges, stat_variable)
             sticky_edges[:] = 0, top_edge
@@ -1328,9 +1318,8 @@ class _DistributionPlotter(VectorPlotter):
         n = len(vector)
 
         # Return data to linear domain
-        # This needs an automatic solution; see GH2409
-        if self._log_scaled(var):
-            vector = np.power(10, vector)
+        _, inv = _get_transform_functions(ax, var)
+        vector = inv(vector)
 
         # We'll always add a single collection with varying colors
         if "hue" in self.variables:
@@ -1362,11 +1351,6 @@ class _DistributionPlotter(VectorPlotter):
         ax.autoscale_view(scalex=var == "x", scaley=var == "y")
 
 
-class _DistributionFacetPlotter(_DistributionPlotter):
-
-    semantics = _DistributionPlotter.semantics + ("col", "row")
-
-
 # ==================================================================================== #
 # External API
 # ==================================================================================== #
@@ -1394,7 +1378,7 @@ def histplot(
 
     p = _DistributionPlotter(
         data=data,
-        variables=_DistributionPlotter.get_semantics(locals())
+        variables=dict(x=x, y=y, hue=hue, weights=weights),
     )
 
     p.map_hue(palette=palette, order=hue_order, norm=hue_norm)
@@ -1609,7 +1593,7 @@ def kdeplot(
     # Handle (past) deprecation of `data2`
     if "data2" in kwargs:
         msg = "`data2` has been removed (replaced by `y`); please update your code."
-        TypeError(msg)
+        raise TypeError(msg)
 
     # Handle deprecation of `vertical`
     vertical = kwargs.pop("vertical", None)
@@ -1624,7 +1608,7 @@ def kdeplot(
             action_taken = "assigning data to `x`."
         msg = textwrap.dedent(f"""\n
         The `vertical` parameter is deprecated; {action_taken}
-        This will become an error in seaborn v0.13.0; please update your code.
+        This will become an error in seaborn v0.14.0; please update your code.
         """)
         warnings.warn(msg, UserWarning, stacklevel=2)
 
@@ -1634,7 +1618,7 @@ def kdeplot(
         msg = textwrap.dedent(f"""\n
         The `bw` parameter is deprecated in favor of `bw_method` and `bw_adjust`.
         Setting `bw_method={bw}`, but please see the docs for the new parameters
-        and update your code. This will become an error in seaborn v0.13.0.
+        and update your code. This will become an error in seaborn v0.14.0.
         """)
         warnings.warn(msg, UserWarning, stacklevel=2)
         bw_method = bw
@@ -1643,7 +1627,7 @@ def kdeplot(
     if kwargs.pop("kernel", None) is not None:
         msg = textwrap.dedent("""\n
         Support for alternate kernels has been removed; using Gaussian kernel.
-        This will become an error in seaborn v0.13.0; please update your code.
+        This will become an error in seaborn v0.14.0; please update your code.
         """)
         warnings.warn(msg, UserWarning, stacklevel=2)
 
@@ -1654,7 +1638,7 @@ def kdeplot(
             thresh = 0
         msg = textwrap.dedent(f"""\n
         `shade_lowest` has been replaced by `thresh`; setting `thresh={thresh}.
-        This will become an error in seaborn v0.13.0; please update your code.
+        This will become an error in seaborn v0.14.0; please update your code.
         """)
         warnings.warn(msg, UserWarning, stacklevel=2)
 
@@ -1684,7 +1668,7 @@ def kdeplot(
 
     p = _DistributionPlotter(
         data=data,
-        variables=_DistributionPlotter.get_semantics(locals()),
+        variables=dict(x=x, y=y, hue=hue, weights=weights),
     )
 
     p.map_hue(palette=palette, order=hue_order, norm=hue_norm)
@@ -1890,7 +1874,7 @@ def ecdfplot(
 
     p = _DistributionPlotter(
         data=data,
-        variables=_DistributionPlotter.get_semantics(locals())
+        variables=dict(x=x, y=y, hue=hue, weights=weights),
     )
 
     p.map_hue(palette=palette, order=hue_order, norm=hue_norm)
@@ -2010,7 +1994,7 @@ def rugplot(
         data = a
         msg = textwrap.dedent("""\n
         The `a` parameter has been replaced; use `x`, `y`, and/or `data` instead.
-        Please update your code; This will become an error in seaborn v0.13.0.
+        Please update your code; This will become an error in seaborn v0.14.0.
         """)
         warnings.warn(msg, UserWarning, stacklevel=2)
 
@@ -2019,9 +2003,10 @@ def rugplot(
             x = data
         elif axis == "y":
             y = data
+        data = None
         msg = textwrap.dedent(f"""\n
         The `axis` parameter has been deprecated; use the `{axis}` parameter instead.
-        Please update your code; this will become an error in seaborn v0.13.0.
+        Please update your code; this will become an error in seaborn v0.14.0.
         """)
         warnings.warn(msg, UserWarning, stacklevel=2)
 
@@ -2037,16 +2022,15 @@ def rugplot(
             action_taken = "assigning data to `x`."
         msg = textwrap.dedent(f"""\n
         The `vertical` parameter is deprecated; {action_taken}
-        This will become an error in seaborn v0.13.0; please update your code.
+        This will become an error in seaborn v0.14.0; please update your code.
         """)
         warnings.warn(msg, UserWarning, stacklevel=2)
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 
-    weights = None
     p = _DistributionPlotter(
         data=data,
-        variables=_DistributionPlotter.get_semantics(locals()),
+        variables=dict(x=x, y=y, hue=hue),
     )
     p.map_hue(palette=palette, order=hue_order, norm=hue_norm)
 
@@ -2104,7 +2088,6 @@ Examples
 """.format(
     params=_param_docs,
     returns=_core_docs["returns"],
-    seealso=_core_docs["seealso"],
 )
 
 
@@ -2122,9 +2105,9 @@ def displot(
     **kwargs,
 ):
 
-    p = _DistributionFacetPlotter(
+    p = _DistributionPlotter(
         data=data,
-        variables=_DistributionFacetPlotter.get_semantics(locals())
+        variables=dict(x=x, y=y, hue=hue, weights=weights, row=row, col=col),
     )
 
     p.map_hue(palette=palette, order=hue_order, norm=hue_norm)
@@ -2330,6 +2313,8 @@ Parameters
 {params.core.xy}
 {params.core.hue}
 {params.facets.rowcol}
+weights : vector or key in ``data``
+    Observation weights used for computing the distribution function.
 kind : {{"hist", "kde", "ecdf"}}
     Approach for visualizing the data. Selects the underlying plotting function
     and determines the additional set of valid parameters.
