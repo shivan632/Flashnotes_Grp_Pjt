@@ -81,3 +81,4 @@ display_df = generated_notes.head(50)[['topic', 'difficulty', 'style', 'view_cou
 display_df['generated_at'] = display_df['generated_at'].dt.strftime('%Y-%m-%d %H:%M')
 display_df.columns = ['Topic', 'Difficulty', 'Style', 'Views', 'Generated At']
 st.dataframe(display_df, use_container_width=True, height=400)
+

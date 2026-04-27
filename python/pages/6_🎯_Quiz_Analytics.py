@@ -63,3 +63,4 @@ with col2:
                       markers=True, color_discrete_sequence=[Config.COLORS['secondary']])
         fig.update_layout(height=400)
         st.plotly_chart(fig, use_container_width=True)
+

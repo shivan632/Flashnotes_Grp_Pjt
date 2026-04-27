@@ -63,3 +63,4 @@ display_df = roadmaps.head(50)[['topic', 'difficulty', 'view_count', 'save_count
 display_df['created_at'] = display_df['created_at'].dt.strftime('%Y-%m-%d %H:%M')
 display_df.columns = ['Topic', 'Difficulty', 'Views', 'Saves', 'Created At']
 st.dataframe(display_df, use_container_width=True, height=400)
+

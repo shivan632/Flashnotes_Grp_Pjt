@@ -458,3 +458,4 @@ with col2:
         )
 
 st.info("👈 Use the sidebar to navigate to detailed analytics pages for each module!")
+

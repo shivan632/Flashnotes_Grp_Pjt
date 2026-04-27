@@ -60,3 +60,4 @@ display_df = feedback.head(50)[['name', 'rating', 'feedback', 'created_at']].cop
 display_df['created_at'] = display_df['created_at'].dt.strftime('%Y-%m-%d %H:%M')
 display_df.columns = ['Name', 'Rating', 'Feedback', 'Date']
 st.dataframe(display_df, use_container_width=True, height=400)
+

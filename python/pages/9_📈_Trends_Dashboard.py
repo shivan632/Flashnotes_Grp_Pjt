@@ -107,3 +107,4 @@ if not trends.empty:
     st.dataframe(trends, use_container_width=True, hide_index=True)
 else:
     st.info("No monthly data available yet.")
+

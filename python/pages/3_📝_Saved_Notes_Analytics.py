@@ -64,3 +64,4 @@ display_df = saved_notes.head(50)[['topic', 'question', 'created_at', 'user_id']
 display_df['created_at'] = display_df['created_at'].dt.strftime('%Y-%m-%d %H:%M')
 display_df.columns = ['Topic', 'Question', 'Saved At', 'User ID']
 st.dataframe(display_df, use_container_width=True, height=400)
+

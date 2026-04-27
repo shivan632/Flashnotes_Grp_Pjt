@@ -68,3 +68,4 @@ display_df['created_at'] = display_df['created_at'].dt.strftime('%Y-%m-%d %H:%M'
 display_df['email_verified'] = display_df['email_verified'].map({True: '✅', False: '❌'})
 display_df.columns = ['Name', 'Email', 'Registered At', 'Verified']
 st.dataframe(display_df, use_container_width=True, height=400)
+
