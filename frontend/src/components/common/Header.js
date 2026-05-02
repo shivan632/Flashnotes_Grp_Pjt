@@ -1,10 +1,13 @@
 // frontend/src/components/common/Header.js
-// Header Component - Enhanced with animations and modern design
+// Header Component - Enhanced with animations, modern design, and achievement notifications
 
 export function Header({ showNav = true, title = 'Flashnotes' }) {
     const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
     const userName = localStorage.getItem('userName') || 'User';
     const userEmail = localStorage.getItem('userEmail') || '';
+    
+    // Achievement badge will be updated by JavaScript after render
+    const achievementBadge = isAuthenticated ? `<span id="achievementBadge" class="hidden absolute -top-1 -right-1 min-w-[16px] h-[16px] bg-gradient-to-r from-amber-500 to-yellow-500 text-white text-[10px] rounded-full flex items-center justify-center px-1 animate-pulse shadow-lg"></span>` : '';
     
     return `
         <header class="bg-gradient-to-r from-[#1F2937] to-[#111827] shadow-lg sticky top-0 z-50 backdrop-blur-sm border-b border-[#374151]/50">
@@ -63,6 +66,17 @@ export function Header({ showNav = true, title = 'Flashnotes' }) {
                                 </span>
                             </button>
                             
+                            <!-- Notifications Button with Achievement Badge -->
+                            <a href="#/notifications" class="relative p-2 text-[#E5E7EB] hover:text-[#3B82F6] transition-all duration-300 rounded-lg hover:bg-[#374151] group">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                                </svg>
+                                ${achievementBadge}
+                                <span class="absolute hidden group-hover:block bg-[#111827] text-white text-xs px-2 py-1 rounded -bottom-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
+                                    Notifications
+                                </span>
+                            </a>
+                            
                             <!-- Profile Menu -->
                             <div class="relative group">
                                 <button class="flex items-center space-x-2 text-[#E5E7EB] hover:text-[#3B82F6] transition-all duration-300 p-1.5 rounded-lg hover:bg-[#374151]">
@@ -96,11 +110,12 @@ export function Header({ showNav = true, title = 'Flashnotes' }) {
                                             </svg>
                                             <span>Settings</span>
                                         </a>
-                                        <a href="#/notifications" class="flex items-center space-x-3 px-4 py-2.5 text-sm text-[#E5E7EB] hover:bg-[#374151] transition-all duration-200 group">
-                                            <svg class="w-4 h-4 text-[#9CA3AF] group-hover:text-[#3B82F6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                                        <a href="#/score" class="flex items-center space-x-3 px-4 py-2.5 text-sm text-[#E5E7EB] hover:bg-[#374151] transition-all duration-200 group">
+                                            <svg class="w-4 h-4 text-[#9CA3AF] group-hover:text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
                                             </svg>
-                                            <span>Notifications</span>
+                                            <span>Achievements</span>
+                                            ${achievementBadge}
                                         </a>
                                     </div>
                                     <hr class="border-[#374151]">
@@ -142,6 +157,7 @@ export function Header({ showNav = true, title = 'Flashnotes' }) {
                     <hr class="border-[#374151] my-2">
                     <a href="#/profile" class="block py-2.5 px-4 text-[#E5E7EB] hover:text-[#3B82F6] hover:bg-[#374151] rounded-lg transition-all duration-200">My Profile</a>
                     <a href="#/settings" class="block py-2.5 px-4 text-[#E5E7EB] hover:text-[#3B82F6] hover:bg-[#374151] rounded-lg transition-all duration-200">Settings</a>
+                    <a href="#/score" class="block py-2.5 px-4 text-[#E5E7EB] hover:text-amber-500 hover:bg-[#374151] rounded-lg transition-all duration-200">🏆 Achievements</a>
                     <button id="mobileLogoutBtn" class="w-full text-left py-2.5 px-4 text-red-400 hover:bg-[#374151] rounded-lg transition-all duration-200">Logout</button>
                 </div>
             </nav>
@@ -158,7 +174,6 @@ export function setupHeader() {
     if (mobileBtn && mobileMenu) {
         mobileBtn.addEventListener('click', () => {
             mobileMenu.classList.toggle('hidden');
-            // Animate icon
             const icon = mobileBtn.querySelector('svg');
             if (icon) {
                 icon.style.transform = mobileMenu.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(90deg)';
@@ -166,13 +181,55 @@ export function setupHeader() {
         });
     }
     
-    // Logout buttons (desktop and mobile)
+    // Update achievement badge count
+    async function updateAchievementBadge() {
+        const badge = document.getElementById('achievementBadge');
+        if (!badge) return;
+        
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                badge.classList.add('hidden');
+                return;
+            }
+            
+            const API_URL = window.API_URL || 'http://localhost:10000/api';
+            const response = await fetch(`${API_URL}/achievements/recent`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            const data = await response.json();
+            if (data.success && data.recent) {
+                const oneDayAgo = new Date();
+                oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+                const newCount = data.recent.filter(a => new Date(a.earnedAt) > oneDayAgo).length;
+                
+                if (newCount > 0) {
+                    badge.textContent = newCount > 9 ? '9+' : newCount;
+                    badge.classList.remove('hidden');
+                    badge.style.animation = 'none';
+                    setTimeout(() => {
+                        badge.style.animation = 'pulse 1s ease-in-out 3';
+                    }, 10);
+                } else {
+                    badge.classList.add('hidden');
+                }
+            }
+        } catch (error) {
+            console.error('Error updating achievement badge:', error);
+        }
+    }
+    
+    // Update badge on page load and periodically
+    updateAchievementBadge();
+    setInterval(updateAchievementBadge, 30000);
+    
+    // Logout buttons
     const logoutBtn = document.getElementById('logoutBtn');
     const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
     
     const handleLogout = (e) => {
         e.preventDefault();
-        // Clear all auth data
         localStorage.removeItem('isAuthenticated');
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
@@ -180,11 +237,7 @@ export function setupHeader() {
         localStorage.removeItem('userEmail');
         localStorage.removeItem('userId');
         localStorage.removeItem('pendingUser');
-        
-        // Redirect to home
         window.location.hash = '#/';
-        
-        // Optional: reload to reset all states
         setTimeout(() => {
             window.location.reload();
         }, 100);
@@ -201,24 +254,22 @@ export function setupHeader() {
         });
     });
     
-    // Add scroll effect to header
+    // Scroll effect
     let lastScroll = 0;
     const header = document.querySelector('header');
     
     window.addEventListener('scroll', () => {
         const currentScroll = window.pageYOffset;
         if (currentScroll > lastScroll && currentScroll > 100) {
-            // Scrolling down
             header?.classList.add('-translate-y-full', 'transition-transform', 'duration-300');
         } else {
-            // Scrolling up
             header?.classList.remove('-translate-y-full');
         }
         lastScroll = currentScroll;
     });
 }
 
-// Add these CSS animations to your style.css if not already present
+// CSS animations
 const headerStyles = `
     @keyframes slideDown {
         from {
@@ -234,9 +285,17 @@ const headerStyles = `
     .animate-slideDown {
         animation: slideDown 0.3s ease-out;
     }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .animate-fadeIn {
+        animation: fadeIn 0.2s ease-out;
+    }
 `;
 
-// Add styles to document if not already present
 if (!document.querySelector('#header-styles')) {
     const style = document.createElement('style');
     style.id = 'header-styles';

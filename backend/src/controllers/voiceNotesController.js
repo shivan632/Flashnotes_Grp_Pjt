@@ -1,7 +1,8 @@
 // backend/src/controllers/voiceNotesController.js
 import { supabaseAdmin } from '../config/supabase.js';
+import achievementService from '../services/achievementService.js';
 
-// Save a new voice note
+// Save voice note - WITH ACHIEVEMENT CHECK
 export const saveVoiceNote = async (req, res) => {
     try {
         const userId = req.user?.id;
@@ -49,6 +50,25 @@ export const saveVoiceNote = async (req, res) => {
         }
         
         console.log('✅ Voice note saved with ID:', data.id);
+        
+        // Check and award achievements
+        try {
+            const newlyEarned = await achievementService.checkAndAwardAchievements(
+                userId,
+                'voice_note_saved',
+                {
+                    text_length: text.length,
+                    word_count: wordCount,
+                    char_count: charCount
+                }
+            );
+            
+            if (newlyEarned && newlyEarned.length > 0) {
+                console.log(`🎉 User ${userId} earned ${newlyEarned.length} new achievement(s) from voice note!`);
+            }
+        } catch (achievementError) {
+            console.error('⚠️ Achievement check error (non-critical):', achievementError);
+        }
         
         res.status(201).json({
             success: true,
@@ -179,6 +199,21 @@ export const updateVoiceNote = async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: 'Text content is required'
+            });
+        }
+        
+        // Check if note exists and belongs to user
+        const { data: existing, error: checkError } = await supabaseAdmin
+            .from('voice_notes')
+            .select('id')
+            .eq('id', id)
+            .eq('user_id', userId)
+            .single();
+        
+        if (checkError || !existing) {
+            return res.status(404).json({
+                success: false,
+                message: 'Voice note not found'
             });
         }
         
@@ -333,3 +368,13 @@ export const getVoiceNotesStats = async (req, res) => {
     }
 };
 
+// Export all functions
+export default {
+    saveVoiceNote,
+    getVoiceNotes,
+    getVoiceNoteById,
+    updateVoiceNote,
+    deleteVoiceNote,
+    toggleFavorite,
+    getVoiceNotesStats
+};

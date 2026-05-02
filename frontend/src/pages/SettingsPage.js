@@ -264,11 +264,11 @@ export function SettingsPage() {
                             <div class="space-y-2 text-sm text-[#9CA3AF]">
                                 <div class="flex items-center gap-3 p-3 bg-[#111827] rounded-xl">
                                     <span class="w-8 h-8 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-lg flex items-center justify-center">📘</span>
-                                    <span>Version 2.0.0</span>
+                                    <span>Version 1.0.0</span>
                                 </div>
                                 <div class="flex items-center gap-3 p-3 bg-[#111827] rounded-xl">
                                     <span class="w-8 h-8 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-lg flex items-center justify-center">©️</span>
-                                    <span>© 2024 Flashnotes. All rights reserved.</span>
+                                    <span>© 2026 Flashnotes. All rights reserved.</span>
                                 </div>
                                 <div class="flex flex-wrap gap-3 mt-4 pt-2">
                                     <a href="#" class="text-sm text-[#60A5FA] hover:text-[#3B82F6] transition-all duration-300 hover:scale-105 inline-flex items-center gap-1">

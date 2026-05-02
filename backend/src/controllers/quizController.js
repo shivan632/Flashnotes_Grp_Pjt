@@ -303,7 +303,7 @@ async function updateUserScores(userId, correctCount, totalQuestions, percentage
 
 // Submit quiz answers
 
-// Submit quiz answers - COMPLETE FIX
+// Submit quiz answers - COMPLETE WITH ACHIEVEMENT CHECK
 export const submitQuiz = async (req, res) => {
     try {
         const quizId = req.params.id;
@@ -360,7 +360,7 @@ export const submitQuiz = async (req, res) => {
             const question = questionMap.get(parseInt(questionId));
             if (question && question.correct_option === parseInt(selectedOption)) {
                 correctCount++;
-                totalPoints += question.points || 10; // Add points if available
+                totalPoints += question.points || 10;
                 console.log(`  ✅ Question ${questionId}: Correct (+${question.points || 10} points)`);
             } else {
                 console.log(`  ❌ Question ${questionId}: Wrong (selected: ${selectedOption}, correct: ${question?.correct_option})`);
@@ -380,7 +380,7 @@ export const submitQuiz = async (req, res) => {
         const { data: updatedAttempt, error: updateError } = await supabase
             .from('quiz_attempts')
             .update({
-                score: totalPoints, // Store total points
+                score: totalPoints,
                 percentage: percentage,
                 correct_count: correctCount,
                 answers: answers,
@@ -404,18 +404,41 @@ export const submitQuiz = async (req, res) => {
 
         // ============= STEP 5: Update user scores =============
         try {
-            // Call updateUserScores with correct parameters
             await updateUserScores(
-                userId,           // user ID
-                correctCount,     // correct answers count
-                totalQuestions,   // total questions
-                percentage,       // percentage score
-                totalPoints       // points earned (optional)
+                userId,
+                correctCount,
+                totalQuestions,
+                percentage,
+                totalPoints
             );
             console.log('✅ User scores updated successfully');
         } catch (scoreError) {
             console.error('⚠️ Score update error (non-critical):', scoreError);
-            // Don't fail the whole request if score update fails
+        }
+
+        // ============= STEP 6: Check and award achievements =============
+        try {
+            const isPerfect = percentage === 100 || correctCount === totalQuestions;
+            
+            const newlyEarned = await achievementService.checkAndAwardAchievements(
+                userId,
+                'quiz_completed',
+                {
+                    score: totalPoints,
+                    percentage: percentage,
+                    perfect: isPerfect,
+                    questions_correct: correctCount,
+                    total_questions: totalQuestions,
+                    time_taken: timeTakenSeconds
+                }
+            );
+            
+            if (newlyEarned && newlyEarned.length > 0) {
+                console.log(`🎉 User ${userId} earned ${newlyEarned.length} new achievement(s)!`);
+                console.log('🏆 Achievements earned:', newlyEarned.map(a => a.name).join(', '));
+            }
+        } catch (achievementError) {
+            console.error('⚠️ Achievement check error (non-critical):', achievementError);
         }
 
         res.json({

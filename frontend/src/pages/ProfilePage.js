@@ -5,6 +5,8 @@ import { Sidebar } from '../components/layout/Sidebar.js';
 import { AIChatSidebar } from '../components/layout/AIChatSidebar.js';
 import { Header } from '../components/common/Header.js';
 import { showError, showSuccess } from '../components/common/ErrorMessage.js';
+import { getUserAchievements } from '../services/scoreService.js';
+import { AchievementGrid } from '../components/score/AchievementCard.js';
 
 export async function ProfilePage() {
     const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
@@ -41,11 +43,13 @@ export async function ProfilePage() {
     };
     
     let recentActivity = [];
+    let achievementsList = [];
+    let achievementsStats = { earned: 0, total: 0, totalPoints: 0 };
     
     try {
-        // Fetch profile from database
         const API_URL = window.API_URL || 'http://localhost:10000/api';
         
+        // Fetch profile
         const profileResponse = await fetch(`${API_URL}/user/profile`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -61,7 +65,6 @@ export async function ProfilePage() {
                     website: profileResult.profile.website || ''
                 };
                 
-                // Update localStorage
                 localStorage.setItem('userName', profileData.full_name);
                 localStorage.setItem('userEmail', profileData.email);
                 localStorage.setItem('userBio', profileData.bio);
@@ -99,22 +102,24 @@ export async function ProfilePage() {
         }
         
         // Fetch achievements
-        const achievementsResponse = await fetch(`${API_URL}/user/achievements`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        if (achievementsResponse.ok) {
-            const achievementsResult = await achievementsResponse.json();
-            if (achievementsResult.success && achievementsResult.achievements) {
-                const recentAchievements = achievementsResult.achievements.filter(a => a.earned).slice(0, 3);
-                recentActivity.push(...recentAchievements.map(ach => ({
-                    type: 'achievement',
-                    message: `Earned "${ach.name}" achievement!`,
-                    date: ach.earnedAt
-                })));
-                recentActivity.sort((a, b) => new Date(b.date) - new Date(a.date));
-                recentActivity = recentActivity.slice(0, 5);
-            }
+        const achievementsData = await getUserAchievements();
+        if (achievementsData.success && achievementsData.achievements) {
+            achievementsList = achievementsData.achievements;
+            achievementsStats = {
+                earned: achievementsList.filter(a => a.earned).length,
+                total: achievementsList.length,
+                totalPoints: achievementsList.filter(a => a.earned).reduce((sum, a) => sum + (a.points || 0), 0)
+            };
+            
+            // Add achievement activity
+            const recentAchievements = achievementsList.filter(a => a.earned).slice(0, 3);
+            recentActivity.push(...recentAchievements.map(ach => ({
+                type: 'achievement',
+                message: `Earned "${ach.name}" achievement!`,
+                date: ach.earnedAt
+            })));
+            recentActivity.sort((a, b) => new Date(b.date) - new Date(a.date));
+            recentActivity = recentActivity.slice(0, 5);
         }
         
     } catch (error) {
@@ -135,14 +140,11 @@ export async function ProfilePage() {
                         <!-- Profile Header -->
                         <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-8 mb-6 border border-[#374151] animate-fadeInUp">
                             <div class="flex flex-col md:flex-row items-center gap-6">
-                                <!-- Avatar -->
                                 <div class="relative">
                                     <div class="w-28 h-28 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-2xl flex items-center justify-center shadow-xl">
                                         <span class="text-4xl font-bold text-white">${getInitials(profileData.full_name)}</span>
                                     </div>
                                 </div>
-                                
-                                <!-- User Info -->
                                 <div class="flex-1 text-center md:text-left">
                                     <h1 class="text-3xl font-bold text-white mb-2">${escapeHtml(profileData.full_name)}</h1>
                                     <p class="text-gray-400 flex items-center justify-center md:justify-start gap-2">
@@ -184,19 +186,19 @@ export async function ProfilePage() {
                         
                         <!-- Stats Cards Row -->
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 animate-fadeInUp" style="animation-delay: 0.1s">
-                            <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-4 text-center border border-[#374151]">
+                            <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-4 text-center border border-[#374151] hover:border-[#3B82F6] transition-all">
                                 <div class="text-2xl font-bold text-[#3B82F6]">${stats.totalQuizzes || 0}</div>
                                 <div class="text-xs text-[#9CA3AF] mt-1">Quizzes Taken</div>
                             </div>
-                            <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-4 text-center border border-[#374151]">
+                            <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-4 text-center border border-[#374151] hover:border-[#3B82F6] transition-all">
                                 <div class="text-2xl font-bold text-[#3B82F6]">${stats.averageScore || 0}%</div>
                                 <div class="text-xs text-[#9CA3AF] mt-1">Avg Score</div>
                             </div>
-                            <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-4 text-center border border-[#374151]">
+                            <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-4 text-center border border-[#374151] hover:border-[#3B82F6] transition-all">
                                 <div class="text-2xl font-bold text-[#3B82F6]">${stats.perfectScores || 0}</div>
                                 <div class="text-xs text-[#9CA3AF] mt-1">Perfect Scores</div>
                             </div>
-                            <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-4 text-center border border-[#374151]">
+                            <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-4 text-center border border-[#374151] hover:border-[#3B82F6] transition-all">
                                 <div class="text-2xl font-bold text-[#3B82F6]">${stats.savedNotes || 0}</div>
                                 <div class="text-xs text-[#9CA3AF] mt-1">Saved Notes</div>
                             </div>
@@ -233,6 +235,31 @@ export async function ProfilePage() {
                                     </div>
                                 `}
                             </div>
+                        </div>
+                        
+                        <!-- Achievements Section -->
+                        <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-6 border border-[#374151] mb-6 animate-fadeInUp" style="animation-delay: 0.25s">
+                            <div class="flex items-center justify-between mb-6">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-xl flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xl font-bold bg-gradient-to-r from-amber-500 to-yellow-500 bg-clip-text text-transparent">Achievements</h3>
+                                        <p class="text-xs text-[#9CA3AF]">🏆 ${achievementsStats.earned}/${achievementsStats.total} earned • ${achievementsStats.totalPoints} points</p>
+                                    </div>
+                                </div>
+                                <a href="#/score" class="text-sm text-[#60A5FA] hover:text-[#3B82F6] transition-colors flex items-center gap-1">
+                                    View all
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                </a>
+                            </div>
+                            
+                            ${AchievementGrid({ achievements: achievementsList, onAchievementClick: null })}
                         </div>
                         
                         <!-- Edit Profile Form -->
@@ -301,6 +328,52 @@ export async function ProfilePage() {
                 </main>
             </div>
         </div>
+        
+        <style>
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            .animate-fadeInUp {
+                animation: fadeInUp 0.5s ease-out forwards;
+                opacity: 0;
+            }
+            
+            .custom-scrollbar::-webkit-scrollbar {
+                width: 6px;
+            }
+            
+            .custom-scrollbar::-webkit-scrollbar-track {
+                background: #1F2937;
+                border-radius: 10px;
+            }
+            
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+                background: #3B82F6;
+                border-radius: 10px;
+            }
+            
+            .loading-spinner-small {
+                width: 20px;
+                height: 20px;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                border-top-color: white;
+                border-radius: 50%;
+                animation: spin 0.8s linear infinite;
+                display: inline-block;
+            }
+            
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+        </style>
     `;
 }
 
@@ -397,58 +470,4 @@ export function setupProfilePage() {
             }
         });
     }
-}
-
-// Add CSS animations
-const profilePageStyles = `
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    .animate-fadeInUp {
-        animation: fadeInUp 0.5s ease-out forwards;
-        opacity: 0;
-    }
-    
-    .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
-    }
-    
-    .custom-scrollbar::-webkit-scrollbar-track {
-        background: #1F2937;
-        border-radius: 10px;
-    }
-    
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #3B82F6;
-        border-radius: 10px;
-    }
-    
-    .loading-spinner-small {
-        width: 20px;
-        height: 20px;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        border-top-color: white;
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-        display: inline-block;
-    }
-    
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-`;
-
-if (!document.querySelector('#profile-page-styles')) {
-    const style = document.createElement('style');
-    style.id = 'profile-page-styles';
-    style.textContent = profilePageStyles;
-    document.head.appendChild(style);
 }

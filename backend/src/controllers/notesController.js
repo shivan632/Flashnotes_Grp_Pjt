@@ -1,5 +1,6 @@
 // backend/src/controllers/notesController.js
 import { supabase } from '../config/supabase.js';
+import achievementService from '../services/achievementService.js';
 
 // Get all notes for a user
 export const getAllNotes = async (req, res) => {
@@ -79,7 +80,7 @@ export const getNoteById = async (req, res) => {
     }
 };
 
-// Create new note (saveNote)
+// Create new note (saveNote) - WITH ACHIEVEMENT CHECK
 export const saveNote = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -114,6 +115,28 @@ export const saveNote = async (req, res) => {
             });
         }
         
+        console.log('✅ Note saved with ID:', note.id);
+        
+        // Check and award achievements
+        try {
+            const newlyEarned = await achievementService.checkAndAwardAchievements(
+                userId,
+                'note_saved',
+                {
+                    topic: topic,
+                    question_length: question?.length || 0,
+                    answer_length: answer?.length || 0
+                }
+            );
+            
+            if (newlyEarned && newlyEarned.length > 0) {
+                console.log(`🎉 User ${userId} earned ${newlyEarned.length} new achievement(s) from saving note!`);
+                console.log('🏆 Achievements earned:', newlyEarned.map(a => a.name).join(', '));
+            }
+        } catch (achievementError) {
+            console.error('⚠️ Achievement check error (non-critical):', achievementError);
+        }
+        
         res.status(201).json({
             success: true,
             message: 'Note saved successfully',
@@ -135,7 +158,7 @@ export const saveNote = async (req, res) => {
     }
 };
 
-// Alias for createNote
+// Alias for saveNote
 export const createNote = saveNote;
 
 // Update note
@@ -237,4 +260,14 @@ export const deleteNote = async (req, res) => {
             message: error.message || 'Failed to delete note'
         });
     }
+};
+
+// Export all functions
+export default {
+    getAllNotes,
+    getNoteById,
+    saveNote,
+    createNote,
+    updateNote,
+    deleteNote
 };
