@@ -19,9 +19,13 @@ class SupabaseClient:
             
             **For local development:**
             Create a `.env` file with:
+            SUPABASE_URL=your-project-url
+            SUPABASE_SERVICE_KEY=your-service-role-key
             
             **For Streamlit Cloud:**
             Go to Settings → Secrets and add:
+            SUPABASE_URL = "your-project-url"
+            SUPABASE_SERVICE_KEY = "your-service-role-key"
             """)
             self.client = None
             return
@@ -34,13 +38,13 @@ class SupabaseClient:
             self.client = None
 
     @st.cache_data(ttl=Config.CACHE_TTL)
-    def fetch_table(self, table_name, limit=None, filters=None, order_by=None):
+    def fetch_table(_self, table_name, limit=None, filters=None, order_by=None):
         """Fetch data from any table"""
-        if self.client is None:
+        if _self.client is None:
             return pd.DataFrame()
 
         try:
-            query = self.client.table(table_name).select("*")
+            query = _self.client.table(table_name).select("*")
 
             if filters:
                 for f in filters:
@@ -97,12 +101,12 @@ class SupabaseClient:
             return pd.DataFrame()
 
     @st.cache_data(ttl=Config.CACHE_TTL)
-    def get_user_analytics(self):
+    def get_user_analytics(_self):
         """Get detailed user analytics"""
-        if self.client is None:
+        if _self.client is None:
             return {}
 
-        users = self.fetch_table('users')
+        users = _self.fetch_table('users')
 
         if users.empty:
             return {}
@@ -125,12 +129,12 @@ class SupabaseClient:
         return analytics
 
     @st.cache_data(ttl=Config.CACHE_TTL)
-    def get_voice_notes_analytics(self):
+    def get_voice_notes_analytics(_self):
         """Get comprehensive voice notes analytics"""
-        if self.client is None:
+        if _self.client is None:
             return {}
 
-        df = self.fetch_table('voice_notes')
+        df = _self.fetch_table('voice_notes')
 
         if df.empty:
             return {}
@@ -160,12 +164,12 @@ class SupabaseClient:
         return analytics
 
     @st.cache_data(ttl=Config.CACHE_TTL)
-    def get_generated_notes_analytics(self):
+    def get_generated_notes_analytics(_self):
         """Get AI generated notes analytics"""
-        if self.client is None:
+        if _self.client is None:
             return {}
 
-        df = self.fetch_table('generated_notes')
+        df = _self.fetch_table('generated_notes')
 
         if df.empty:
             return {}
@@ -192,13 +196,13 @@ class SupabaseClient:
         return analytics
 
     @st.cache_data(ttl=Config.CACHE_TTL)
-    def get_quiz_analytics(self):
+    def get_quiz_analytics(_self):
         """Get quiz performance analytics"""
-        if self.client is None:
+        if _self.client is None:
             return {}
 
-        attempts = self.fetch_table('quiz_attempts')
-        questions = self.fetch_table('quiz_questions')
+        attempts = _self.fetch_table('quiz_attempts')
+        questions = _self.fetch_table('quiz_questions')
 
         analytics = {
             'total_attempts': len(attempts),
@@ -233,12 +237,12 @@ class SupabaseClient:
         return analytics
 
     @st.cache_data(ttl=Config.CACHE_TTL)
-    def get_feedback_analytics(self):
+    def get_feedback_analytics(_self):
         """Get user feedback analytics"""
-        if self.client is None:
+        if _self.client is None:
             return {}
 
-        df = self.fetch_table('feedback')
+        df = _self.fetch_table('feedback')
 
         if df.empty:
             return {}
@@ -260,12 +264,12 @@ class SupabaseClient:
         return analytics
 
     @st.cache_data(ttl=Config.CACHE_TTL)
-    def get_roadmap_analytics(self):
+    def get_roadmap_analytics(_self):
         """Get roadmap analytics"""
-        if self.client is None:
+        if _self.client is None:
             return {}
 
-        df = self.fetch_table('roadmaps')
+        df = _self.fetch_table('roadmaps')
 
         if df.empty:
             return {}
@@ -290,12 +294,12 @@ class SupabaseClient:
         return analytics
 
     @st.cache_data(ttl=Config.CACHE_TTL)
-    def get_saved_notes_analytics(self):
+    def get_saved_notes_analytics(_self):
         """Get saved notes analytics"""
-        if self.client is None:
+        if _self.client is None:
             return {}
 
-        df = self.fetch_table('saved_notes')
+        df = _self.fetch_table('saved_notes')
 
         if df.empty:
             return {}
