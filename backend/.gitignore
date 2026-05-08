@@ -19,6 +19,7 @@ yarn.lock
 .env.development
 .env.test
 .env.production.local
+.env.example
 
 # misc
 .DS_Store
