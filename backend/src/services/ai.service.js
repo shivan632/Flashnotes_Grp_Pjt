@@ -1,55 +1,159 @@
 // backend/src/services/ai.service.js
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import OpenAI from 'openai';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 // Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'AIzaSyC_V7jYScslWhDuKSjnMm-');
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY);
 
-// Generate Q&A for a given topic
+// Initialize OpenRouter as fallback
+let openrouter = null;
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY;
+
+if (OPENROUTER_API_KEY) {
+    try {
+        openrouter = new OpenAI({
+            baseURL: 'https://openrouter.ai/api/v1',
+            apiKey: OPENROUTER_API_KEY,
+            defaultHeaders: {
+                'HTTP-Referer': 'https://flashnotes.app',
+                'X-Title': 'Flashnotes'
+            }
+        });
+        console.log('✅ OpenRouter client initialized for AI service');
+    } catch (error) {
+        console.error('❌ OpenRouter initialization error:', error.message);
+    }
+}
+
+// Working model names (based on test results)
+const GEMINI_MODELS = [
+    'gemini-2.5-flash',      // ✅ Fastest Gemini (2-3s)
+    'gemini-1.5-flash',      // ✅ Fast & reliable
+    'gemini-1.5-pro'         // ✅ Slower but more accurate
+];
+
+const OPENROUTER_MODELS = [
+    'liquid/lfm-2.5-1.2b-instruct:free',  // ✅ Fastest (1.5s)
+    'nvidia/nemotron-nano-9b-v2:free',    // ✅ Fast & reliable
+    'openai/gpt-oss-120b:free',           // ✅ Good quality
+    'z-ai/glm-4.5-air:free'               // ✅ Working fallback
+];
+
+// Generate Q&A for a given topic using multiple AI providers
 export const generateQA = async (topic, count = 5) => {
     try {
         console.log(`🤖 Generating ${count} Q&A for topic: ${topic}`);
         
-        // Fallback questions
+        // Fallback questions (always available)
         const fallbackData = getFallbackQuestions(topic, count);
         
-        if (!process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY === 'AIzaSyC_V7jYScslWhDuKSjnMm-') {
-            console.log('⚠️ Using fallback questions (no valid API key)');
-            return fallbackData;
+        // Try Gemini first
+        if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'AIzaSyC_V7jYScslWhDuKSjnMm-') {
+            const geminiResult = await tryGeminiQA(topic, count);
+            if (geminiResult && geminiResult.length > 0) {
+                console.log('✅ Q&A generated using Gemini');
+                return geminiResult.slice(0, count);
+            }
         }
         
-        try {
-            const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-            
-            const prompt = `Generate ${count} important questions and their detailed answers about "${topic}". 
-            Format each as:
-            Q: [question]
-            A: [detailed answer]`;
-            
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            const text = response.text();
-            
-            const qaList = parseQA(text);
-            
-            if (qaList.length > 0) {
-                return qaList.slice(0, count);
+        // Try OpenRouter if Gemini fails
+        if (openrouter && OPENROUTER_API_KEY) {
+            const openrouterResult = await tryOpenRouterQA(topic, count);
+            if (openrouterResult && openrouterResult.length > 0) {
+                console.log('✅ Q&A generated using OpenRouter');
+                return openrouterResult.slice(0, count);
             }
-            
-            return fallbackData;
-            
-        } catch (aiError) {
-            console.error('AI error:', aiError.message);
-            return fallbackData;
         }
+        
+        // Use fallback if all APIs fail
+        console.log('⚠️ Using fallback questions (all APIs failed)');
+        return fallbackData;
         
     } catch (error) {
         console.error('Generation error:', error.message);
         return getFallbackQuestions(topic, count);
     }
 };
+
+// Try Gemini with multiple model fallbacks
+async function tryGeminiQA(topic, count) {
+    const prompt = `Generate ${count} important questions and their detailed answers about "${topic}". 
+    Format each as:
+    Q: [question]
+    A: [detailed answer]
+    
+    Make answers informative and educational.`;
+    
+    for (const modelName of GEMINI_MODELS) {
+        try {
+            const model = genAI.getGenerativeModel({ model: modelName });
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            const text = response.text();
+            
+            const qaList = parseQA(text);
+            if (qaList.length > 0) {
+                console.log(`✅ Gemini model ${modelName} worked!`);
+                return qaList;
+            }
+        } catch (error) {
+            console.log(`⚠️ Gemini model ${modelName} failed: ${error.message}`);
+            continue;
+        }
+    }
+    return null;
+}
+
+// Try OpenRouter with multiple model fallbacks
+async function tryOpenRouterQA(topic, count) {
+    const prompt = `Generate ${count} important questions and their detailed answers about "${topic}". 
+    
+    Format each as:
+    Q: [question]
+    A: [detailed answer]
+    
+    Make answers informative and educational.`;
+    
+    for (const modelName of OPENROUTER_MODELS) {
+        try {
+            const completion = await openrouter.chat.completions.create({
+                model: modelName,
+                messages: [
+                    {
+                        role: 'system',
+                        content: 'You are a helpful educational assistant that creates clear Q&A pairs.'
+                    },
+                    {
+                        role: 'user',
+                        content: prompt
+                    }
+                ],
+                temperature: 0.7,
+                max_tokens: 2000
+            });
+            
+            let text = null;
+            if (completion.choices && completion.choices[0]?.message?.content) {
+                text = completion.choices[0].message.content;
+            }
+            
+            if (text) {
+                const qaList = parseQA(text);
+                if (qaList.length > 0) {
+                    console.log(`✅ OpenRouter model ${modelName} worked!`);
+                    return qaList;
+                }
+            }
+        } catch (error) {
+            console.log(`⚠️ OpenRouter model ${modelName} failed: ${error.message}`);
+            continue;
+        }
+    }
+    return null;
+}
 
 function parseQA(text) {
     const qaList = [];

@@ -1,8 +1,117 @@
 // backend/src/services/roadmapGeminiService.js
-import { getGeminiModel, testGeminiConnection } from '../config/gemini.js';
+import dotenv from 'dotenv';
+dotenv.config();
+
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_NOTES_API_KEY;
+const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
+
+// ✅ Working OpenRouter free models (from test results)
+const OPENROUTER_MODELS = [
+    'liquid/lfm-2.5-1.2b-instruct:free',     // ⚡ Fastest (1.5s)
+    'nvidia/nemotron-nano-9b-v2:free',       // ✅ Fast & reliable
+    'nvidia/nemotron-nano-12b-v2-vl:free',   // ✅ Good quality
+    'openai/gpt-oss-120b:free',              // ✅ Good
+    'z-ai/glm-4.5-air:free'                  // ✅ Working fallback
+];
 
 /**
- * Generate structured roadmap for a topic using Gemini AI
+ * Call OpenRouter API to generate roadmap
+ */
+async function callOpenRouter(prompt) {
+    if (!OPENROUTER_API_KEY) {
+        throw new Error('OpenRouter API key not configured');
+    }
+
+    const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://flashnotes.app',
+            'X-Title': 'FlashNotes'
+        },
+        body: JSON.stringify({
+            model: OPENROUTER_MODELS[0],
+            messages: [
+                {
+                    role: 'system',
+                    content: 'You are an expert curriculum designer that creates detailed, specific learning roadmaps. Always return valid JSON only.'
+                },
+                {
+                    role: 'user',
+                    content: prompt
+                }
+            ],
+            temperature: 0.7,
+            max_tokens: 4096
+        })
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(`OpenRouter API error: ${error.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0]?.message?.content;
+}
+
+/**
+ * Try multiple OpenRouter models until one works
+ */
+async function tryMultipleOpenRouterModels(prompt) {
+    for (const model of OPENROUTER_MODELS) {
+        try {
+            console.log(`📡 Trying OpenRouter model: ${model}`);
+            
+            const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+                    'Content-Type': 'application/json',
+                    'HTTP-Referer': 'https://flashnotes.app',
+                    'X-Title': 'FlashNotes'
+                },
+                body: JSON.stringify({
+                    model: model,
+                    messages: [
+                        {
+                            role: 'system',
+                            content: 'You are an expert curriculum designer that creates detailed, specific learning roadmaps. Return ONLY valid JSON.'
+                        },
+                        {
+                            role: 'user',
+                            content: prompt
+                        }
+                    ],
+                    temperature: 0.7,
+                    max_tokens: 4096
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({}));
+                console.log(`⚠️ Model ${model} failed: ${error.error?.message || response.statusText}`);
+                continue;
+            }
+
+            const data = await response.json();
+            const text = data.choices[0]?.message?.content;
+            
+            if (text && text.length > 100) {
+                console.log(`✅ OpenRouter model ${model} worked!`);
+                return text;
+            }
+        } catch (error) {
+            console.log(`⚠️ Model ${model} failed: ${error.message}`);
+            continue;
+        }
+    }
+    return null;
+}
+
+/**
+ * Generate structured roadmap for a topic using OpenRouter API
  * @param {string} topic - Topic name (e.g., "Python", "React")
  * @param {string} difficulty - beginner, intermediate, advanced
  * @param {number} depth - Number of levels (2-5)
@@ -13,25 +122,27 @@ export async function generateRoadmapWithGemini(topic, difficulty = 'beginner', 
         console.log('🤖 Generating roadmap for:', topic);
         console.log(`   📊 Difficulty: ${difficulty}, Depth: ${depth}`);
         
-        const model = getGeminiModel();
-        
         // Build the prompt
         const prompt = buildRoadmapPrompt(topic, difficulty, depth);
         
-        console.log('📡 Sending to Gemini API...');
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
+        console.log('📡 Sending to OpenRouter API...');
+        
+        // Try OpenRouter first
+        let text = await tryMultipleOpenRouterModels(prompt);
+        
+        if (!text) {
+            throw new Error('All OpenRouter models failed');
+        }
         
         // Parse the JSON response
-        const roadmapData = parseGeminiResponse(text, topic);
+        const roadmapData = parseAPIResponse(text, topic);
         
         console.log(`✅ Roadmap generated: ${roadmapData.nodes.length} nodes, ${roadmapData.edges.length} edges`);
         
         return roadmapData;
         
     } catch (error) {
-        console.error('Gemini Roadmap Error:', error);
+        console.error('Roadmap Generation Error:', error);
         
         // Return fallback roadmap if API fails
         console.log('📝 Using fallback roadmap...');
@@ -40,189 +151,9 @@ export async function generateRoadmapWithGemini(topic, difficulty = 'beginner', 
 }
 
 /**
- * Build the prompt for Gemini API - IMPROVED for specific content
+ * Parse API response and extract JSON
  */
-function buildRoadmapPrompt(topic, difficulty, depth) {
-    const difficultyGuide = {
-        beginner: 'Basic concepts, simple explanations, introductory topics. Focus on fundamentals.',
-        intermediate: 'Practical applications, tools, frameworks, real-world examples. Include best practices.',
-        advanced: 'Optimization, architecture patterns, advanced techniques, expert-level concepts.'
-    };
-    
-    // Get specific topics based on technology
-    const techSpecificTips = getTechSpecificTips(topic, difficulty);
-    
-    return `You are an expert curriculum designer. Create a DETAILED and SPECIFIC learning roadmap for "${topic}" at ${difficulty} level with ${depth} levels deep.
-
-IMPORTANT RULES:
-1. DO NOT use generic names like "Part 1", "Part 2", "Introduction Part X"
-2. Use SPECIFIC, REAL topic names (e.g., "JSX Syntax", "React Hooks", "State Management with Redux")
-3. Each node name must be meaningful and descriptive (3-8 words max)
-4. Include REAL concepts that actually exist in ${topic}
-
-${techSpecificTips}
-
-${difficulty === 'beginner' ? `
-For BEGINNER level, focus on:
-- What is ${topic} and why use it?
-- Basic syntax and setup
-- Core fundamentals
-- Simple examples` : difficulty === 'intermediate' ? `
-For INTERMEDIATE level, focus on:
-- Advanced concepts and patterns
-- State management
-- Performance optimization
-- Real-world applications` : `
-For ADVANCED level, focus on:
-- Expert-level patterns
-- Architecture design
-- Optimization techniques
-- Production-ready practices`}
-
-Return ONLY a valid JSON object with this EXACT structure:
-
-{
-  "topic": "${topic}",
-  "title": "Complete ${topic} Learning Path - ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Level",
-  "description": "A comprehensive ${difficulty} level roadmap with specific topics to master ${topic}",
-  "difficulty": "${difficulty}",
-  "depth_level": ${depth},
-  "nodes": [
-    {
-      "id": "1",
-      "name": "SPECIFIC TOPIC NAME - NOT GENERIC",
-      "level": 0,
-      "description": "Detailed description of what to learn in this topic",
-      "estimated_time": "X hours",
-      "resources": ["Official Documentation", "Video Tutorial", "Practice Exercises"]
-    }
-  ],
-  "edges": [
-    { "from": "1", "to": "1.1" }
-  ]
-}
-
-Generate ${Math.min(depth * 3 + 2, 15)} to ${Math.min(depth * 5 + 3, 25)} specific nodes for "${topic}" at ${difficulty} level.
-Each node must have a unique id (use "1", "1.1", "1.1.1", "2", "2.1", etc.)
-Level 0 is the root/overview node.
-Level 1 are main categories.
-Level 2+ are sub-topics based on depth ${depth}.`;
-}
-
-/**
- * Get technology-specific tips for better roadmap generation
- */
-function getTechSpecificTips(topic, difficulty) {
-    const topicLower = topic.toLowerCase();
-    
-    if (topicLower.includes('react')) {
-        if (difficulty === 'beginner') {
-            return `For React beginner roadmap, include these SPECIFIC topics:
-- JSX (JavaScript XML) syntax
-- Functional Components vs Class Components
-- Props and PropTypes
-- useState Hook for state management
-- Event Handling in React
-- Conditional Rendering
-- Lists and Keys (map() function)
-- Forms and Controlled Components`;
-        } else if (difficulty === 'intermediate') {
-            return `For React intermediate roadmap, include these SPECIFIC topics:
-- useEffect Hook (side effects, API calls)
-- useContext Hook for global state
-- Custom Hooks creation
-- React Router v6 (routing)
-- Redux Toolkit (state management)
-- React Query (data fetching)
-- Performance optimization (memo, useCallback, useMemo)
-- Code splitting (lazy, Suspense)`;
-        } else {
-            return `For React advanced roadmap, include these SPECIFIC topics:
-- Higher-Order Components (HOCs)
-- Render Props pattern
-- Compound Components pattern
-- Server Components
-- Next.js Framework
-- React Server Components (RSC)
-- Testing (Jest, React Testing Library, Vitest)
-- Deployment and CI/CD`;
-        }
-    }
-    
-    if (topicLower.includes('python')) {
-        if (difficulty === 'beginner') {
-            return `For Python beginner roadmap, include these SPECIFIC topics:
-- Variables and Data Types
-- Strings and String Methods
-- Lists, Tuples, Dictionaries, Sets
-- If-Else Statements
-- Loops (for, while)
-- Functions and Lambda
-- File Handling (open, read, write)
-- Error Handling (try-except)`;
-        } else if (difficulty === 'intermediate') {
-            return `For Python intermediate roadmap, include these SPECIFIC topics:
-- List Comprehensions
-- Generators and Iterators
-- Decorators
-- Object-Oriented Programming (Classes, Inheritance)
-- Modules and Packages (pip, virtualenv)
-- Working with APIs (requests)
-- Database (SQLite, PostgreSQL)
-- Web Scraping (BeautifulSoup, Selenium)`;
-        } else {
-            return `For Python advanced roadmap, include these SPECIFIC topics:
-- Multithreading and Multiprocessing
-- Asyncio and Async/Await
-- Web Frameworks (FastAPI, Django)
-- Data Science (NumPy, Pandas, Matplotlib)
-- Machine Learning (scikit-learn, TensorFlow)
-- Testing (pytest, unittest)
-- Deployment (Docker, AWS, Heroku)`;
-        }
-    }
-    
-    if (topicLower.includes('javascript') || topicLower.includes('js')) {
-        if (difficulty === 'beginner') {
-            return `For JavaScript beginner roadmap, include these SPECIFIC topics:
-- Variables (var, let, const)
-- Data Types (String, Number, Boolean, etc.)
-- Functions and Scope
-- Arrays and Objects
-- Loops (for, while, forEach)
-- Conditionals (if-else, switch)
-- DOM Manipulation
-- Events and Event Listeners`;
-        } else if (difficulty === 'intermediate') {
-            return `For JavaScript intermediate roadmap, include these SPECIFIC topics:
-- ES6+ Features (arrow functions, destructuring)
-- Promises and Async/Await
-- Closures and Higher-Order Functions
-- Modules (import/export)
-- Error Handling (try-catch)
-- Local Storage and Session Storage
-- Fetch API and AJAX
-- Regular Expressions`;
-        } else {
-            return `For JavaScript advanced roadmap, include these SPECIFIC topics:
-- Prototypal Inheritance
-- Event Loop and Concurrency
-- Design Patterns in JS
-- Web APIs (WebSockets, Service Workers)
-- Performance Optimization
-- Testing (Jest, Mocha, Cypress)
-- Build Tools (Webpack, Vite)
-- TypeScript Integration`;
-        }
-    }
-    
-    return `For ${topic}, create a comprehensive roadmap with real, specific topics that are actually used in ${topic} development.`;
-}
-
-/**
- * Parse Gemini response and extract JSON
- */
-function parseGeminiResponse(text, topic) {
+function parseAPIResponse(text, topic) {
     try {
         // Extract JSON from response
         let jsonStr = text;
@@ -246,15 +177,63 @@ function parseGeminiResponse(text, topic) {
             edges: roadmap.edges || [],
             metadata: {
                 generated_at: new Date().toISOString(),
-                model: 'gemini-1.5-flash',
+                model: 'openrouter',
                 topic: topic
             }
         };
         
     } catch (error) {
-        console.error('Failed to parse Gemini response:', error);
+        console.error('Failed to parse API response:', error);
         throw new Error('Invalid response from AI');
     }
+}
+
+/**
+ * Build the prompt for API - IMPROVED for specific content
+ */
+function buildRoadmapPrompt(topic, difficulty, depth) {
+    const difficultyText = difficulty === 'beginner' ? 'Basic concepts, simple explanations, introductory topics.' :
+                          difficulty === 'intermediate' ? 'Practical applications, tools, frameworks, real-world examples.' :
+                          'Optimization, architecture patterns, advanced techniques, expert-level concepts.';
+    
+    const exampleCount = difficulty === 'beginner' ? 8 : difficulty === 'intermediate' ? 10 : 12;
+    
+    return `You are an expert curriculum designer. Create a DETAILED and SPECIFIC learning roadmap for "${topic}" at ${difficulty} level with ${depth} levels deep.
+
+IMPORTANT RULES:
+1. DO NOT use generic names like "Part 1", "Part 2", "Introduction Part X"
+2. Use SPECIFIC, REAL topic names (e.g., "JSX Syntax", "React Hooks", "State Management with Redux")
+3. Each node name must be meaningful and descriptive (3-8 words max)
+4. Include REAL concepts that actually exist in ${topic}
+
+Return ONLY a valid JSON object with this EXACT structure. DO NOT include any other text:
+
+{
+  "topic": "${topic}",
+  "title": "Complete ${topic} Learning Path - ${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Level",
+  "description": "A comprehensive ${difficulty} level roadmap with specific topics to master ${topic}",
+  "difficulty": "${difficulty}",
+  "depth_level": ${depth},
+  "nodes": [
+    {
+      "id": "1",
+      "name": "SPECIFIC TOPIC NAME - NOT GENERIC",
+      "level": 0,
+      "description": "Detailed description of what to learn",
+      "estimated_time": "X hours",
+      "resources": ["Official Documentation", "Video Tutorial", "Practice Exercises"]
+    }
+  ],
+  "edges": [
+    { "from": "1", "to": "1.1" }
+  ]
+}
+
+Generate ${Math.min(depth * 3 + 2, 15)} to ${Math.min(depth * 5 + 3, 25)} specific nodes for "${topic}" at ${difficulty} level.
+Each node must have a unique id (use "1", "1.1", "1.1.1", "2", "2.1", etc.)
+Level 0 is the root/overview node.
+Level 1 are main categories.
+Level 2+ are sub-topics based on depth ${depth}.`;
 }
 
 /**
@@ -263,7 +242,6 @@ function parseGeminiResponse(text, topic) {
 function getFallbackRoadmap(topic, difficulty, depth) {
     console.log('📝 Using fallback roadmap for:', topic);
     
-    // Specific topics based on actual technology
     const specificTopics = getSpecificTopicsForTech(topic, difficulty);
     
     const nodes = [];
@@ -432,7 +410,6 @@ function getSpecificTopicsForTech(topic, difficulty) {
         }
     };
     
-    // Default topics for any technology
     const defaultTopics = {
         beginner: [
             `Introduction to ${topic}`,
@@ -466,7 +443,6 @@ function getSpecificTopicsForTech(topic, difficulty) {
         ]
     };
     
-    // Get tech-specific topics or fallback to defaults
     const tech = Object.keys(techTopics).find(t => topicLower.includes(t));
     
     if (tech && techTopics[tech][difficulty]) {
@@ -489,4 +465,4 @@ function getSubTopicName(parentName, partNumber) {
     }
 }
 
-export default { generateRoadmapWithGemini, testGeminiConnection };
+export default { generateRoadmapWithGemini };

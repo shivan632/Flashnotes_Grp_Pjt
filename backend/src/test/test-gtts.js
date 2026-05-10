@@ -11,7 +11,7 @@ async function testGoogleTTS() {
     console.log('🎤 Testing Google Text-to-Speech (gTTS)...\n');
     
     // Test text
-    const text = "Hello! Welcome to Bhang Bhosda website we are plased to welcome bhadwe. Your PDF notes are ready to be read aloud. This is a test of the Google Text to Speech system.";
+    const text = "Hello! Welcome to FlashNotes WebApp we are plased to welcome. Your PDF notes are ready to be read aloud. This is a test of the Google Text to Speech system.";
     
     console.log('📝 Text to convert:', text);
     console.log('📡 Getting audio URL from Google...');

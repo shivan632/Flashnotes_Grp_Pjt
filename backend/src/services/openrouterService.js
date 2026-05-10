@@ -32,92 +32,49 @@ try {
     console.error('❌ OpenRouter initialization error:', error.message);
 }
 
-// ✅ ALL CONFIRMED WORKING FREE MODELS (from test results)
+// ✅ CONFIRMED WORKING FREE MODELS (from test results - May 2026)
 export const FREE_MODELS = {
-    // ⭐ CONFIRMED WORKING MODELS (Tested & Verified)
-    STEP_FLASH: 'stepfun/step-3.5-flash:free',                          // ✅ FAST - Primary
-    TRINITY_LARGE: 'arcee-ai/trinity-large-preview:free',               // ✅ GOOD - Backup
+    // ⭐ FASTEST WORKING MODELS (from test)
+    LIQUID_2_5_INSTRUCT: 'liquid/lfm-2.5-1.2b-instruct:free',     // ✅ FASTEST (1.5s)
+    GLM_4_5_AIR: 'z-ai/glm-4.5-air:free',                          // ✅ WORKING (11.8s)
     
-    // NVIDIA Models
-    NEMOTRON_9B: 'nvidia/nemotron-nano-9b-v2:free',
-    NEMOTRON_12B: 'nvidia/nemotron-nano-12b-v2-vl:free',
-    NEMOTRON_3_SUPER: 'nvidia/nemotron-3-super-120b-a12b:free',
-    NEMOTRON_3_NANO: 'nvidia/nemotron-3-nano-30b-a3b:free',
+    // NVIDIA Models - Confirmed Working
+    NEMOTRON_9B: 'nvidia/nemotron-nano-9b-v2:free',                // ✅ WORKING
+    NEMOTRON_12B: 'nvidia/nemotron-nano-12b-v2-vl:free',           // ✅ WORKING
     
-    // Qwen Models
-    QWEN_3_6_PLUS: 'qwen/qwen3.6-plus-preview:free',
-    QWEN_3_CODER: 'qwen/qwen3-coder:free',
-    QWEN_3_NEXT: 'qwen/qwen3-next-80b-a3b-instruct:free',
+    // OpenAI Models - Confirmed Working
+    GPT_OSS_120B: 'openai/gpt-oss-120b:free',                      // ✅ WORKING
     
-    // OpenAI Models
-    GPT_OSS_120B: 'openai/gpt-oss-120b:free',
-    GPT_OSS_20B: 'openai/gpt-oss-20b:free',
+    // Gemini Models - Confirmed Working
+    GEMINI_2_5_FLASH: 'gemini-2.5-flash',                          // ✅ WORKING (Google)
     
-    // Arcee Models
-    TRINITY_MINI: 'arcee-ai/trinity-mini:free',
+    // Qwen Models - Rate Limited
+    QWEN_3_CODER: 'qwen/qwen3-coder:free',                         // ⚠️ Rate Limited
+    QWEN_3_NEXT: 'qwen/qwen3-next-80b-a3b-instruct:free',         // ⚠️ Rate Limited
     
-    // Liquid Models
-    LIQUID_2_5_THINKING: 'liquid/lfm-2.5-1.2b-thinking:free',
-    LIQUID_2_5_INSTRUCT: 'liquid/lfm-2.5-1.2b-instruct:free',
-    
-    // Z-AI Models
-    GLM_4_5_AIR: 'z-ai/glm-4.5-air:free',
-    
-    // MinMax Models
-    MINIMAX_M2_5: 'minimax/minimax-m2.5:free',
-    
-    // Dolphin Models
-    DOLPHIN_MISTRAL_24B: 'cognitivecomputations/dolphin-mistral-24b-venice-edition:free',
-    
-    // Google Gemma Models
-    GEMMA_3N_E2B: 'google/gemma-3n-e2b-it:free',
-    GEMMA_3N_E4B: 'google/gemma-3n-e4b-it:free',
-    GEMMA_3_4B: 'google/gemma-3-4b-it:free',
-    
-    // Mistral Models
-    MISTRAL_7B: 'mistralai/mistral-7b-instruct:free',
-    MISTRAL_8X7B: 'mistralai/mixtral-8x7b-instruct:free'
+    // Deprecated/Removed Models (DO NOT USE)
+    // STEP_FLASH: 'stepfun/step-3.5-flash:free',                  // ❌ 404 - REMOVED
+    // TRINITY_LARGE: 'arcee-ai/trinity-large-preview:free',       // ❌ 404 - REMOVED
+    // TRINITY_MINI: 'arcee-ai/trinity-mini:free',                 // ❌ 404 - REMOVED
 };
 
-// Ordered list of models to try (working models FIRST)
+// Ordered list of models to try (WORKING models FIRST)
 const MODEL_PRIORITY = [
-    // ⭐ CONFIRMED WORKING MODELS
-    FREE_MODELS.STEP_FLASH,           // ✅ FASTEST - Primary
-    FREE_MODELS.TRINITY_LARGE,        // ✅ GOOD - Secondary
+    // ⭐ FASTEST WORKING MODELS
+    FREE_MODELS.LIQUID_2_5_INSTRUCT,      // ✅ Fastest (1.5s)
+    FREE_MODELS.GEMINI_2_5_FLASH,         // ✅ Google Gemini (2s)
+    FREE_MODELS.GPT_OSS_120B,             // ✅ OpenAI GPT (3.5s)
+    FREE_MODELS.NEMOTRON_12B,             // ✅ NVIDIA (5.35s)
+    FREE_MODELS.NEMOTRON_9B,              // ✅ NVIDIA (6.34s)
+    FREE_MODELS.GLM_4_5_AIR,              // ✅ Z-AI (11.8s)
     
-    // NVIDIA - Good for technical content
-    FREE_MODELS.NEMOTRON_9B,          // Fast and reliable
-    FREE_MODELS.NEMOTRON_12B,         // Larger model
-    
-    // Qwen - Good for coding/technical
-    FREE_MODELS.QWEN_3_CODER,         // Good for code summaries
-    FREE_MODELS.QWEN_3_NEXT,          // Powerful model
-    
-    // OpenAI - Good all-rounder
-    FREE_MODELS.GPT_OSS_120B,         // Powerful
-    FREE_MODELS.GPT_OSS_20B,          // Lightweight
-    
-    // Dolphin - Good all-rounder
-    FREE_MODELS.DOLPHIN_MISTRAL_24B,  // Good for summaries
-    
-    // Google Gemma - Reliable
-    FREE_MODELS.GEMMA_3_4B,           // Google's lightweight model
-    
-    // Arcee - Backup
-    FREE_MODELS.TRINITY_MINI,         // Lightweight backup
-    
-    // Liquid - Experimental
-    FREE_MODELS.LIQUID_2_5_INSTRUCT,  // Fast and efficient
-    
-    // Z-AI - Fallback
-    FREE_MODELS.GLM_4_5_AIR,          // Reliable fallback
-    
-    // MinMax - Last resort
-    FREE_MODELS.MINIMAX_M2_5          // Final fallback
+    // ⚠️ Rate Limited - Try after working models
+    FREE_MODELS.QWEN_3_CODER,              // ⚠️ Rate limited
+    FREE_MODELS.QWEN_3_NEXT,              // ⚠️ Rate limited
 ];
 
 // Default model (fastest working)
-const DEFAULT_MODEL = FREE_MODELS.STEP_FLASH;
+const DEFAULT_MODEL = FREE_MODELS.LIQUID_2_5_INSTRUCT;
 
 // Track if we're in fallback mode
 let isInFallbackMode = false;
@@ -287,7 +244,6 @@ Make it easy to read and study-friendly.
                 if (completion.choices && completion.choices[0]?.message?.content) {
                     summary = completion.choices[0].message.content;
                 }
-                
                 if (summary && summary.length > 50) {
                     console.log(`✅ Model ${model} worked!`);
                     return {
@@ -341,11 +297,14 @@ export async function testOpenRouter() {
     }
     
     try {
-        // Try working models first
+        // Try working models first (based on test results)
         const workingModels = [
-            FREE_MODELS.STEP_FLASH,
-            FREE_MODELS.TRINITY_LARGE,
-            FREE_MODELS.NEMOTRON_9B
+            FREE_MODELS.LIQUID_2_5_INSTRUCT,   // Fastest
+            FREE_MODELS.GEMINI_2_5_FLASH,       // Google
+            FREE_MODELS.GPT_OSS_120B,           // OpenAI
+            FREE_MODELS.NEMOTRON_12B,           // NVIDIA
+            FREE_MODELS.NEMOTRON_9B,            // NVIDIA
+            FREE_MODELS.GLM_4_5_AIR             // Z-AI
         ];
         
         for (const model of workingModels) {
@@ -388,8 +347,29 @@ export async function listAvailableModels() {
     return Object.entries(FREE_MODELS).map(([name, id]) => ({
         name,
         id,
-        description: `Free model: ${id}`
+        description: `Free model: ${id}`,
+        status: getModelStatus(id)
     }));
+}
+
+function getModelStatus(modelId) {
+    const workingModels = [
+        'liquid/lfm-2.5-1.2b-instruct:free',
+        'gemini-2.5-flash',
+        'openai/gpt-oss-120b:free',
+        'nvidia/nemotron-nano-12b-v2-vl:free',
+        'nvidia/nemotron-nano-9b-v2:free',
+        'z-ai/glm-4.5-air:free'
+    ];
+    
+    if (workingModels.includes(modelId)) {
+        return '✅ Working';
+    } else if (modelId.includes('qwen')) {
+        return '⚠️ Rate Limited';
+    } else if (modelId.includes('stepfun') || modelId.includes('trinity')) {
+        return '❌ Deprecated';
+    }
+    return '❓ Unknown';
 }
 
 export async function getCurrentWorkingModel() {
