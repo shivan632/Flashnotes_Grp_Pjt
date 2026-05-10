@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{title}} - FlashNotes</title>
+    <style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    background: #f0f2f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 40px 20px;
+    margin: 0;
+}
+
+.certificate {
+    max-width: 900px;
+    width: 100%;
+    background: white;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.certificate:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 25px 40px -12px rgba(0, 0, 0, 0.25);
+}
+
+.gradient-top {
+    height: 8px;
+    background: linear-gradient(90deg, var(--gradient-from, #6366f1), var(--gradient-to, #a855f7));
+    width: 100%;
+}
+
+.certificate-inner {
+    padding: 40px 48px 48px;
+    text-align: center;
+}
+
+.logo {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--gradient-from, #6366f1), var(--gradient-to, #a855f7));
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    box-shadow: 0 8px 16px -4px rgba(99, 102, 241, 0.3);
+}
+
+.logo span {
+    font-size: 42px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 1px;
+}
+
+.logo-text {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-top: 8px;
+    letter-spacing: 1px;
+}
+
+.title-small {
+    font-size: 13px;
+    color: #5b6e8c;
+    letter-spacing: 3.5px;
+    margin: 24px 0 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.icon {
+    font-size: 68px;
+    margin: 16px 0 8px;
+    line-height: 1;
+}
+
+.cert-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 12px 0 8px;
+    letter-spacing: -0.3px;
+}
+
+.recipient-name {
+    font-size: 42px;
+    color: #0f172a;
+    margin: 16px 0;
+    font-weight: 800;
+    background: linear-gradient(135deg, #1e293b, #334155);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    line-height: 1.2;
+    word-break: break-word;
+}
+
+.divider {
+    width: 100px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--gradient-from, #6366f1), var(--gradient-to, #a855f7));
+    margin: 24px auto;
+    border-radius: 4px;
+}
+
+.description-text {
+    font-size: 18px;
+    color: #334155;
+    margin: 20px 0;
+    line-height: 1.55;
+    max-width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.details {
+    color: #5b6e8c;
+    font-size: 13px;
+    margin: 28px 0 20px;
+    line-height: 1.8;
+    background: #f8fafc;
+    padding: 12px 20px;
+    border-radius: 40px;
+    display: inline-block;
+    width: auto;
+}
+
+.details div {
+    margin: 4px 0;
+}
+
+.footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: 40px;
+    padding-top: 32px;
+    border-top: 1px solid #e2e8f0;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.signature-line {
+    width: 160px;
+    height: 2px;
+    background: #cbd5e1;
+    margin-bottom: 12px;
+    border-radius: 2px;
+}
+
+.footer div:first-child {
+    text-align: left;
+}
+
+.footer div:first-child div:not(.signature-line) {
+    font-size: 14px;
+    color: #1e293b;
+    font-weight: 500;
+}
+
+.footer div:first-child div:last-child {
+    font-size: 11px;
+    color: #5b6e8c;
+    font-weight: normal;
+    margin-top: 4px;
+}
+
+.stamp {
+    width: 75px;
+    height: 75px;
+    border: 2.5px solid var(--gradient-from, #6366f1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    background: white;
+    opacity: 0.85;
+    transform: rotate(-8deg);
+}
+
+/* Responsive adjustments */
+@media (max-width: 650px) {
+    body {
+        padding: 24px 16px;
+    }
+    
+    .certificate-inner {
+        padding: 28px 24px 36px;
+    }
+    
+    .recipient-name {
+        font-size: 32px;
+    }
+    
+    .cert-title {
+        font-size: 26px;
+    }
+    
+    .description-text {
+        font-size: 16px;
+        max-width: 95%;
+    }
+    
+    .footer {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 28px;
+    }
+    
+    .footer div:first-child {
+        text-align: center;
+    }
+    
+    .signature-line {
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .details {
+        font-size: 11px;
+        padding: 8px 16px;
+    }
+    
+    .icon {
+        font-size: 52px;
+    }
+}
+
+/* Print optimization */
+@media print {
+    body {
+        background: white;
+        padding: 0;
+        margin: 0;
+        min-height: auto;
+        display: block;
+    }
+    
+    .certificate {
+        max-width: 100%;
+        box-shadow: none;
+        border-radius: 0;
+        margin: 0;
+    }
+    
+    .certificate:hover {
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .gradient-top {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+    
+    .logo {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+        box-shadow: none;
+    }
+    
+    .divider {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+    
+    .stamp {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+        border-color: #6366f1;
+    }
+    
+    .recipient-name {
+        background: none;
+        -webkit-background-clip: unset;
+        background-clip: unset;
+        color: #0f172a;
+    }
+    
+    .certificate-inner {
+        padding: 32px;
+    }
+    
+    .details {
+        background: none;
+        border: 1px solid #e2e8f0;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="certificate">
+        <div class="gradient-top"></div>
+        <div class="certificate-inner">
+            <div class="logo">
+                <span>F</span>
+            </div>
+            <div class="logo-text">FLASHNOTES</div>
+            
+            <div class="title-small">CERTIFICATE OF ACHIEVEMENT</div>
+            
+            <div class="icon">{{icon}}</div>
+            
+            <div class="cert-title">{{title}}</div>
+            
+            <div class="recipient-name">{{user_name}}</div>
+            
+            <div class="divider"></div>
+            
+            <div class="description-text">{{description}}</div>
+            
+            <div class="details">
+                <div>📅 Awarded on {{earned_date}}</div>
+                <div>🆔 Certificate ID: {{certificate_number}}</div>
+            </div>
+            
+            <div class="footer">
+                <div>
+                    <div class="signature-line"></div>
+                    <div>FlashNotes Team</div>
+                    <div style="font-size: 11px; color: #999;">Director of Learning</div>
+                </div>
+                <div class="stamp">🎓</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

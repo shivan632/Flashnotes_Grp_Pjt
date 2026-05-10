@@ -1,6 +1,8 @@
 // backend/src/controllers/quizController.js
 import { supabase, supabaseAdmin } from '../config/supabase.js';
 import jwt from 'jsonwebtoken';
+import achievementService from '../services/achievementService.js';
+import certificateService from '../services/certificateService.js';
 
 // Get all available quizzes
 export const getAllQuizzes = async (req, res) => {
@@ -91,7 +93,7 @@ export const getQuizQuestions = async (req, res) => {
         
         const { data: questions, error } = await supabase
             .from('quiz_questions')
-            .select('id, question, options, correct_option, points, explanation')  // ← Add correct_option here
+            .select('id, question, options, correct_option, points, explanation')
             .eq('quiz_id', id)
             .order('id', { ascending: true });
         
@@ -111,14 +113,11 @@ export const getQuizQuestions = async (req, res) => {
     }
 };
 
-// Start a new quiz attempt - FIXED FOREIGN KEY ERROR
-// backend/src/controllers/quizController.js - REPLACE startQuiz function
-
+// Start a new quiz attempt
 export const startQuiz = async (req, res) => {
     try {
         const quizId = req.params.id;
         
-        // Get user from request (set by auth middleware)
         if (!req.user) {
             console.error('❌ No user in request');
             return res.status(401).json({
@@ -133,7 +132,6 @@ export const startQuiz = async (req, res) => {
         console.log('🎯 Starting quiz attempt:');
         console.log('  - Quiz ID:', quizId);
         console.log('  - User ID:', userId);
-        console.log('  - User Email:', userEmail);
         
         // ============= STEP 1: Verify user exists =============
         const { data: userCheck, error: userError } = await supabase
@@ -248,7 +246,7 @@ export const startQuiz = async (req, res) => {
 };
 
 // Helper function to update user scores
-async function updateUserScores(userId, correctCount, totalQuestions, percentage) {
+async function updateUserScores(userId, correctCount, totalQuestions, percentage, totalPoints) {
     try {
         // Get existing scores
         const { data: existing } = await supabaseAdmin
@@ -264,6 +262,7 @@ async function updateUserScores(userId, correctCount, totalQuestions, percentage
             const newCorrectAnswers = existing.correct_answers + correctCount;
             const newAverageScore = ((existing.average_score * existing.total_quizzes_taken) + percentage) / newTotalQuizzes;
             const newPerfectScores = existing.perfect_scores + (percentage === 100 ? 1 : 0);
+            const newTotalPoints = (existing.total_points || 0) + (totalPoints || 0);
             
             await supabaseAdmin
                 .from('user_scores')
@@ -271,8 +270,9 @@ async function updateUserScores(userId, correctCount, totalQuestions, percentage
                     total_quizzes_taken: newTotalQuizzes,
                     total_questions_answered: newTotalQuestions,
                     correct_answers: newCorrectAnswers,
-                    average_score: newAverageScore,
+                    average_score: Math.round(newAverageScore),
                     perfect_scores: newPerfectScores,
+                    total_points: newTotalPoints,
                     last_quiz_date: new Date().toISOString().split('T')[0],
                     updated_at: new Date().toISOString()
                 })
@@ -286,8 +286,9 @@ async function updateUserScores(userId, correctCount, totalQuestions, percentage
                     total_quizzes_taken: 1,
                     total_questions_answered: totalQuestions,
                     correct_answers: correctCount,
-                    average_score: percentage,
+                    average_score: Math.round(percentage),
                     perfect_scores: percentage === 100 ? 1 : 0,
+                    total_points: totalPoints || 0,
                     last_quiz_date: new Date().toISOString().split('T')[0],
                     created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString()
@@ -301,9 +302,7 @@ async function updateUserScores(userId, correctCount, totalQuestions, percentage
     }
 }
 
-// Submit quiz answers
-
-// Submit quiz answers - COMPLETE WITH ACHIEVEMENT CHECK
+// Submit quiz answers - COMPLETE WITH ACHIEVEMENT AND CERTIFICATE CHECK
 export const submitQuiz = async (req, res) => {
     try {
         const quizId = req.params.id;
@@ -314,7 +313,6 @@ export const submitQuiz = async (req, res) => {
         console.log('  - Quiz ID:', quizId);
         console.log('  - User ID:', userId);
         console.log('  - Attempt ID:', attemptId);
-        console.log('  - Answers:', answers);
         console.log('  - Time Taken:', timeTakenSeconds);
 
         // ============= STEP 1: Verify attempt exists =============
@@ -416,11 +414,12 @@ export const submitQuiz = async (req, res) => {
             console.error('⚠️ Score update error (non-critical):', scoreError);
         }
 
-        // ============= STEP 6: Check and award achievements =============
+        // ============= STEP 6: Check and award ACHIEVEMENTS =============
+        let newlyEarnedAchievements = [];
         try {
             const isPerfect = percentage === 100 || correctCount === totalQuestions;
             
-            const newlyEarned = await achievementService.checkAndAwardAchievements(
+            newlyEarnedAchievements = await achievementService.checkAndAwardAchievements(
                 userId,
                 'quiz_completed',
                 {
@@ -433,14 +432,28 @@ export const submitQuiz = async (req, res) => {
                 }
             );
             
-            if (newlyEarned && newlyEarned.length > 0) {
-                console.log(`🎉 User ${userId} earned ${newlyEarned.length} new achievement(s)!`);
-                console.log('🏆 Achievements earned:', newlyEarned.map(a => a.name).join(', '));
+            if (newlyEarnedAchievements && newlyEarnedAchievements.length > 0) {
+                console.log(`🎉 User ${userId} earned ${newlyEarnedAchievements.length} new achievement(s)!`);
+                console.log('🏆 Achievements earned:', newlyEarnedAchievements.map(a => a.name).join(', '));
             }
         } catch (achievementError) {
             console.error('⚠️ Achievement check error (non-critical):', achievementError);
         }
 
+        // ============= STEP 7: Check and award CERTIFICATES =============
+        let newlyEarnedCertificates = [];
+        try {
+            const certResult = await certificateService.checkAndAwardCertificates(userId);
+            if (certResult.success && certResult.newCertificates && certResult.newCertificates.length > 0) {
+                newlyEarnedCertificates = certResult.newCertificates;
+                console.log(`🎓 User ${userId} earned ${newlyEarnedCertificates.length} new certificate(s)!`);
+                console.log('📜 Certificates earned:', newlyEarnedCertificates.map(c => c.title).join(', '));
+            }
+        } catch (certError) {
+            console.error('⚠️ Certificate check error (non-critical):', certError);
+        }
+
+        // ============= STEP 8: Return response with rewards =============
         res.json({
             success: true,
             result: {
@@ -449,6 +462,20 @@ export const submitQuiz = async (req, res) => {
                 totalQuestions: totalQuestions,
                 percentage: Math.round(percentage * 100) / 100,
                 passed: percentage >= 70
+            },
+            rewards: {
+                achievements: newlyEarnedAchievements.map(a => ({
+                    id: a.id,
+                    name: a.name,
+                    icon: a.icon,
+                    points: a.points
+                })),
+                certificates: newlyEarnedCertificates.map(c => ({
+                    id: c.id,
+                    title: c.title,
+                    type: c.type,
+                    certificate_number: c.certificate_number
+                }))
             }
         });
 

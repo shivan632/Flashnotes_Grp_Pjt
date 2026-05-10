@@ -75,7 +75,7 @@ import { VoiceNotesPage, setupVoiceNotesPage } from './pages/VoiceNotesPage.js';
 import { RoadmapPage, setupRoadmapPage } from './pages/RoadmapPage.js';
 import { MyRoadmapsPage, setupMyRoadmapsPage } from './pages/MyRoadmapsPage.js';
 import { RoadmapDetailPage, setupRoadmapDetailPage } from './pages/RoadmapDetailPage.js';
-
+import { CertificatePage, setupCertificatePage } from './pages/CertificatePage.js';
 // ============= API URL CONFIGURATION =============
 if (typeof window !== 'undefined' && !window.API_URL) {
     const hostname = window.location.hostname;
@@ -256,6 +256,8 @@ const routes = {
     '/my-roadmaps': MyRoadmapsPage,
     '/code-editor': CodeEditorPage,
     '/voice-notes': VoiceNotesPage,
+    '/certificates': CertificatePage,
+    '/certificate/view/:id': CertificatePage,  // Will handle view
 };
 
 // ============= GLOBAL STATE =============
@@ -502,6 +504,8 @@ async function router() {
                 // The page is self-contained with its own initialization
                 setupVoiceNotesPage();
                 console.log('Voice Notes page loaded');
+            }else if (path === '/certificates') {
+                setupCertificatePage();
             }
         }, 100);
         

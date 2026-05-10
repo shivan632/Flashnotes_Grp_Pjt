@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { testConnection } from './src/config/supabase.js';
+import certificateRoutes from './src/routes/certificateRoutes.js';
 
 // Get __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -26,6 +27,8 @@ import notesGenRoutes from './src/routes/notesGenRoutes.js';
 import codeRoutes from './src/routes/codeRoutes.js';
 import voiceNotesRoutes from './src/routes/voiceNotesRoutes.js';
 import achievementRoutes from './src/routes/achievementRoutes.js';
+// ❌ REMOVE THIS DUPLICATE LINE:
+// import certificateRoutes from './src/routes/certificateRoutes.js';
 
 dotenv.config();
 
@@ -106,8 +109,8 @@ app.use(express.static(frontendPath));
 
 // ============= API ROUTES =============
 app.use('/api/auth', authRoutes);
-app.use('/api/notes', notesRoutes);           // Old notes routes
-app.use('/api/notes-gen', notesGenRoutes);    // ✅ NEW: Notes Generator routes (separate path)
+app.use('/api/notes', notesRoutes);
+app.use('/api/notes-gen', notesGenRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/quiz', quizRoutes);
@@ -119,6 +122,7 @@ app.use('/api/roadmap', roadmapRoutes);
 app.use('/api/code', codeRoutes);
 app.use('/api/voice-notes', voiceNotesRoutes);
 app.use('/api/achievements', achievementRoutes);
+app.use('/api/certificates', certificateRoutes);  // ✅ Single line
 
 // Health check route
 app.get('/api/health', (req, res) => {

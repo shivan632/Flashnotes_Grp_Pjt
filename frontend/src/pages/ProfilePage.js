@@ -7,6 +7,8 @@ import { Header } from '../components/common/Header.js';
 import { showError, showSuccess } from '../components/common/ErrorMessage.js';
 import { getUserAchievements } from '../services/scoreService.js';
 import { AchievementGrid } from '../components/score/AchievementCard.js';
+import { getUserCertificates } from '../services/certificateService.js';
+import { CertificateCard } from '../components/certificate/CertificateCard.js';
 
 export async function ProfilePage() {
     const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
@@ -45,6 +47,8 @@ export async function ProfilePage() {
     let recentActivity = [];
     let achievementsList = [];
     let achievementsStats = { earned: 0, total: 0, totalPoints: 0 };
+    let certificatesList = [];
+    let certificatesStats = { total: 0 };
     
     try {
         const API_URL = window.API_URL || 'http://localhost:10000/api';
@@ -117,6 +121,25 @@ export async function ProfilePage() {
                 type: 'achievement',
                 message: `Earned "${ach.name}" achievement!`,
                 date: ach.earnedAt
+            })));
+            recentActivity.sort((a, b) => new Date(b.date) - new Date(a.date));
+            recentActivity = recentActivity.slice(0, 5);
+        }
+        
+        // Fetch certificates
+        const certificatesData = await getUserCertificates();
+        if (certificatesData.success && certificatesData.certificates) {
+            certificatesList = certificatesData.certificates;
+            certificatesStats = {
+                total: certificatesList.length
+            };
+            
+            // Add certificate activity
+            const recentCertificates = certificatesList.slice(0, 3);
+            recentActivity.push(...recentCertificates.map(cert => ({
+                type: 'certificate',
+                message: `Earned "${cert.title}" certificate!`,
+                date: cert.earned_at
             })));
             recentActivity.sort((a, b) => new Date(b.date) - new Date(a.date));
             recentActivity = recentActivity.slice(0, 5);
@@ -199,8 +222,8 @@ export async function ProfilePage() {
                                 <div class="text-xs text-[#9CA3AF] mt-1">Perfect Scores</div>
                             </div>
                             <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-4 text-center border border-[#374151] hover:border-[#3B82F6] transition-all">
-                                <div class="text-2xl font-bold text-[#3B82F6]">${stats.savedNotes || 0}</div>
-                                <div class="text-xs text-[#9CA3AF] mt-1">Saved Notes</div>
+                                <div class="text-2xl font-bold text-[#3B82F6]">${certificatesStats.total}</div>
+                                <div class="text-xs text-[#9CA3AF] mt-1">Certificates</div>
                             </div>
                         </div>
                         
@@ -218,7 +241,7 @@ export async function ProfilePage() {
                                 ${recentActivity.length > 0 ? recentActivity.map((activity, index) => `
                                     <div class="flex items-center gap-3 p-3 bg-[#111827] rounded-xl hover:bg-[#1F2937] transition-all duration-300">
                                         <div class="w-8 h-8 bg-gradient-to-r from-[#3B82F6] to-[#A78BFA] rounded-lg flex items-center justify-center">
-                                            ${activity.type === 'quiz' ? '📊' : '🏆'}
+                                            ${activity.type === 'quiz' ? '📊' : activity.type === 'certificate' ? '🎓' : '🏆'}
                                         </div>
                                         <div class="flex-1">
                                             <p class="text-sm text-[#E5E7EB]">${escapeHtml(activity.message)}</p>
@@ -260,6 +283,48 @@ export async function ProfilePage() {
                             </div>
                             
                             ${AchievementGrid({ achievements: achievementsList, onAchievementClick: null })}
+                        </div>
+                        
+                        <!-- Certificates Section -->
+                        <div class="bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-2xl p-6 border border-[#374151] mb-6 animate-fadeInUp" style="animation-delay: 0.27s">
+                            <div class="flex items-center justify-between mb-6">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-xl font-bold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">Certificates</h3>
+                                        <p class="text-xs text-[#9CA3AF]">🎓 ${certificatesStats.total} certificates earned</p>
+                                    </div>
+                                </div>
+                                <a href="#/certificates" class="text-sm text-[#60A5FA] hover:text-[#3B82F6] transition-colors flex items-center gap-1">
+                                    View all
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                </a>
+                            </div>
+                            
+                            ${certificatesList.length > 0 ? `
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    ${certificatesList.slice(0, 4).map(cert => CertificateCard({ certificate: cert })).join('')}
+                                </div>
+                                ${certificatesList.length > 4 ? `
+                                    <div class="text-center mt-4">
+                                        <a href="#/certificates" class="text-sm text-[#60A5FA] hover:text-[#3B82F6] transition-colors">+ ${certificatesList.length - 4} more certificates</a>
+                                    </div>
+                                ` : ''}
+                            ` : `
+                                <div class="text-center py-8">
+                                    <svg class="w-12 h-12 mx-auto text-[#4B5563] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                    </svg>
+                                    <p class="text-[#9CA3AF] text-sm">No certificates yet</p>
+                                    <p class="text-xs text-[#6B7280] mt-1">Complete quizzes to earn certificates!</p>
+                                </div>
+                            `}
                         </div>
                         
                         <!-- Edit Profile Form -->
@@ -329,6 +394,8 @@ export async function ProfilePage() {
             </div>
         </div>
         
+        <div id="certificateModalContainer"></div>
+        
         <style>
             @keyframes fadeInUp {
                 from {
@@ -374,6 +441,45 @@ export async function ProfilePage() {
                 to { transform: rotate(360deg); }
             }
         </style>
+        
+        <script>
+            (function() {
+                const modalContainer = document.getElementById('certificateModalContainer');
+                const API_URL = window.API_URL || 'http://localhost:10000/api';
+                const token = localStorage.getItem('token');
+                
+                function handleViewCertificate(certificateId) {
+                    fetch(API_URL + '/certificates/' + certificateId + '/html', {
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    })
+                    .then(response => response.text())
+                    .then(html => {
+                        const newWindow = window.open();
+                        if (newWindow) {
+                            newWindow.document.write(html);
+                            newWindow.document.close();
+                        } else {
+                            alert('Please allow popups to view certificate');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to load certificate');
+                    });
+                }
+                
+                function attachCertificateEvents() {
+                    document.querySelectorAll('.view-cert-btn').forEach(function(btn) {
+                        btn.addEventListener('click', function(e) {
+                            var id = e.currentTarget.dataset.id;
+                            if (id) handleViewCertificate(id);
+                        });
+                    });
+                }
+                
+                attachCertificateEvents();
+            })();
+        </script>
     `;
 }
 
